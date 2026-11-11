@@ -39,8 +39,15 @@ services:
     volumes:
       - panel-data:/app/data   # baza JSON + kopie; to jest dysk trwały
 
-  # Dodawane w kolejnych krokach (po jednym kontenerze na aplikację):
-  #   fridgebite  -> fridgebite.novopix.uk (repo fridgechef, port 3000)
+  fridgebite:
+    <<: *app
+    build: { context: ../../fridgebite, dockerfile: Dockerfile }
+    environment:
+      NODE_ENV: production
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      # Limity AI: AI_PER_MINUTE=20, AI_DAILY_PER_IP=80, AI_DAILY_TOTAL=600 (domyslne w aplikacji)
+
+  # Dodawane w kolejnych krokach:
   #   pantrypal   -> statyczne pliki w wolumenie pantrypal-site (serwuje Caddy)
 
   caddy:
@@ -53,7 +60,7 @@ services:
       - caddy-data:/data
       - caddy-config:/config
       - pantrypal-site:/srv/pantrypal:ro
-    depends_on: [scanner, panel]
+    depends_on: [scanner, panel, fridgebite]
 
 networks:
   web:

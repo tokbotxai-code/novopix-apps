@@ -16,10 +16,10 @@ panel.novopix.uk {
 	reverse_proxy panel:3000
 }
 
-# fridgebite.novopix.uk {
-# 	encode gzip
-# 	reverse_proxy fridgebite:3000
-# }
+fridgebite.novopix.uk {
+	encode gzip
+	reverse_proxy fridgebite:3000
+}
 
 pantrypal.novopix.uk {
 	encode gzip
