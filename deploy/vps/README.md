@@ -7,4 +7,4 @@ Jedna komenda w konsoli VPS (jako root):
 - Klonuje publiczne repo z kodem, generuje `/opt/novopix/.env` (losowy `INTERNAL_TOKEN` i `AGENCY_PIN`, bez wypisywania), hasło panelu zapisuje w `/root/novopix-credentials.txt` (tylko root).
 - Klucze Google/Gemini: `nano /opt/novopix/.env`, potem `docker compose --env-file /opt/novopix/.env up -d` w `/opt/novopix/deploy/vps`.
 - Co 5 minut serwer pobiera zmiany z GitHuba (`novopix-update`), kopia danych panelu codziennie o 03:17 (30 dni).
-- DNS (Spaceship): rekordy A `skaner`, `panel`, `fridgebite` na adres IP VPS.
+- DNS (Spaceship): rekordy A `scanner`, `panel`, `fridgebite` na adres IP VPS.

@@ -2,9 +2,13 @@
 	email contact@novopix.uk
 }
 
-skaner.novopix.uk {
+scanner.novopix.uk {
 	encode gzip
 	reverse_proxy scanner:3000
+}
+
+skaner.novopix.uk {
+	redir https://scanner.novopix.uk{uri} permanent
 }
 
 panel.novopix.uk {
