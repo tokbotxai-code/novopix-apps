@@ -1230,6 +1230,25 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#F4F6F9] flex flex-col lg:flex-row text-slate-800 font-sans selection:bg-emerald-500/30">
+      {/* Login status badge (agency panel only) */}
+      {!isPublicMode && (
+        <div className="fixed top-2 right-2 z-50 no-print flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-bold shadow-lg border"
+          style={{ background: agencyToken ? "#064e3b" : "#3f2d06", color: agencyToken ? "#a7f3d0" : "#fcd34d", borderColor: agencyToken ? "#10b981" : "#f59e0b" }}>
+          <span>{agencyToken ? (isPolish ? "✅ Zalogowano (Agencja)" : "✅ Logged in (Agency)") : (isPolish ? "🔒 Niezalogowany" : "🔒 Not logged in")}</span>
+          {agencyToken ? (
+            <button type="button" className="underline cursor-pointer"
+              onClick={() => {
+                fetch("/api/settings/logout", { method: "POST", headers: getAuthHeaders() }).catch(() => {});
+                setAgencyToken(null);
+                try { sessionStorage.removeItem("novopix_agency_token"); } catch {}
+              }}>{isPolish ? "Wyloguj" : "Log out"}</button>
+          ) : (
+            <button type="button" className="underline cursor-pointer"
+              onClick={() => { setActiveTab("crm"); handleRequestAgencyMode(); }}>{isPolish ? "Zaloguj" : "Log in"}</button>
+          )}
+        </div>
+      )}
+
       {/* Toast Notification */}
       {toastMsg && (
         <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 flex items-center gap-2.5 text-xs font-bold animate-in fade-in slide-in-from-bottom-3 no-print">
