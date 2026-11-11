@@ -48,7 +48,7 @@ services:
       # Limity AI: AI_PER_MINUTE=20, AI_DAILY_PER_IP=80, AI_DAILY_TOTAL=600 (domyslne w aplikacji)
 
   # Dodawane w kolejnych krokach:
-  #   pantrypal   -> statyczne pliki w wolumenie pantrypal-site (serwuje Caddy)
+  #   pantrypal   -> statyczne pliki z katalogu pantrypal-site (serwuje Caddy)
 
   caddy:
     image: caddy:2-alpine
@@ -59,7 +59,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
-      - pantrypal-site:/srv/pantrypal:ro
+      - ../../pantrypal-site:/srv/pantrypal:ro
     depends_on: [scanner, panel, fridgebite]
 
 networks:
@@ -69,4 +69,3 @@ volumes:
   panel-data:
   caddy-data:
   caddy-config:
-  pantrypal-site:
