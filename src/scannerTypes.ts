@@ -166,6 +166,8 @@ export interface ClientActivityEntry {
   summary: string;
 }
 
+import type { ClientStage, ScanSnapshot } from "./agencyTypes";
+
 export interface AgencyClient {
   id: string;
   name: string;
@@ -173,7 +175,9 @@ export interface AgencyClient {
   email: string;
   phone: string;
   website: string;
-  status: "lead" | "audit_sent" | "proposal_accepted" | "remediated" | "retainer";
+  status: ClientStage;
+  lastScan?: ScanSnapshot;
+  source?: string;
   contractValue: number;
   hourlyRate: number;
   estimatedHours: number;
@@ -188,10 +192,12 @@ export interface AgencyClient {
 export interface MonitoringAlertEntry {
   id: string;
   timestamp: string;
-  type: "downtime" | "slow_response" | "score_drop" | "recovered";
+  type: "downtime" | "slow_response" | "score_drop" | "psi_drop" | "recovered";
   message: string;
   httpStatus?: number;
   responseTimeMs?: number;
+  seen?: boolean;
+  emailed?: "sent" | "not_configured" | "failed";
 }
 
 export interface MonitoredDomain {
@@ -212,6 +218,17 @@ export interface MonitoredDomain {
   status: "healthy" | "warning" | "alert";
   history: Array<{ date: string; score: number; responseMs: number; httpStatus?: number; ok?: boolean }>;
   alertsLog?: MonitoringAlertEntry[];
+  psi?: {
+    at: string;
+    status: "live_lighthouse" | "unavailable";
+    overall: number | null;
+    performance: number | null;
+    seo: number | null;
+    accessibility: number | null;
+    bestPractices: number | null;
+    error?: string;
+  };
+  clientId?: string;
 }
 
 export interface PageWeightBreakdown {

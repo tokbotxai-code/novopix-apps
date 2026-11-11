@@ -20,8 +20,93 @@ export interface LeadRecord {
 export interface ClientActivityEntry {
   id: string;
   timestamp: string;
-  type: "audit" | "proposal_sent" | "proposal_accepted" | "status_change" | "note";
+  type: "audit" | "proposal_sent" | "proposal_accepted" | "status_change" | "note" | "offer_draft" | "offer_approved" | "email_sent" | "monitoring";
   summary: string;
+}
+
+// Etapy ścieżki: lead → skan → szkic oferty → oferta zatwierdzona → wysłano → zaakceptowano → wdrożono → monitoring → abonament.
+// Starsze rekordy w bazie mają tylko lead/audit_sent/proposal_accepted/remediated/retainer – nadal są poprawne.
+export type ClientStage =
+  | "lead"
+  | "scanned"
+  | "offer_draft"
+  | "offer_approved"
+  | "audit_sent"
+  | "proposal_accepted"
+  | "remediated"
+  | "monitoring"
+  | "retainer";
+
+export const STAGE_ORDER: ClientStage[] = [
+  "lead",
+  "scanned",
+  "offer_draft",
+  "offer_approved",
+  "audit_sent",
+  "proposal_accepted",
+  "remediated",
+  "monitoring",
+  "retainer",
+];
+
+// Migawka ostatniego pomiaru (wartości null = brak pomiaru; niczego nie zmyślamy).
+export interface ScanSnapshot {
+  scannedAt: string;
+  url: string;
+  finalUrl: string;
+  strategy: "mobile" | "desktop";
+  measurementStatus: "live_lighthouse" | "partial_html" | "failed";
+  measurementNote?: string;
+  overallScore: number | null;
+  categories: { performance: number | null; seo: number | null; accessibility: number | null; bestPractices: number | null };
+  cwv: Array<{ acronym: string; name: string; displayValue: string; status: string }>;
+  issues: Array<{ title: string; description: string; priority: string; category?: string }>;
+  responseTimeMs?: number | null;
+  https?: boolean;
+  cmsTech?: string | null;
+}
+
+export interface OfferDraft {
+  id: string;
+  clientId: string;
+  language: "pl" | "en";
+  status: "draft" | "approved";
+  subject: string;
+  mailBody: string;
+  offerTitle: string;
+  offerSections: Array<{ heading: string; body: string }>;
+  priceNet: number;
+  currency: "PLN" | "EUR" | "GBP";
+  generatedBy: "ai" | "template";
+  createdAt: string;
+  updatedAt: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  sentAt?: string;
+  sentTo?: string;
+  sendLog?: Array<{ at: string; action: string; detail?: string }>;
+}
+
+export interface BulkScanRow {
+  url: string;
+  status: "queued" | "running" | "done" | "failed";
+  measurementStatus?: "live_lighthouse" | "partial_html" | "failed";
+  overallScore: number | null;
+  performance: number | null;
+  seo: number | null;
+  accessibility: number | null;
+  bestPractices: number | null;
+  issuesCount: number | null;
+  error?: string;
+  addedToCrm?: string;
+}
+
+export interface BulkScanJob {
+  id: string;
+  createdAt: string;
+  finishedAt?: string;
+  strategy: "mobile" | "desktop";
+  rows: BulkScanRow[];
 }
 
 export interface AgencyClient {
@@ -31,7 +116,7 @@ export interface AgencyClient {
   email: string;
   phone: string;
   website: string;
-  status: "lead" | "audit_sent" | "proposal_accepted" | "remediated" | "retainer";
+  status: ClientStage;
   contractValue: number;
   hourlyRate: number;
   estimatedHours: number;
@@ -41,15 +126,19 @@ export interface AgencyClient {
   notes: string;
   cmsTech?: string;
   activityLog?: ClientActivityEntry[];
+  lastScan?: ScanSnapshot;
+  source?: string;
 }
 
 export interface MonitoringAlertEntry {
   id: string;
   timestamp: string;
-  type: "downtime" | "slow_response" | "score_drop" | "recovered";
+  type: "downtime" | "slow_response" | "score_drop" | "psi_drop" | "recovered";
   message: string;
   httpStatus?: number;
   responseTimeMs?: number;
+  seen?: boolean;
+  emailed?: "sent" | "not_configured" | "failed";
 }
 
 export interface MonitoredDomain {
@@ -70,6 +159,19 @@ export interface MonitoredDomain {
   status: "healthy" | "warning" | "alert";
   history: Array<{ date: string; score: number; responseMs: number; httpStatus?: number; ok?: boolean }>;
   alertsLog?: MonitoringAlertEntry[];
+  // Pomiar Google PageSpeed: najwyżej 1 raz dziennie na domenę; brak pomiaru = status "unavailable" (bez wymyślonych liczb).
+  psi?: {
+    at: string;
+    status: "live_lighthouse" | "unavailable";
+    overall: number | null;
+    performance: number | null;
+    seo: number | null;
+    accessibility: number | null;
+    bestPractices: number | null;
+    error?: string;
+  };
+  psiAttemptDay?: string;
+  clientId?: string;
 }
 
 export interface DatabaseSchema {
@@ -77,6 +179,8 @@ export interface DatabaseSchema {
   agencyClients: AgencyClient[];
   monitoredDomains: MonitoredDomain[];
   proposals: Record<string, any>;
+  offers?: Record<string, OfferDraft>;
+  bulkScans?: BulkScanJob[];
   agencyPin: string;
   lastSavedAt?: string;
 }
@@ -113,6 +217,8 @@ export function loadDb(): DatabaseSchema {
         agencyClients: Array.isArray(parsed.agencyClients) ? parsed.agencyClients.filter((c: any) => !isDemoClient(c)) : [],
         monitoredDomains: Array.isArray(parsed.monitoredDomains) ? parsed.monitoredDomains.filter((d: any) => !isDemoDomain(d)) : [],
         proposals: parsed.proposals && typeof parsed.proposals === "object" ? parsed.proposals : {},
+        offers: parsed.offers && typeof parsed.offers === "object" ? parsed.offers : {},
+        bulkScans: Array.isArray(parsed.bulkScans) ? parsed.bulkScans : [],
         agencyPin:
           typeof parsed.agencyPin === "string" && parsed.agencyPin.trim()
             ? parsed.agencyPin.trim()
@@ -128,9 +234,37 @@ export function loadDb(): DatabaseSchema {
     agencyClients: [...DEFAULT_CLIENTS],
     monitoredDomains: [...DEFAULT_DOMAINS],
     proposals: {},
+    offers: {},
+    bulkScans: [],
     agencyPin: "",
     lastSavedAt: new Date().toISOString(),
   };
+}
+
+export function advanceStage(client: AgencyClient, target: ClientStage, summary: string): boolean {
+  const cur = STAGE_ORDER.indexOf(client.status);
+  const next = STAGE_ORDER.indexOf(target);
+  if (next <= cur) return false;
+  client.status = target;
+  if (!Array.isArray(client.activityLog)) client.activityLog = [];
+  client.activityLog.unshift({
+    id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+    timestamp: new Date().toISOString(),
+    type: "status_change",
+    summary,
+  });
+  return true;
+}
+
+export function logActivity(client: AgencyClient, type: ClientActivityEntry["type"], summary: string) {
+  if (!Array.isArray(client.activityLog)) client.activityLog = [];
+  client.activityLog.unshift({
+    id: `act_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+    timestamp: new Date().toISOString(),
+    type,
+    summary,
+  });
+  if (client.activityLog.length > 60) client.activityLog.length = 60;
 }
 
 export const db: DatabaseSchema = loadDb();

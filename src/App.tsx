@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import {
   Zap,
   Search,
@@ -57,6 +57,10 @@ import {
   buildDynamicAuditArtifacts,
 } from "./scannerTypes";
 import { AuditIntegrityBanner } from "./components/AuditIntegrityBanner";
+import { STAGES, stageLabel, type AgencyCtx } from "./agencyTypes";
+
+// Zakładki agencyjne są ładowane dopiero po zalogowaniu (publiczny skaner ich nie pobiera).
+const ClientWorkflow = lazy(() => import("./tabs/ClientWorkflow"));
 
 // Authentic 5x5 Animated Pixel Matrix from novopix.uk (#mk) cycling N - O - V - O - P - I - X
 const NOVOPIX_LETTERS: string[][] = [
@@ -168,6 +172,7 @@ export default function App() {
   // Agency CRM State
   const [crmClients, setCrmClients] = useState<AgencyClient[]>([]);
   const [crmFilter, setCrmFilter] = useState<string>("all");
+  const [expandedClientId, setExpandedClientId] = useState<string | null>(null);
   const [newClientName, setNewClientName] = useState<string>("");
   const [newClientCompany, setNewClientCompany] = useState<string>("");
   const [newClientEmail, setNewClientEmail] = useState<string>("");
@@ -233,6 +238,25 @@ export default function App() {
       headers["Authorization"] = `Bearer ${tok}`;
     }
     return headers;
+  };
+
+  const agencyCtx: AgencyCtx = {
+    isPolish,
+    token: agencyToken,
+    authHeaders: () => getAuthHeaders(),
+    showToast,
+    requestLogin: () => setIsPinModalOpen(true),
+    onUnauthorized: () => {
+      setAgencyToken(null);
+      try {
+        sessionStorage.removeItem("novopix_agency_token");
+      } catch {}
+      setIsPinModalOpen(true);
+    },
+  };
+
+  const updateClientLocal = (c: AgencyClient) => {
+    setCrmClients((prev) => prev.map((x) => (x.id === c.id ? c : x)));
   };
 
   const loadProtectedCrmAndMonitoring = async (tok: string | null) => {
@@ -3411,10 +3435,7 @@ export default function App() {
                   <div className="flex flex-wrap items-center gap-1 bg-slate-100 p-1 rounded-xl">
                     {[
                       { id: "all", label: isPolish ? "Wszyscy" : "All" },
-                      { id: "lead", label: isPolish ? "Nowy Lead" : "Lead" },
-                      { id: "audit_sent", label: isPolish ? "Audyt Wysłany" : "Audit Sent" },
-                      { id: "proposal_accepted", label: isPolish ? "Zaakceptowano" : "Accepted" },
-                      { id: "remediated", label: isPolish ? "Wdrożono" : "Remediated" },
+                      ...STAGES.map((st) => ({ id: st.id as string, label: isPolish ? st.pl : st.en })),
                     ].map((st) => (
                       <button
                         key={st.id}
@@ -3442,12 +3463,21 @@ export default function App() {
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-xs">
                       {filteredCrmClients.map((client) => (
-                        <tr key={client.id} className="hover:bg-slate-50/70">
+                        <React.Fragment key={client.id}>
+                        <tr className="hover:bg-slate-50/70">
                           <td className="py-3.5 px-3">
                             <div className="font-bold text-slate-900">{client.company}</div>
                             <div className="text-[11px] text-slate-500">
                               {client.name} · {client.email} · {client.phone}
                             </div>
+                            <button
+                              type="button"
+                              onClick={() => setExpandedClientId(expandedClientId === client.id ? null : client.id)}
+                              aria-expanded={expandedClientId === client.id}
+                              className="mt-1.5 px-2.5 py-1.5 bg-amber-400 text-slate-900 rounded-lg text-[11px] font-bold hover:bg-amber-300 cursor-pointer"
+                            >
+                              {isPolish ? "Ścieżka: skan → oferta → mail" : "Workflow: scan → offer → email"}
+                            </button>
                             {client.notes && <div className="text-[11px] text-slate-600 mt-1 italic">{client.notes}</div>}
                             {client.activityLog && client.activityLog.length > 0 && (
                               <div className="mt-1.5 text-[10px] font-mono text-slate-500 bg-slate-100/80 px-2 py-1 rounded border border-slate-200/70">
@@ -3467,11 +3497,11 @@ export default function App() {
                               onChange={(e) => handleUpdateClientStatus(client.id, e.target.value as AgencyClient["status"])}
                               className="px-2.5 py-1.5 bg-slate-100 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 cursor-pointer"
                             >
-                              <option value="lead">{isPolish ? "Nowy Lead" : "New Lead"}</option>
-                              <option value="audit_sent">{isPolish ? "Audyt Wysłany" : "Audit Sent"}</option>
-                              <option value="proposal_accepted">{isPolish ? "Oferta Zaakceptowana" : "Proposal Accepted"}</option>
-                              <option value="remediated">{isPolish ? "Wdrożono (Cel 90+)" : "Remediated"}</option>
-                              <option value="retainer">{isPolish ? "Stały Abonament" : "Active Retainer"}</option>
+                              {STAGES.map((st) => (
+                                <option key={st.id} value={st.id}>
+                                  {isPolish ? st.pl : st.en}
+                                </option>
+                              ))}
                             </select>
                           </td>
                           <td className="py-3.5 px-3 text-right font-mono tabular-nums">
@@ -3509,10 +3539,32 @@ export default function App() {
                             </div>
                           </td>
                         </tr>
+                        </React.Fragment>
                       ))}
                     </tbody>
                   </table>
                 </div>
+                {expandedClientId && crmClients.find((c) => c.id === expandedClientId) && (
+                  <div className="space-y-2">
+                    <div className="text-xs font-extrabold text-slate-900">
+                      {isPolish ? "Ścieżka klienta" : "Client workflow"}: {crmClients.find((c) => c.id === expandedClientId)!.company}
+                    </div>
+                    <Suspense fallback={<div className="text-xs text-slate-500 p-3">{isPolish ? "Ładowanie…" : "Loading…"}</div>}>
+                      <ClientWorkflow
+                        key={expandedClientId}
+                        ctx={agencyCtx}
+                        client={crmClients.find((c) => c.id === expandedClientId)!}
+                        monitored={monitoredDomains.find((d) => {
+                          const cl = crmClients.find((c) => c.id === expandedClientId)!;
+                          const norm = (u: string) => u.replace(/^https?:\/\//, "").replace(/\/$/, "");
+                          return d.clientId === cl.id || norm(d.domain) === norm(cl.website);
+                        })}
+                        onClientUpdated={updateClientLocal}
+                        onMonitoringAdded={(d) => setMonitoredDomains((prev) => [d, ...prev.filter((x) => x.id !== d.id)])}
+                      />
+                    </Suspense>
+                  </div>
+                )}
               </div>
             </div>
           )}

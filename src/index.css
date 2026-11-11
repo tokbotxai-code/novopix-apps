@@ -5,6 +5,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  color-scheme: light;
   font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
