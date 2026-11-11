@@ -74,6 +74,7 @@ export interface BulkScanRow {
   accessibility: number | null;
   bestPractices: number | null;
   issuesCount: number | null;
+  rankScore?: number | null;
   error?: string;
   addedToCrm?: string;
 }

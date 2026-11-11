@@ -31,6 +31,7 @@ import {
 import { performDeepLiveSeoInspection } from "./server/seoCrawler";
 import { performScan } from "./server/scanService";
 import { registerAgencyOfferRoutes } from "./server/routes/agencyOffers";
+import { registerAgencyBulkRoutes } from "./server/routes/agencyBulk";
 import {
   performRealDomainCheck,
   runPsiOncePerDay,
@@ -114,6 +115,7 @@ if (APP_MODE === "public") {
 if (APP_MODE === "agency") {
   startMonitoringScheduler();
   registerAgencyOfferRoutes(app);
+  registerAgencyBulkRoutes(app);
 }
 
 // --- Auth & Security Status Endpoints ---

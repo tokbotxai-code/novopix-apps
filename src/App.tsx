@@ -43,6 +43,7 @@ import {
   Calculator,
   Bot,
   Bell,
+  ListOrdered,
 } from "lucide-react";
 import {
   AuditReport,
@@ -61,6 +62,7 @@ import { STAGES, stageLabel, type AgencyCtx } from "./agencyTypes";
 
 // Zakładki agencyjne są ładowane dopiero po zalogowaniu (publiczny skaner ich nie pobiera).
 const ClientWorkflow = lazy(() => import("./tabs/ClientWorkflow"));
+const BulkTab = lazy(() => import("./tabs/BulkTab"));
 
 // Authentic 5x5 Animated Pixel Matrix from novopix.uk (#mk) cycling N - O - V - O - P - I - X
 const NOVOPIX_LETTERS: string[][] = [
@@ -379,7 +381,7 @@ export default function App() {
 
   // Prevent client view from staying on internal agency tabs
   useEffect(() => {
-    if (viewMode === "client" && (activeTab === "crm" || activeTab === "monitoring")) {
+    if (viewMode === "client" && (activeTab === "crm" || activeTab === "monitoring" || activeTab === "bulk")) {
       setActiveTab("overview");
     }
   }, [viewMode, activeTab]);
@@ -1205,6 +1207,7 @@ export default function App() {
     { id: "compare", label: isPolish ? "Porównanie z Konkurencją" : "Competitor 1:1", short: isPolish ? "Konkurencja" : "Compare", icon: Scale },
     { id: "monitoring", label: isPolish ? "Monitoring 24/7 (Retainer)" : "24/7 Monitoring", short: "Monitoring 24/7", icon: Bell, highlight: true, agencyOnly: true },
     { id: "crm", label: isPolish ? "Panel Agencji (CRM)" : "Agency CRM", short: isPolish ? "Panel Agencji" : "Agency CRM", icon: Briefcase, highlight: true, agencyOnly: true },
+    { id: "bulk", label: isPolish ? "Skan wielu stron i leady" : "Bulk scan & leads", short: isPolish ? "Leady" : "Leads", icon: ListOrdered, highlight: true, agencyOnly: true },
     { id: "reports", label: isPolish ? "Raporty PDF & Link Klienta" : "Reports & Share Link", short: isPolish ? "Raporty & Link" : "Reports & Share", icon: Share2, highlight: true },
     { id: "webscore", label: isPolish ? "Trend WebScore i Historia" : "WebScore & History", short: "WebScore", icon: TrendingUp },
     { id: "diagnostics", label: isPolish ? "Diagnostyka Indeksowania" : "Crawl Diagnostics", short: isPolish ? "Diagnostyka" : "Diagnostics", icon: Activity },
@@ -3669,6 +3672,21 @@ export default function App() {
                 )}
               </div>
             </div>
+          )}
+
+          {activeTab === "bulk" && viewMode === "agency" && (
+            <Suspense fallback={<div className="text-xs text-slate-500 p-3">{isPolish ? "Ładowanie…" : "Loading…"}</div>}>
+              {agencyToken ? (
+                <BulkTab ctx={agencyCtx} onClientAdded={(c) => setCrmClients((prev) => [c, ...prev.filter((x) => x.id !== c.id)])} />
+              ) : (
+                <div className="bg-white rounded-2xl p-6 border border-slate-200 text-sm text-slate-700 space-y-3">
+                  <p>{isPolish ? "Ta funkcja wymaga zalogowania kodem PIN." : "This feature requires PIN login."}</p>
+                  <button type="button" onClick={() => setIsPinModalOpen(true)} className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold cursor-pointer">
+                    {isPolish ? "Zaloguj" : "Log in"}
+                  </button>
+                </div>
+              )}
+            </Suspense>
           )}
 
           {/* ================================================================= */}
