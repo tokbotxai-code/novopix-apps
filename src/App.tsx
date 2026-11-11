@@ -865,8 +865,8 @@ export default function App() {
           >
             <p className="text-xs text-slate-600 leading-relaxed">
               {isPolish
-                ? "Ten raport został otwarty w chronionym Pokoju Ofertowym Klienta. Aby uzyskać dostęp do wewnętrznego CRM, skryptów sprzedażowych i edycji stawek, wpisz kod PIN Agencji."
-                : "This report was opened in a protected Client Deal Room. Enter your Agency PIN to unlock internal CRM and sales scripts."}
+                ? "Wpisz kod PIN agencji, aby odblokować CRM, oferty, monitoring i skan wielu stron."
+                : "Enter the agency PIN to unlock the CRM, offers, monitoring and bulk scan."}
             </p>
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">

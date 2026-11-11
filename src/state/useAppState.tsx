@@ -1,6 +1,7 @@
 import { Activity, Bell, Bot, Briefcase, Calculator, Check, CheckCircle2, Copy, Eye, Layers, LayoutDashboard, ListOrdered, Lock, Scale, Search, Share2, TrendingUp, Zap } from "lucide-react";
 import { AgencyClient, AiAdvisorData, AuditReport, DEFAULT_SCOPE_TASKS, EMPTY_AUDIT, EMPTY_LIVE_SEO, LiveSeoInspection, MonitoredDomain, ScopeTaskItem, buildDynamicAuditArtifacts } from "../scannerTypes";
 import { AgencyCtx } from "../agencyTypes";
+import { copyText } from "../utils/clipboard";
 import React, { useEffect, useMemo, useState } from "react";
 
 export function useAppState() {
@@ -927,24 +928,24 @@ export function useAppState() {
             showToast(isPolish ? "Nie udało się zatwierdzić raportu." : "Could not approve the report.");
             return;
           }
-          navigator.clipboard.writeText(fullUrl);
+          const copied = await copyText(fullUrl);
           showToast(
             isPolish
-              ? `Raport zatwierdzony przez ${reviewer.trim()}. Link dla klienta skopiowany.`
-              : `Report approved by ${reviewer.trim()}. Client link copied.`
+              ? `Raport zatwierdzony przez ${reviewer.trim()}. ${copied ? "Link dla klienta skopiowany." : "Nie udało się skopiować linku – skopiuj go ręcznie z paska adresu po otwarciu raportu."}`
+              : `Report approved by ${reviewer.trim()}. ${copied ? "Client link copied." : "Could not copy the link – copy it manually."}`
           );
           return;
         }
       }
     } catch {}
-    navigator.clipboard.writeText(shareableClientUrl);
-    showToast(isPolish ? "Skopiowano link do oferty dla klienta!" : "Copied shareable client link!");
+    const copiedShare = await copyText(shareableClientUrl);
+    showToast(copiedShare ? (isPolish ? "Skopiowano link do oferty dla klienta!" : "Copied shareable client link!") : isPolish ? "Nie udało się skopiować linku." : "Could not copy the link.");
   };
 
   // Copy text helper
-  const handleCopyText = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    showToast(isPolish ? `Skopiowano: ${label}` : `Copied: ${label}`);
+  const handleCopyText = async (text: string, label: string) => {
+    const ok = await copyText(text);
+    showToast(ok ? (isPolish ? `Skopiowano: ${label}` : `Copied: ${label}`) : isPolish ? "Nie udało się skopiować." : "Copy failed.");
   };
 
   // Standalone White-Label HTML Report Export
