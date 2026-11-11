@@ -64,4 +64,4 @@ export async function buildEml(input: MailInput): Promise<string> {
   return info.message.toString("utf-8");
 }
 
-export const ALERT_RECIPIENT = process.env.ALERT_EMAIL || "contact@novopix.uk";
+export const alertRecipient = () => process.env.ALERT_EMAIL || "contact@novopix.uk";

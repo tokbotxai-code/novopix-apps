@@ -30,7 +30,7 @@ import {
 } from "./server/database";
 import { performDeepLiveSeoInspection } from "./server/seoCrawler";
 import { performScan } from "./server/scanService";
-import { sendMail, ALERT_RECIPIENT } from "./server/mailer";
+import { sendMail, alertRecipient } from "./server/mailer";
 import { registerAgencyOfferRoutes } from "./server/routes/agencyOffers";
 import { registerAgencyBulkRoutes } from "./server/routes/agencyBulk";
 import {
@@ -503,7 +503,7 @@ async function handleContact(req: any, res: any, internal = false) {
 
     // Powiadomienie o nowym zgłoszeniu (tylko gdy SMTP jest skonfigurowane; bez SMTP zgłoszenie i tak jest w CRM).
     void sendMail({
-      to: ALERT_RECIPIENT,
+      to: alertRecipient(),
       subject: `[NovoPix] Nowe zgłoszenie ze skanera: ${record.website}`,
       text: `Nowe zgłoszenie w CRM.\n\nStrona: ${record.website}\nOsoba: ${record.name || "-"}\nE-mail: ${record.email}\nTelefon: ${record.phone || "-"}\nWynik: ${record.overallScore ?? "brak pomiaru"}\n\nWiadomość:\n${record.details || "-"}\n\nOtwórz panel agencji, aby wykonać skan, przygotować i zatwierdzić ofertę.`,
       replyTo: record.email,

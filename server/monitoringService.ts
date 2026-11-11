@@ -1,6 +1,6 @@
 import { db, saveDb, MonitoredDomain, MonitoringAlertEntry } from "./database";
 import { performDeepLiveSeoInspection } from "./seoCrawler";
-import { sendMail, smtpConfigured, ALERT_RECIPIENT } from "./mailer";
+import { sendMail, smtpConfigured, alertRecipient } from "./mailer";
 
 const ALERT_REPEAT_MS = 6 * 60 * 60 * 1000; // ten sam typ alertu dla domeny nie częściej niż co 6 h
 const today = () => new Date().toISOString().slice(0, 10);
@@ -174,7 +174,7 @@ async function mailAlert(dom: MonitoredDomain, entry: MonitoringAlertEntry) {
     return;
   }
   const out = await sendMail({
-    to: ALERT_RECIPIENT,
+    to: alertRecipient(),
     subject: `[NovoPix monitoring] ${ALERT_LABEL[entry.type]}: ${dom.domain}`,
     text: `${ALERT_LABEL[entry.type]}\n\nDomena: ${dom.domain}\nKlient: ${dom.clientName}\nCzas: ${entry.timestamp}\n\n${entry.message}\n\nPróg alertu: ${dom.threshold}/100\nOstatni wynik kondycji: ${dom.lastScore}/100\nUptime: ${dom.uptimePercent}%\n\nWiadomość automatyczna z panelu NovoPix (wstępna kontrola automatyczna, nie certyfikat).`,
   });
