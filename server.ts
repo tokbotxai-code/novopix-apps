@@ -33,6 +33,7 @@ import { performScan } from "./server/scanService";
 import { registerAgencyOfferRoutes } from "./server/routes/agencyOffers";
 import {
   performRealDomainCheck,
+  runPsiOncePerDay,
   startMonitoringScheduler,
 } from "./server/monitoringService";
 
@@ -803,6 +804,20 @@ app.post("/api/monitoring/add", requireAgencyAuth, async (req, res) => {
   db.monitoredDomains.unshift(newMonitored);
   saveDb();
   res.json({ success: true, domain: newMonitored, client: linked });
+});
+
+app.post("/api/monitoring/psi/:id", requireAgencyAuth, async (req, res) => {
+  const dom = db.monitoredDomains.find((d) => d.id === req.params.id);
+  if (!dom) return res.status(404).json({ error: "Monitored domain not found" });
+  const out = await runPsiOncePerDay(dom);
+  if (out === "limit") return res.status(429).json({ error: "Limit: jeden pomiar Google PageSpeed na domenę dziennie został już wykorzystany.", domain: dom });
+  return res.json({ success: true, domain: dom });
+});
+
+app.post("/api/monitoring/alerts/seen", requireAgencyAuth, (_req, res) => {
+  for (const d of db.monitoredDomains) for (const a of d.alertsLog || []) a.seen = true;
+  saveDb();
+  return res.json({ success: true, domains: db.monitoredDomains });
 });
 
 app.post("/api/monitoring/check/:id", requireAgencyAuth, async (req, res) => {

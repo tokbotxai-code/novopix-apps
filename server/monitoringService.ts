@@ -1,5 +1,9 @@
 import { db, saveDb, MonitoredDomain, MonitoringAlertEntry } from "./database";
 import { performDeepLiveSeoInspection } from "./seoCrawler";
+import { sendMail, smtpConfigured, ALERT_RECIPIENT } from "./mailer";
+
+const ALERT_REPEAT_MS = 6 * 60 * 60 * 1000; // ten sam typ alertu dla domeny nie częściej niż co 6 h
+const today = () => new Date().toISOString().slice(0, 10);
 
 function intervalToMs(interval: MonitoredDomain["interval"]): number {
   switch (interval) {
@@ -18,7 +22,12 @@ function intervalToMs(interval: MonitoredDomain["interval"]): number {
 }
 
 export async function performRealDomainCheck(dom: MonitoredDomain): Promise<MonitoredDomain> {
-  const inspection = await performDeepLiveSeoInspection(dom.domain);
+  let inspection = await performDeepLiveSeoInspection(dom.domain);
+  if (!inspection.isLiveFetch) {
+    // Jedna ponowna próba po chwili, żeby chwilowy błąd sieci nie dawał fałszywego alarmu.
+    await new Promise((r) => setTimeout(r, 3000));
+    inspection = await performDeepLiveSeoInspection(dom.domain);
+  }
 
   const isUp = inspection.isLiveFetch && inspection.responseTimeMs > 0;
   const totalChecks = (dom.totalChecks || 0) + 1;
@@ -68,6 +77,8 @@ export async function performRealDomainCheck(dom: MonitoredDomain): Promise<Moni
     dom.status = "alert";
   } else if (nextScore < dom.threshold) {
     dom.status = nextScore < dom.threshold - 10 ? "alert" : "warning";
+  } else if (dom.psi?.status === "live_lighthouse" && dom.psi.overall !== null && dom.psi.overall < dom.threshold) {
+    dom.status = dom.psi.overall < dom.threshold - 10 ? "alert" : "warning";
   } else {
     dom.status = "healthy";
   }
@@ -87,25 +98,32 @@ export async function performRealDomainCheck(dom: MonitoredDomain): Promise<Moni
   }
 
   const pushAlert = (type: MonitoringAlertEntry["type"], message: string) => {
-    dom.alertsLog!.unshift({
+    const last = dom.alertsLog![0];
+    // Bez powtarzania tego samego alarmu przy każdym pomiarze (np. co 5 min).
+    if (last && last.type === type && Date.now() - new Date(last.timestamp).getTime() < ALERT_REPEAT_MS) return;
+    const entry: MonitoringAlertEntry = {
       id: `al_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       timestamp: new Date().toISOString(),
       type,
       message,
       httpStatus,
       responseTimeMs: inspection.responseTimeMs,
-    });
-    if (dom.alertsLog!.length > 15) dom.alertsLog!.pop();
+      seen: type === "recovered",
+      emailed: smtpConfigured() ? undefined : "not_configured",
+    };
+    dom.alertsLog!.unshift(entry);
+    if (dom.alertsLog!.length > 30) dom.alertsLog!.pop();
+    void mailAlert(dom, entry);
   };
 
   if (!isUp || httpStatus >= 400) {
-    pushAlert("downtime", `Brak prawidłowej odpowiedzi HTTP (${httpStatus || "Timeout"}). Sprawdź serwer docelowy.`);
-  } else if (inspection.responseTimeMs > 1200) {
-    pushAlert("slow_response", `Wysoki czas odpowiedzi serwera TTFB: ${inspection.responseTimeMs} ms.`);
+    pushAlert("downtime", `Strona nie odpowiada prawidłowo (HTTP ${httpStatus || "brak odpowiedzi / timeout"}).`);
   } else if (nextScore < dom.threshold) {
-    pushAlert("score_drop", `Wynik kondycji (${nextScore}/100) spadł poniżej ustalonego progu (${dom.threshold}/100).`);
+    pushAlert("score_drop", `Wynik kondycji (${nextScore}/100) spadł poniżej progu alertu (${dom.threshold}/100).`);
+  } else if (inspection.responseTimeMs > 1200) {
+    pushAlert("slow_response", `Wysoki czas odpowiedzi serwera (TTFB): ${inspection.responseTimeMs} ms.`);
   } else if (prevStatus === "alert" && dom.status === "healthy") {
-    pushAlert("recovered", `Domena wróciła do pełnej sprawności (${nextScore}/100, TTFB ${inspection.responseTimeMs} ms).`);
+    pushAlert("recovered", `Domena wróciła do normy (${nextScore}/100, TTFB ${inspection.responseTimeMs} ms).`);
   }
 
   saveDb();
@@ -130,10 +148,91 @@ export function startMonitoringScheduler() {
           await performRealDomainCheck(dom);
         }
       }
+      // Dzienny pomiar PageSpeed: jedna domena na obieg (limit 1/dzień/domena), żeby nie przeciążać API.
+      const needPsi = db.monitoredDomains.find((d) => d.psiAttemptDay !== today());
+      if (needPsi) await runPsiOncePerDay(needPsi);
     } catch (e) {
       console.warn("Background monitoring check error:", e);
     } finally {
       isSchedulerRunningCheck = false;
     }
   }, 60 * 1000); // Evaluates due domains every 60 seconds
+}
+
+
+const ALERT_LABEL: Record<MonitoringAlertEntry["type"], string> = {
+  downtime: "STRONA NIE ODPOWIADA",
+  slow_response: "Wolna odpowiedź",
+  score_drop: "Spadek wyniku poniżej progu",
+  psi_drop: "Spadek wyniku Google PageSpeed poniżej progu",
+  recovered: "Powrót do normy",
+};
+
+async function mailAlert(dom: MonitoredDomain, entry: MonitoringAlertEntry) {
+  if (!smtpConfigured()) {
+    entry.emailed = "not_configured";
+    return;
+  }
+  const out = await sendMail({
+    to: ALERT_RECIPIENT,
+    subject: `[NovoPix monitoring] ${ALERT_LABEL[entry.type]}: ${dom.domain}`,
+    text: `${ALERT_LABEL[entry.type]}\n\nDomena: ${dom.domain}\nKlient: ${dom.clientName}\nCzas: ${entry.timestamp}\n\n${entry.message}\n\nPróg alertu: ${dom.threshold}/100\nOstatni wynik kondycji: ${dom.lastScore}/100\nUptime: ${dom.uptimePercent}%\n\nWiadomość automatyczna z panelu NovoPix (wstępna kontrola automatyczna, nie certyfikat).`,
+  });
+  entry.emailed = out.ok ? "sent" : "failed";
+  saveDb();
+}
+
+// --- Google PageSpeed: najwyżej 1 próba na domenę dziennie; błąd = uczciwe "brak pomiaru" (zero wymyślonych liczb) ---
+export async function runPsiOncePerDay(dom: MonitoredDomain, force = false): Promise<"ran" | "limit"> {
+  if (!force && dom.psiAttemptDay === today()) return "limit";
+  dom.psiAttemptDay = today();
+  const key = process.env.PAGESPEED_API_KEY || "";
+  const api = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(dom.domain)}&strategy=mobile&category=PERFORMANCE&category=SEO&category=ACCESSIBILITY&category=BEST_PRACTICES${key ? `&key=${key}` : ""}`;
+  const at = new Date().toISOString();
+  try {
+    const r = await fetch(api, { signal: AbortSignal.timeout(60000) });
+    if (!r.ok) {
+      const body: any = await r.json().catch(() => ({}));
+      dom.psi = { at, status: "unavailable", overall: null, performance: null, seo: null, accessibility: null, bestPractices: null, error: String(body?.error?.message || `HTTP ${r.status}`).slice(0, 200) };
+    } else {
+      const data: any = await r.json();
+      const c = data.lighthouseResult?.categories || {};
+      const pct = (k: string) => (typeof c[k]?.score === "number" ? Math.round(c[k].score * 100) : null);
+      const parts = [pct("performance"), pct("seo"), pct("accessibility"), pct("best-practices")];
+      const have = parts.filter((v): v is number => v !== null);
+      dom.psi = {
+        at,
+        status: have.length === 4 ? "live_lighthouse" : "unavailable",
+        overall: have.length === 4 ? Math.round(have.reduce((a, b) => a + b, 0) / 4) : null,
+        performance: parts[0],
+        seo: parts[1],
+        accessibility: parts[2],
+        bestPractices: parts[3],
+        error: have.length === 4 ? undefined : "Niepełna odpowiedź Lighthouse",
+      };
+    }
+  } catch (e: any) {
+    dom.psi = { at, status: "unavailable", overall: null, performance: null, seo: null, accessibility: null, bestPractices: null, error: String(e?.message || e).slice(0, 200) };
+  }
+
+  if (!Array.isArray(dom.alertsLog)) dom.alertsLog = [];
+  if (dom.psi.status === "live_lighthouse" && dom.psi.overall !== null && dom.psi.overall < dom.threshold) {
+    const last = dom.alertsLog[0];
+    if (!(last && last.type === "psi_drop" && Date.now() - new Date(last.timestamp).getTime() < ALERT_REPEAT_MS)) {
+      const entry: MonitoringAlertEntry = {
+        id: `al_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        timestamp: at,
+        type: "psi_drop",
+        message: `Wynik Google PageSpeed (${dom.psi.overall}/100, telefon) jest poniżej progu alertu (${dom.threshold}/100).`,
+        seen: false,
+        emailed: smtpConfigured() ? undefined : "not_configured",
+      };
+      dom.alertsLog.unshift(entry);
+      if (dom.alertsLog.length > 30) dom.alertsLog.pop();
+      if (dom.status === "healthy") dom.status = dom.psi.overall < dom.threshold - 10 ? "alert" : "warning";
+      void mailAlert(dom, entry);
+    }
+  }
+  saveDb();
+  return "ran";
 }

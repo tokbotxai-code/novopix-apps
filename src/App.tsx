@@ -1250,6 +1250,49 @@ export default function App() {
     return { pipelineVal, monthlyMrr, avgScore, count: crmClients.length };
   }, [crmClients]);
 
+  const unseenAlerts = useMemo(
+    () =>
+      monitoredDomains.flatMap((d) =>
+        (d.alertsLog || []).filter((a) => a.seen === false && a.type !== "recovered").map((a) => ({ ...a, domain: d.domain }))
+      ),
+    [monitoredDomains]
+  );
+
+  // Odświeżanie monitoringu co minutę po zalogowaniu (alerty z cyklicznych pomiarów pojawiają się bez przeładowania).
+  useEffect(() => {
+    if (!agencyToken || isPublicMode) return;
+    const t = setInterval(async () => {
+      try {
+        const r = await fetch("/api/monitoring", { headers: getAuthHeaders() });
+        if (r.ok) {
+          const d = await r.json();
+          if (Array.isArray(d.domains)) setMonitoredDomains(d.domains);
+        }
+      } catch {}
+    }, 60000);
+    return () => clearInterval(t);
+  }, [agencyToken, isPublicMode]);
+
+  const handleMarkAlertsSeen = async () => {
+    const r = await fetch("/api/monitoring/alerts/seen", { method: "POST", headers: getAuthHeaders() }).catch(() => null);
+    if (r && r.ok) {
+      const d = await r.json();
+      if (Array.isArray(d.domains)) setMonitoredDomains(d.domains);
+    }
+  };
+
+  const handleRunPsi = async (id: string) => {
+    setCheckingDomainId(id);
+    try {
+      const r = await fetch(`/api/monitoring/psi/${id}`, { method: "POST", headers: getAuthHeaders() });
+      const d = await r.json().catch(() => ({}));
+      if (d.domain) setMonitoredDomains((prev) => prev.map((x) => (x.id === id ? d.domain : x)));
+      showToast(r.ok ? (isPolish ? "Zakończono pomiar Google PageSpeed." : "Google PageSpeed measurement finished.") : d.error || "Error");
+    } catch {} finally {
+      setCheckingDomainId(null);
+    }
+  };
+
   const pageWeight = currentReport.pageWeight || SAMPLE_AUDIT.pageWeight!;
 
   return (
@@ -1363,6 +1406,11 @@ export default function App() {
                       <IconComponent className={`w-4 h-4 shrink-0 ${isActive ? "text-[#4de0ff]" : item.highlight ? "text-[#ffc233]" : "text-[#8fd8ff]/70"}`} />
                       <span className="truncate">{item.label}</span>
                     </span>
+                    {item.id === "monitoring" && unseenAlerts.length > 0 && (
+                      <span className="ml-2 shrink-0 min-w-5 h-5 px-1.5 rounded-full bg-rose-600 text-white text-[10px] font-extrabold flex items-center justify-center" aria-label={isPolish ? `Nowe alerty: ${unseenAlerts.length}` : `New alerts: ${unseenAlerts.length}`}>
+                        {unseenAlerts.length}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -1729,6 +1777,11 @@ export default function App() {
                   >
                     <IconComp className={`w-3.5 h-3.5 ${active ? "text-emerald-400" : "text-emerald-600"}`} />
                     <span>{tab.short}</span>
+                    {tab.id === "monitoring" && unseenAlerts.length > 0 && (
+                      <span className="min-w-4 h-4 px-1 rounded-full bg-rose-600 text-white text-[10px] font-extrabold flex items-center justify-center" aria-label={isPolish ? `Nowe alerty: ${unseenAlerts.length}` : `New alerts: ${unseenAlerts.length}`}>
+                        {unseenAlerts.length}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -3188,15 +3241,13 @@ export default function App() {
                     <h2 className="text-lg font-extrabold text-slate-900 font-heading flex items-center gap-2">
                       <Bell className="w-5 h-5 text-emerald-600" />
                       <span>
-                        {isPolish
-                          ? "Monitoring Stron 24/7 & Alerty Spadków (Generator Stałego Abonamentu)"
-                          : "24/7 Website Monitoring & Regression Watchlist"}
+                        {isPolish ? "Monitoring stron i alerty" : "Website monitoring & alerts"}
                       </span>
                     </h2>
                     <p className="text-xs text-slate-500 mt-1">
                       {isPolish
-                        ? "Zamień jednorazowe zlecenie za 1200 zł w stały abonament (np. 300 zł/mies.) za całodobowy nadzór nad szybkością, SSL i Core Web Vitals."
-                        : "Turn one-off projects into recurring monthly retainers by monitoring client uptime, speed, and SEO health."}
+                        ? "Cykliczne pomiary HTTP/HTML według wybranego interwału oraz jeden pomiar Google PageSpeed dziennie na domenę. Gdy strona nie odpowiada lub wynik spadnie poniżej progu, pojawi się alert w panelu i mail na contact@novopix.uk (jeśli SMTP jest skonfigurowane). Brak pomiaru jest pokazywany jako „brak pomiaru”."
+                        : "Periodic HTTP/HTML checks at the chosen interval plus one Google PageSpeed measurement per domain per day. When a site does not respond or the score drops below the threshold, an alert appears in the panel and an email goes to contact@novopix.uk (if SMTP is configured). Missing measurements are shown as “not measured”."}
                     </p>
                   </div>
                 </div>
@@ -3238,6 +3289,34 @@ export default function App() {
                   </button>
                 </form>
               </div>
+
+              {unseenAlerts.length > 0 && (
+                <div role="alert" className="bg-rose-50 border-2 border-rose-500 rounded-2xl p-4 space-y-2" data-testid="alerts-panel">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-sm font-extrabold text-rose-800 flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-rose-600 inline-block" />
+                      {isPolish ? `Nowe alerty (${unseenAlerts.length})` : `New alerts (${unseenAlerts.length})`}
+                    </div>
+                    <button type="button" onClick={handleMarkAlertsSeen} className="px-3 py-1.5 bg-white border border-rose-300 text-rose-800 rounded-lg text-xs font-bold cursor-pointer">
+                      {isPolish ? "Oznacz jako przeczytane" : "Mark as read"}
+                    </button>
+                  </div>
+                  <ul className="space-y-1.5">
+                    {unseenAlerts.slice(0, 10).map((a) => (
+                      <li key={a.id} className="text-xs text-rose-900">
+                        <span className="font-mono font-bold">{a.domain}</span> · {new Date(a.timestamp).toLocaleString(isPolish ? "pl-PL" : "en-GB")} — {a.message}{" "}
+                        <span className="text-[10px] font-bold text-rose-700">
+                          {a.emailed === "sent"
+                            ? isPolish ? "[mail wysłany na contact@novopix.uk]" : "[email sent to contact@novopix.uk]"
+                            : a.emailed === "failed"
+                            ? isPolish ? "[mail nie został wysłany: błąd SMTP]" : "[email failed: SMTP error]"
+                            : isPolish ? "[mail nie wysłany: SMTP nie skonfigurowane]" : "[email not sent: SMTP not configured]"}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* Monitored Domains Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -3300,6 +3379,21 @@ export default function App() {
                         </div>
                       </div>
 
+                      <div className="text-[11px] text-slate-600 bg-slate-50 border border-slate-200 rounded-lg p-2" data-testid="psi-line">
+                        <span className="font-bold">Google PageSpeed ({isPolish ? "telefon" : "mobile"}): </span>
+                        {dom.psi && dom.psi.status === "live_lighthouse" ? (
+                          <span className="font-mono font-bold">
+                            {dom.psi.overall}/100 · {new Date(dom.psi.at).toLocaleDateString(isPolish ? "pl-PL" : "en-GB")}
+                          </span>
+                        ) : dom.psi ? (
+                          <span className="text-amber-800 font-bold">
+                            {isPolish ? "brak pomiaru" : "not measured"} ({new Date(dom.psi.at).toLocaleDateString(isPolish ? "pl-PL" : "en-GB")}{dom.psi.error ? `: ${dom.psi.error}` : ""})
+                          </span>
+                        ) : (
+                          <span className="text-slate-500">{isPolish ? "jeszcze nie mierzono (1 pomiar dziennie)" : "not measured yet (1 per day)"}</span>
+                        )}
+                      </div>
+
                       {dom.alertsLog && dom.alertsLog.length > 0 && (
                         <div className="pt-2 space-y-1">
                           <div className="text-[10px] font-bold text-rose-700 uppercase">
@@ -3320,6 +3414,14 @@ export default function App() {
                       >
                         <RefreshCw className={`w-3.5 h-3.5 ${checkingDomainId === dom.id ? "animate-spin" : ""}`} />
                         <span>{isPolish ? "Sprawdź Teraz" : "Run Check"}</span>
+                      </button>
+                      <button
+                        onClick={() => handleRunPsi(dom.id)}
+                        disabled={checkingDomainId === dom.id}
+                        className="px-2.5 py-2 bg-white border border-slate-300 text-slate-800 rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50"
+                        title={isPolish ? "Pomiar Google PageSpeed (maks. 1 dziennie na domenę)" : "Google PageSpeed measurement (max 1/day per domain)"}
+                      >
+                        PageSpeed
                       </button>
                       <button
                         onClick={() => handleDeleteMonitoredDomain(dom.id)}
