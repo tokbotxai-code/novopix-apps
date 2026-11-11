@@ -1173,7 +1173,7 @@ export default function App() {
   // All 14 Navigation Workspace Items (filtered when in Client Deal Room viewMode === "client")
   const allWorkspaceTabs = [
     { id: "overview", label: isPolish ? "AURA Audyt (Główny)" : "AURA Overview", short: isPolish ? "AURA Audyt" : "Overview", icon: LayoutDashboard },
-    { id: "ai-advisor", label: isPolish ? "AI Growth Advisor & Pitch" : "AI Growth Advisor", short: "AI Advisor", icon: Bot, highlight: true },
+    { id: "ai-advisor", label: "AI Advisor", short: "AI Advisor", icon: Bot, highlight: true },
     { id: "roi-calculator", label: isPolish ? "Kalkulator Wyceny & ROI" : "Pricing & ROI Calc", short: isPolish ? "Wycena & ROI" : "ROI & Quote", icon: Calculator, highlight: true },
     { id: "seo", label: isPolish ? "Głęboki Audyt SEO (HTML)" : "Deep SEO Inspector", short: "Deep SEO", icon: Search },
     { id: "performance", label: isPolish ? "Wydajność & Core Vitals" : "Core Web Vitals", short: isPolish ? "Wydajność" : "Performance", icon: Zap },
@@ -1339,9 +1339,6 @@ export default function App() {
                       <IconComponent className={`w-4 h-4 shrink-0 ${isActive ? "text-[#4de0ff]" : item.highlight ? "text-[#ffc233]" : "text-[#8fd8ff]/70"}`} />
                       <span className="truncate">{item.label}</span>
                     </span>
-                    {item.highlight && !isActive && !isPublicMode && (
-                      <span className="text-[10px] text-[#ffc233] font-mono">PRO</span>
-                    )}
                   </button>
                 );
               })}
@@ -1429,7 +1426,7 @@ export default function App() {
                 ]
               : [
                   { id: "overview", label: isPolish ? "Przegląd AURA" : "AURA Overview" },
-                  { id: "ai-advisor", label: isPolish ? "AI Growth Advisor" : "AI Advisor" },
+                  { id: "ai-advisor", label: "AI Advisor" },
                   { id: "roi-calculator", label: isPolish ? "Kalkulator Wyceny & ROI" : "ROI & Pricing" },
                   { id: "seo", label: isPolish ? "Audyt SEO HTML" : "Deep SEO" },
                   { id: "crm", label: isPolish ? "Panel Agencji CRM" : "Agency CRM" },
