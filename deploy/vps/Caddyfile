@@ -1,0 +1,29 @@
+{
+	email contact@novopix.uk
+}
+
+skaner.novopix.uk {
+	encode gzip
+	reverse_proxy scanner:3000
+}
+
+panel.novopix.uk {
+	encode gzip
+	reverse_proxy panel:3000
+}
+
+# fridgebite.novopix.uk {
+# 	encode gzip
+# 	reverse_proxy fridgebite:3000
+# }
+
+pantrypal.novopix.uk {
+	encode gzip
+	root * /srv/pantrypal
+	try_files {path} /index.html
+	file_server
+}
+
+# Stare adresy -> nowe (po przepięciu DNS)
+# fridgebite.pepsafe.uk { redir https://fridgebite.novopix.uk{uri} permanent }
+# pantrypal.pepsafe.uk  { redir https://pantrypal.novopix.uk{uri} permanent }
