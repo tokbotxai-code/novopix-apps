@@ -1232,7 +1232,7 @@ export default function App() {
     <div className="min-h-screen bg-[#F4F6F9] flex flex-col lg:flex-row text-slate-800 font-sans selection:bg-emerald-500/30">
       {/* Login status badge (agency panel only) */}
       {!isPublicMode && (
-        <div className="fixed top-2 right-2 z-50 no-print flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-bold shadow-lg border"
+        <div className="fixed bottom-3 left-3 z-50 no-print flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-bold shadow-lg border"
           style={{ background: agencyToken ? "#064e3b" : "#3f2d06", color: agencyToken ? "#a7f3d0" : "#fcd34d", borderColor: agencyToken ? "#10b981" : "#f59e0b" }}>
           <span>{agencyToken ? (isPolish ? "✅ Zalogowano (Agencja)" : "✅ Logged in (Agency)") : (isPolish ? "🔒 Niezalogowany" : "🔒 Not logged in")}</span>
           {agencyToken ? (
