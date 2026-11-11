@@ -874,6 +874,8 @@ app.post("/api/scan", async (req, res) => {
 
 // Mount Vite in dev mode
 async function startServer() {
+  // Nieistniejące ścieżki API zwracają 404 JSON (a nie stronę HTML aplikacji).
+  app.use("/api", (_req, res) => res.status(404).json({ error: "Not found" }));
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
