@@ -41,7 +41,7 @@ export function AuditIntegrityBanner({
   const [authBusy, setAuthBusy] = useState(false);
   const [authErr, setAuthErr] = useState<string | null>(null);
 
-  const status = report.measurementStatus || (report.isSample ? "demo_sample" : report.livePsiVerified ? "live_lighthouse" : "partial_html");
+  const status = report.id === "empty" ? "none" : report.measurementStatus || (report.livePsiVerified ? "live_lighthouse" : "partial_html");
 
   const handleQuickLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,8 +104,8 @@ export function AuditIntegrityBanner({
                     ? "Stan Pomiaru 2/3: Częściowy Pomiar Rzeczywisty (Live HTML + HTTP — bez symulacji)"
                     : "Measurement State 2/3: Partial Real Measurement (Live HTML + HTTP — zero simulation)"
                   : isPolish
-                  ? "Widok Referencyjny (Dane Przykładowe dla novopix.uk — wpisz domenę, aby wykonać żywy pomiar)"
-                  : "Reference Demo View (Enter any domain above and click Scan for live measurements)"}
+                  ? "Brak pomiaru: zeskanuj stronę"
+                  : "No measurement yet: scan a website"}
               </span>
             </div>
             <p className="text-[11px] opacity-85 leading-relaxed">
@@ -119,13 +119,14 @@ export function AuditIntegrityBanner({
                     ? "Zmierzono prawdziwy kod HTML, czas odpowiedzi TTFB, nagłówki bezpieczeństwa i strukturę SEO. Silnik Google Lighthouse przekroczył bezpłatny limit zapytań lub został ograniczony przez firewall."
                     : "Measured real HTML DOM, TTFB, security headers, and SEO tags. Google Lighthouse API quota was exceeded."
                   : isPolish
-                  ? "System nigdy nie zgaduje wyników z nazwy domeny. Kliknij Skanuj, aby pobrać rzeczywiste dane."
-                  : "System never fabricates scores from domain names. Click Scan to fetch live data.")}
+                  ? "Żadne liczby nie są pokazywane, dopóki nie wykonasz pomiaru. Wpisz adres strony i kliknij Skanuj."
+                  : "No numbers are shown until you run a measurement. Enter a website address and click Scan.")}
             </p>
           </div>
         </div>
 
         {/* Detected Technology, CMS & Script Telemetry */}
+        {status !== "none" && (
         <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono shrink-0 border-t lg:border-t-0 pt-2 lg:pt-0 border-slate-200/60">
           <div className="flex items-center gap-1.5 text-slate-700">
             <Layers className="w-3.5 h-3.5 text-emerald-600" />
@@ -144,6 +145,7 @@ export function AuditIntegrityBanner({
             </strong>
           </div>
         </div>
+        )}
       </div>
 
       {/* 3. Server-Side CRM Session Authorization & Atomic Backup Bar (Agency Mode Only) */}
@@ -159,11 +161,11 @@ export function AuditIntegrityBanner({
               <span className="font-bold">
                 {agencyToken
                   ? isPolish
-                    ? "Autoryzacja Serwerowa CRM Aktywna (Sesja Tokenowa 256-bit + Anti-SSRF)"
-                    : "Server-Side CRM Session Active (256-bit Bearer Token + Anti-SSRF)"
+                    ? "Zalogowano w panelu agencji (CRM i monitoring aktywne)"
+                    : "Logged in to the agency panel (CRM and monitoring active)"
                   : isPolish
-                  ? "Baza CRM i Monitoring są chronione na serwerze — podaj PIN, aby odblokować zapis/odczyt"
-                  : "CRM & Monitoring endpoints are locked on the server — enter PIN to authenticate"}
+                  ? "CRM i monitoring są chronione PIN-em — zaloguj się, aby z nich korzystać"
+                  : "CRM and monitoring are PIN-protected — log in to use them"}
               </span>
               {agencyToken && isDefaultPinWarning && (
                 <span className="ml-2 text-amber-300 font-semibold">

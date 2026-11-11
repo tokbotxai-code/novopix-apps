@@ -53,8 +53,8 @@ import {
   AgencyClient,
   MonitoredDomain,
   DEFAULT_SCOPE_TASKS,
-  DEFAULT_LIVE_SEO,
-  SAMPLE_AUDIT,
+  EMPTY_LIVE_SEO,
+  EMPTY_AUDIT,
   buildDynamicAuditArtifacts,
 } from "./scannerTypes";
 import { AuditIntegrityBanner } from "./components/AuditIntegrityBanner";
@@ -133,7 +133,7 @@ function NovoPixAnimatedMark({ sizeClass = "w-6 h-6" }: { sizeClass?: string }) 
 export default function App() {
   const [isPolish, setIsPolish] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>("overview");
-  const [urlInput, setUrlInput] = useState<string>("novopix.uk");
+  const [urlInput, setUrlInput] = useState<string>("");
   const [strategy, setStrategy] = useState<"mobile" | "desktop">("mobile");
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -142,10 +142,10 @@ export default function App() {
   const [viewMode, setViewMode] = useState<"agency" | "client">("agency");
 
   // Core Audit & Live SEO State
-  const [currentReport, setCurrentReport] = useState<AuditReport>(SAMPLE_AUDIT);
-  const [liveSeo, setLiveSeo] = useState<LiveSeoInspection>(DEFAULT_LIVE_SEO);
+  const [currentReport, setCurrentReport] = useState<AuditReport>(EMPTY_AUDIT);
+  const [liveSeo, setLiveSeo] = useState<LiveSeoInspection>(EMPTY_LIVE_SEO);
   const [isSeoLoading, setIsSeoLoading] = useState<boolean>(false);
-  const [scanHistory, setScanHistory] = useState<AuditReport[]>([SAMPLE_AUDIT]);
+  const [scanHistory, setScanHistory] = useState<AuditReport[]>([]);
 
   // AI Growth Advisor State
   const [aiAdvisor, setAiAdvisor] = useState<AiAdvisorData | null>(null);
@@ -161,10 +161,10 @@ export default function App() {
   const [newTaskHours, setNewTaskHours] = useState<number>(2);
 
   // Business ROI Simulator Parameters
-  const [monthlyVisitors, setMonthlyVisitors] = useState<number>(4500);
-  const [currentConvRate, setCurrentConvRate] = useState<number>(1.8);
-  const [avgOrderValue, setAvgOrderValue] = useState<number>(400);
-  const [projectedLiftPct, setProjectedLiftPct] = useState<number>(10);
+  const [monthlyVisitors, setMonthlyVisitors] = useState<number>(0);
+  const [currentConvRate, setCurrentConvRate] = useState<number>(0);
+  const [avgOrderValue, setAvgOrderValue] = useState<number>(0);
+  const [projectedLiftPct, setProjectedLiftPct] = useState<number>(0);
 
   // Competitor Comparison State
   const [competitorUrl, setCompetitorUrl] = useState<string>("webflow.com");
@@ -601,7 +601,11 @@ export default function App() {
 
   // Run Full Hybrid Scan (3 Authentic Measurement States — Never fabricates scores)
   const handleRunScan = async (targetUrl?: string, preserveCustomScope = false) => {
-    const query = (targetUrl || urlInput).trim() || "novopix.uk";
+    const query = (targetUrl || urlInput).trim();
+    if (!query) {
+      showToast(isPolish ? "Wpisz adres strony do zeskanowania." : "Enter a website address to scan.");
+      return;
+    }
     setIsScanning(true);
     setScanError(null);
 
@@ -629,7 +633,7 @@ export default function App() {
       }
 
       const baseMerged: AuditReport = {
-        ...SAMPLE_AUDIT,
+        ...EMPTY_AUDIT,
         ...data,
         id: `scan-${Date.now()}`,
         isSample: false,
@@ -713,7 +717,7 @@ export default function App() {
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.measurementStatus !== "failed") {
         setCompetitorReport({
-          ...SAMPLE_AUDIT,
+          ...EMPTY_AUDIT,
           ...data,
           id: `comp-${Date.now()}`,
           isSample: false,
@@ -749,8 +753,8 @@ export default function App() {
     const payload = {
       name: clientName || "Klient Audytu",
       company: cleanHost.toUpperCase(),
-      email: `kontakt@${cleanHost}`,
-      phone: "+48 600 000 000",
+      email: "",
+      phone: "",
       website: currentReport.finalUrl || currentReport.scannedUrl,
       contractValue: scopeSummary.netPrice,
       hourlyRate,
@@ -797,8 +801,8 @@ export default function App() {
         body: JSON.stringify({
           name: newClientName || "Klient",
           company: newClientCompany || newClientWeb,
-          email: newClientEmail || "kontakt@klient.pl",
-          phone: newClientPhone || "-",
+          email: newClientEmail,
+          phone: newClientPhone,
           website: newClientWeb,
           contractValue: scopeSummary.netPrice,
           hourlyRate,
@@ -1102,7 +1106,7 @@ export default function App() {
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding-top:8px;">
           <div>
             <div style="font-size:12px; color:#475569;">Łączny nakład pracy: <strong>${scopeSummary.totalHours} roboczogodzin</strong> (${hourlyRate} ${currency}/h)</div>
-            <div style="font-size:12px; color:#047857; font-weight:bold;">Scenariusz ilustracyjny przy założeniach agencji: +${scopeSummary.monthlyGain} ${currency}/mies. To nie jest prognoza ani gwarancja wyniku.</div>
+            ${hasRoiAssumptions ? `<div style="font-size:12px; color:#047857; font-weight:bold;">Scenariusz ilustracyjny przy założeniach agencji: +${scopeSummary.monthlyGain} ${currency}/mies. To nie jest prognoza ani gwarancja wyniku.</div>` : ""}
           </div>
           <div style="font-size:22px; font-weight:900; color:#0f172a;">Inwestycja: ${scopeSummary.netPrice} ${currency} netto</div>
         </div>
@@ -1139,7 +1143,7 @@ export default function App() {
       </div>
       <div style="text-align:right;">
         <div style="font-size:36px; font-weight:900; color:#34d399;">${currentReport.overallScore ?? "N/A"}/100</div>
-        <div style="font-size:11px; color:#94a3b8;">Indeks Kondycji AURA</div>
+        <div style="font-size:11px; color:#94a3b8;">Indeks kondycji strony</div>
       </div>
     </div>
 
@@ -1198,7 +1202,7 @@ export default function App() {
 
   // All 14 Navigation Workspace Items (filtered when in Client Deal Room viewMode === "client")
   const allWorkspaceTabs = [
-    { id: "overview", label: isPolish ? "AURA Audyt (Główny)" : "AURA Overview", short: isPolish ? "AURA Audyt" : "Overview", icon: LayoutDashboard },
+    { id: "overview", label: isPolish ? "Przegląd audytu" : "Audit overview", short: isPolish ? "Przegląd" : "Overview", icon: LayoutDashboard },
     { id: "ai-advisor", label: "AI Advisor", short: "AI Advisor", icon: Bot, highlight: true },
     { id: "roi-calculator", label: isPolish ? "Kalkulator Wyceny & ROI" : "Pricing & ROI Calc", short: isPolish ? "Wycena & ROI" : "ROI & Quote", icon: Calculator, highlight: true },
     { id: "seo", label: isPolish ? "Głęboki Audyt SEO (HTML)" : "Deep SEO Inspector", short: "Deep SEO", icon: Search },
@@ -1247,9 +1251,8 @@ export default function App() {
     const monthlyMrr = crmClients
       .filter((c) => c.status === "remediated" || c.status === "retainer" || c.status === "proposal_accepted")
       .reduce((s, c) => s + (c.retainerFee || 300), 0);
-    const avgScore = crmClients.length
-      ? Math.round(crmClients.reduce((s, c) => s + (c.lastScore || 65), 0) / crmClients.length)
-      : 72;
+    const scored = crmClients.filter((c) => typeof c.lastScore === "number" && c.lastScore > 0);
+    const avgScore = scored.length ? Math.round(scored.reduce((s, c) => s + c.lastScore, 0) / scored.length) : null;
     return { pipelineVal, monthlyMrr, avgScore, count: crmClients.length };
   }, [crmClients]);
 
@@ -1296,7 +1299,12 @@ export default function App() {
     }
   };
 
-  const pageWeight = currentReport.pageWeight || SAMPLE_AUDIT.pageWeight!;
+  const hasScan = currentReport.id !== "empty";
+  // Scenariusz przychodowy pokazujemy tylko, gdy ktoś sam wpisał założenia (ruch, konwersja, wartość zamówienia, wzrost).
+  const hasRoiAssumptions = monthlyVisitors > 0 && currentConvRate > 0 && avgOrderValue > 0 && projectedLiftPct > 0;
+  const shownTab = !hasScan && !["roi-calculator", "monitoring", "crm", "bulk"].includes(activeTab) ? "empty-state" : activeTab;
+
+  const pageWeight = currentReport.pageWeight || { totalKb: 0, requestCount: 0, jsKb: 0, imagesKb: 0, cssKb: 0, fontsKb: 0, serverResponseMs: 0, thirdPartyBlockingMs: 0 };
 
   return (
     <div className="min-h-screen bg-[#F4F6F9] flex flex-col lg:flex-row text-slate-800 font-sans selection:bg-emerald-500/30">
@@ -1342,7 +1350,6 @@ export default function App() {
               <div className="font-heading font-extrabold text-base tracking-tight text-white leading-none">
                 <span>Novo</span>
                 <span className="novopix-wordmark-pix">Pix</span>
-                <span className="ml-1.5 text-[10px] font-mono uppercase tracking-widest text-[#ffc233]">AURA</span>
               </div>
               <div className="text-[11px] text-[#bcd6e6] font-medium mt-1">
                 {viewMode === "client" && !isPublicMode ? (isPolish ? "Pokój Ofertowy Klienta" : "Client Deal Room") : "Website Growth Scanner"}
@@ -1447,9 +1454,13 @@ export default function App() {
             <div className="text-[11px] font-bold text-white mb-0.5">
               {isPolish ? "Bieżąca Wycena Naprawy" : "Current Fix Quote"}
             </div>
-            <div className="text-base font-mono font-extrabold text-[#ffc233] tabular-nums">
-              {scopeSummary.netPrice} {currency} <span className="text-[10px] font-normal text-[#bcd6e6]">({scopeSummary.totalHours}h)</span>
-            </div>
+            {hasScan ? (
+              <div className="text-base font-mono font-extrabold text-[#ffc233] tabular-nums">
+                {scopeSummary.netPrice} {currency} <span className="text-[10px] font-normal text-[#bcd6e6]">({scopeSummary.totalHours}h)</span>
+              </div>
+            ) : (
+              <div className="text-[11px] text-[#bcd6e6]">{isPolish ? "Wycena pojawi się po skanie strony." : "The quote appears after a website scan."}</div>
+            )}
             <button
               onClick={() => (viewMode === "client" && !isPublicMode ? setIsAcceptProposalOpen(true) : isPublicMode ? setIsQuoteOpen(true) : setActiveTab("roi-calculator"))}
               className="mt-1.5 text-[11px] font-bold text-[#8fe9ff] hover:text-white flex items-center gap-1 cursor-pointer"
@@ -1500,7 +1511,7 @@ export default function App() {
                   { id: "compare", label: isPolish ? "Porównanie z Konkurencją" : "Competitor Compare" },
                 ]
               : [
-                  { id: "overview", label: isPolish ? "Przegląd AURA" : "AURA Overview" },
+                  { id: "overview", label: isPolish ? "Przegląd audytu" : "Audit overview" },
                   { id: "ai-advisor", label: "AI Advisor" },
                   { id: "roi-calculator", label: isPolish ? "Kalkulator Wyceny & ROI" : "ROI & Pricing" },
                   { id: "seo", label: isPolish ? "Audyt SEO HTML" : "Deep SEO" },
@@ -1606,27 +1617,32 @@ export default function App() {
                   ? "Kompleksowy Audyt Szybkości, Technicznego SEO i Konwersji"
                   : "Comprehensive Speed, Technical SEO & Conversion Audit"}
               </h1>
-              <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-slate-500">
-                <span className="font-semibold text-slate-800 flex items-center gap-1.5 truncate max-w-xs sm:max-w-md font-mono">
-                  <Globe className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  {currentReport.finalUrl || currentReport.scannedUrl}
-                </span>
-                <span aria-hidden="true">·</span>
-                <span className="font-medium text-emerald-700">
-                  {isPolish ? "Kondycja:" : "Health:"} {currentReport.overallScore ?? "N/A"}/100 ({currentReport.overallLabel})
-                </span>
-                <span aria-hidden="true">·</span>
-                <span>
-                  {isPolish ? "Dynamiczna wycena:" : "Dynamic Quote:"}{" "}
-                  <strong className="text-slate-900 font-mono tabular-nums">
-                    {scopeSummary.netPrice} {currency} ({scopeSummary.totalHours}h)
-                  </strong>
-                </span>
-                <span aria-hidden="true">·</span>
-                <span className="text-slate-400 font-mono tabular-nums">
-                  {new Date(currentReport.scannedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </span>
-              </div>
+              {hasScan && (
+                <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-slate-500">
+                  <span className="font-semibold text-slate-800 flex items-center gap-1.5 truncate max-w-xs sm:max-w-md font-mono">
+                    <Globe className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    {currentReport.finalUrl || currentReport.scannedUrl}
+                  </span>
+                  <span aria-hidden="true">·</span>
+                  <span className="font-medium text-emerald-700">
+                    {isPolish ? "Kondycja:" : "Health:"}{" "}
+                    {currentReport.overallScore === null
+                      ? isPolish ? "brak pomiaru ogólnego (pomiar częściowy)" : "no overall score (partial measurement)"
+                      : `${currentReport.overallScore}/100 (${currentReport.overallLabel})`}
+                  </span>
+                  <span aria-hidden="true">·</span>
+                  <span>
+                    {isPolish ? "Wstępna wycena:" : "Preliminary quote:"}{" "}
+                    <strong className="text-slate-900 font-mono tabular-nums">
+                      {scopeSummary.netPrice} {currency} ({scopeSummary.totalHours}h)
+                    </strong>
+                  </span>
+                  <span aria-hidden="true">·</span>
+                  <span className="text-slate-400 font-mono tabular-nums">
+                    {new Date(currentReport.scannedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Utility Controls: Language, Mode, Export */}
@@ -1711,8 +1727,8 @@ export default function App() {
                   onChange={(e) => setUrlInput(e.target.value)}
                   placeholder={
                     isPolish
-                      ? "Wpisz adres strony klienta (np. novopix.uk, autoklinika.pl, sklep.pl)"
-                      : "Enter client website URL (e.g. novopix.uk, mybusiness.com)"
+                      ? "Wpisz adres strony do zeskanowania (np. firma.pl)"
+                      : "Enter the website address to scan (e.g. company.com)"
                   }
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all font-mono"
                   required
@@ -1807,15 +1823,35 @@ export default function App() {
             onOpenPinSettings={() => setActiveTab("reports")}
           />
 
+          {shownTab === "empty-state" && (
+            <div className="bg-white rounded-2xl p-8 border border-slate-200 text-center space-y-4" data-testid="empty-scan-state">
+              <Search className="w-10 h-10 text-emerald-600 mx-auto" />
+              <h2 className="text-xl font-extrabold text-slate-900 font-heading">{isPolish ? "Zeskanuj stronę" : "Scan a website"}</h2>
+              <p className="text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">
+                {isPolish
+                  ? "Wpisz adres strony w polu powyżej i kliknij „Skanuj”. Wyniki pojawią się dopiero po rzeczywistym pomiarze; do tego czasu nie pokazujemy żadnych liczb."
+                  : "Enter a website address in the field above and click “Scan”. Results appear only after a real measurement; until then no numbers are shown."}
+              </p>
+              <button
+                type="button"
+                onClick={() => handleRunScan()}
+                disabled={isScanning || !urlInput.trim()}
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold cursor-pointer disabled:opacity-50"
+              >
+                {isScanning ? (isPolish ? "Skanuję…" : "Scanning…") : isPolish ? "Skanuj stronę" : "Scan website"}
+              </button>
+            </div>
+          )}
+
           {/* ================================================================= */}
           {/* TAB 1: OVERVIEW (AURA EXECUTIVE OVERVIEW)                         */}
           {/* ================================================================= */}
-          {activeTab === "overview" && (
+          {shownTab === "overview" && (
             <div className="space-y-6">
               {/* Top 4 KPI Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
                 <ScoreGaugeCard
-                  title={isPolish ? "Indeks Kondycji AURA" : "Overall Health Index"}
+                  title={isPolish ? "Indeks kondycji strony" : "Overall Health Index"}
                   score={currentReport.overallScore}
                   status={currentReport.overallLabel}
                   isPolish={isPolish}
@@ -1943,9 +1979,11 @@ export default function App() {
                           ? "Wpływ Błędów Technicznych na Sprzedaż i Pozyskiwanie Klientów"
                           : "Business & Conversion Impact Diagnosis"}
                       </h2>
-                      <span className="text-xs font-mono font-semibold text-emerald-700">
-                        {isPolish ? "Szacowany potencjał wzrostu:" : "Projected conversion lift:"} +{projectedLiftPct}%
-                      </span>
+                      {hasRoiAssumptions && (
+                        <span className="text-xs font-mono font-semibold text-emerald-700">
+                          {isPolish ? "Założony wzrost konwersji (scenariusz):" : "Assumed conversion lift (scenario):"} +{projectedLiftPct}%
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                       {isPolish
@@ -1955,9 +1993,10 @@ export default function App() {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {hasRoiAssumptions && (
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
                       <div className="text-xs font-semibold text-slate-500">
-                        {isPolish ? "Szacowany dodatkowy przychód" : "Projected Monthly Gain"}
+                        {isPolish ? "Scenariusz: dodatkowy przychód (z Twoich założeń)" : "Scenario: extra revenue (from your inputs)"}
                       </div>
                       <div className="text-xl font-mono font-extrabold text-emerald-600 mt-1 tabular-nums">
                         +{scopeSummary.monthlyGain.toLocaleString()} {currency}/mc
@@ -1966,6 +2005,8 @@ export default function App() {
                         {isPolish ? `Wzrost z ${scopeSummary.currentLeads} do ${scopeSummary.newLeads} klientów/mc` : `Lift from ${scopeSummary.currentLeads} to ${scopeSummary.newLeads} leads/mo`}
                       </div>
                     </div>
+
+                    )}
 
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
                       <div className="text-xs font-semibold text-slate-500">
@@ -1979,6 +2020,7 @@ export default function App() {
                       </div>
                     </div>
 
+                    {hasRoiAssumptions && (
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
                       <div className="text-xs font-semibold text-slate-500">
                         {isPolish ? "Czas zwrotu (scenariusz ilustracyjny)" : "Payback (illustrative scenario)"}
@@ -1990,6 +2032,7 @@ export default function App() {
                         {isPolish ? "Wynik zależy od założeń; to nie prognoza" : "Depends on the assumptions; not a forecast"}
                       </div>
                     </div>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -2175,7 +2218,7 @@ export default function App() {
           {/* ================================================================= */}
           {/* TAB 2: AI GROWTH ADVISOR & SALES SCRIPT GENERATOR                 */}
           {/* ================================================================= */}
-          {activeTab === "ai-advisor" && (
+          {shownTab === "ai-advisor" && (
             <div className="space-y-6">
               <div className="bg-white rounded-2xl p-6 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
@@ -2194,11 +2237,11 @@ export default function App() {
                   <p className="text-xs text-slate-500 mt-1">
                     {viewMode === "client"
                       ? isPolish
-                        ? "Indywidualna ekspertyza sztucznej inteligencji wyznaczająca najszybszą ścieżkę do osiągnięcia wyniku 90+/100 w Google."
-                        : "Tailored AI roadmap outlining the fastest path to 90+/100 Google scores."
+                        ? "Szkic planu poprawy wskaźników przygotowany przez AI na podstawie zmierzonych danych (do weryfikacji przez człowieka)."
+                        : "A draft improvement plan prepared by AI from the measured data (to be reviewed by a person)."
                       : isPolish
-                      ? "Sztuczna inteligencja analizuje błędy strony i tworzy gotową strategię naprawczą oraz teksty rozmów handlowych, dzięki którym obronisz wycenę 1200+ zł przed tanią konkurencją."
-                      : "AI analyzes site bottlenecks to generate an executive strategy and ready-to-use sales scripts that justify your agency pricing."}
+                      ? "Sztuczna inteligencja analizuje błędy strony i tworzy gotową strategię naprawczą oraz teksty rozmów handlowych, które pomagają uzasadnić wycenę w rozmowie z klientem."
+                      : "AI analyzes site bottlenecks to generate an executive strategy and ready-to-use sales scripts that help explain your pricing to the client."}
                   </p>
                 </div>
                 <button
@@ -2297,8 +2340,8 @@ export default function App() {
                         <div>
                           <h3 className="text-sm font-extrabold text-white">
                             {isPolish
-                              ? "Gotowe Skrypty Sprzedażowe i Obrona Ceny 1200+ PLN"
-                              : "Ready-to-Use Agency Sales Scripts & Price Defense"}
+                              ? "Gotowe szkice wiadomości i argumenty do rozmowy"
+                              : "Ready-made message drafts and talking points"}
                           </h3>
                           <p className="text-xs text-slate-400 mt-0.5">
                             {isPolish
@@ -2330,7 +2373,7 @@ export default function App() {
                               activeScriptTab === "objectionHandler" ? "bg-emerald-600 text-white" : "text-slate-300 hover:text-white"
                             }`}
                           >
-                            {isPolish ? "3. Obrona Ceny (1200 zł vs 500 zł)" : "3. Price Defense"}
+                            {isPolish ? "3. Odpowiedź na zastrzeżenie o cenie" : "3. Handling a price objection"}
                           </button>
                         </div>
                       </div>
@@ -2363,7 +2406,7 @@ export default function App() {
           {/* ================================================================= */}
           {/* TAB 3: DYNAMIC HOURLY SCOPE & ROI CALCULATOR                      */}
           {/* ================================================================= */}
-          {activeTab === "roi-calculator" && (
+          {shownTab === "roi-calculator" && (
             <div className="space-y-6">
               <div className="bg-white rounded-2xl p-6 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
@@ -2523,6 +2566,8 @@ export default function App() {
                     <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
                       {isPolish ? "3. Scenariusz ilustracyjny (nie prognoza)" : "3. Illustrative scenario (not a forecast)"}
                     </div>
+                    {hasRoiAssumptions ? (
+                    <>
                     <div>
                       <div className="text-xs text-slate-400">{isPolish ? "Wynik przy założeniach wpisanych powyżej:" : "Result under the assumptions entered above:"}</div>
                       <div className="text-3xl font-mono font-extrabold text-emerald-400 mt-0.5 tabular-nums">
@@ -2540,6 +2585,12 @@ export default function App() {
                         ? `Przy podanych założeniach (ruch, konwersja, wartość zamówienia, wzrost konwersji) koszt ${scopeSummary.netPrice} ${currency} zwróciłby się po ok. ${scopeSummary.paybackDays} dniach. To rachunek ilustracyjny na wpisanych danych, a nie prognoza wyniku klienta.`
                         : `Under the entered assumptions (traffic, conversion, order value, conversion lift) the ${scopeSummary.netPrice} ${currency} cost would be recovered in about ${scopeSummary.paybackDays} days. This is an illustration based on typed-in inputs, not a forecast of the client's results.`}
                     </p>
+                    </>
+                    ) : (
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        {isPolish ? "Wpisz własne założenia powyżej (ruch, konwersja, wartość zamówienia, wzrost konwersji), aby zobaczyć scenariusz. Bez nich nie pokazujemy żadnych kwot przychodu." : "Enter your own assumptions above (traffic, conversion, order value, conversion lift) to see a scenario. Without them no revenue figures are shown."}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex flex-col gap-2">
@@ -2711,7 +2762,7 @@ export default function App() {
           {/* ================================================================= */}
           {/* TAB 4: DEEP TECHNICAL SEO & LIVE HTML INSPECTOR                   */}
           {/* ================================================================= */}
-          {activeTab === "seo" && (
+          {shownTab === "seo" && (
             <div className="space-y-6">
               <div className="bg-white rounded-2xl p-6 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
@@ -2927,7 +2978,7 @@ export default function App() {
           {/* ================================================================= */}
           {/* TAB 5: ADVANCED PERFORMANCE & CORE WEB VITALS                     */}
           {/* ================================================================= */}
-          {activeTab === "performance" && (
+          {shownTab === "performance" && (
             <div className="space-y-6">
               <div className="bg-white rounded-2xl p-6 border border-slate-200 space-y-4">
                 <h2 className="text-lg font-extrabold text-slate-900 font-heading">
@@ -2986,7 +3037,7 @@ export default function App() {
           {/* ================================================================= */}
           {/* TAB 6: INSIGHTS, RESOURCE PAGE WEIGHT & ISSUE DETECTION           */}
           {/* ================================================================= */}
-          {activeTab === "insights" && (
+          {shownTab === "insights" && (
             <div className="space-y-6">
               {/* Real Lighthouse Resource Page Weight Breakdown */}
               <div className="bg-white rounded-2xl p-6 border border-slate-200 space-y-4">
@@ -3094,7 +3145,7 @@ export default function App() {
           {/* ================================================================= */}
           {/* TAB 7: COMPETITOR ANALYSIS (HEAD-TO-HEAD 1:1 + DELTA VERDICT)     */}
           {/* ================================================================= */}
-          {activeTab === "compare" && (
+          {shownTab === "compare" && (
             <div className="bg-white rounded-2xl p-6 border border-slate-200 space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                 <div>
@@ -3236,7 +3287,7 @@ export default function App() {
           {/* ================================================================= */}
           {/* TAB 8: 24/7 DOMAIN MONITORING & RETAINER ALERTS (AGENCY ONLY)     */}
           {/* ================================================================= */}
-          {activeTab === "monitoring" && viewMode === "agency" && (
+          {shownTab === "monitoring" && viewMode === "agency" && (
             <div className="space-y-6">
               <div className="bg-white rounded-2xl p-6 border border-slate-200 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -3443,7 +3494,7 @@ export default function App() {
           {/* ================================================================= */}
           {/* TAB 9: AGENCY CRM PANEL (AGENCY ONLY)                             */}
           {/* ================================================================= */}
-          {activeTab === "crm" && viewMode === "agency" && (
+          {shownTab === "crm" && viewMode === "agency" && (
             <div className="space-y-6">
               {/* CRM KPI Summary Row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -3465,7 +3516,7 @@ export default function App() {
                 </div>
                 <div className="bg-white rounded-2xl p-5 border border-slate-200">
                   <div className="text-xs font-semibold text-slate-500">{isPolish ? "Średni Wynik Domen Klientów" : "Avg Client WebScore"}</div>
-                  <div className="text-2xl font-mono font-extrabold text-slate-900 mt-1 tabular-nums">{crmMetrics.avgScore}/100</div>
+                  <div className="text-2xl font-mono font-extrabold text-slate-900 mt-1 tabular-nums">{crmMetrics.avgScore === null ? "—" : `${crmMetrics.avgScore}/100`}</div>
                 </div>
               </div>
 
@@ -3674,7 +3725,7 @@ export default function App() {
             </div>
           )}
 
-          {activeTab === "bulk" && viewMode === "agency" && (
+          {shownTab === "bulk" && viewMode === "agency" && (
             <Suspense fallback={<div className="text-xs text-slate-500 p-3">{isPolish ? "Ładowanie…" : "Loading…"}</div>}>
               {agencyToken ? (
                 <BulkTab ctx={agencyCtx} onClientAdded={(c) => setCrmClients((prev) => [c, ...prev.filter((x) => x.id !== c.id)])} />
@@ -3692,7 +3743,7 @@ export default function App() {
           {/* ================================================================= */}
           {/* TAB 10: WHITE-LABEL REPORTS & INTERACTIVE CLIENT SHARE LINK       */}
           {/* ================================================================= */}
-          {activeTab === "reports" && (
+          {shownTab === "reports" && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white rounded-2xl p-6 border border-slate-200 space-y-4">
@@ -3873,7 +3924,7 @@ export default function App() {
           {/* ================================================================= */}
           {/* TAB 11: WEBSCORE EVOLUTION & LOCAL SCAN HISTORY                   */}
           {/* ================================================================= */}
-          {activeTab === "webscore" && (
+          {shownTab === "webscore" && (
             <div className="space-y-6">
               <div className="bg-white rounded-2xl p-6 border border-slate-200 space-y-6">
                 <div className="flex flex-wrap items-center justify-between gap-4">
@@ -3906,7 +3957,7 @@ export default function App() {
                     <span className="font-mono">Aktualny wynik: {currentReport.overallScore}/100</span>
                   </div>
                   <div className="h-44 flex items-end justify-between gap-4 pt-8 px-4 border-b border-slate-800">
-                    {(currentReport.demo?.scoreHistory || SAMPLE_AUDIT.demo!.scoreHistory).map((pt, i) => (
+                    {(currentReport.demo?.scoreHistory || []).map((pt, i) => (
                       <div key={i} className="flex flex-col items-center gap-2 flex-1">
                         <span className="text-xs font-mono font-bold text-emerald-400 tabular-nums">{pt.overall}</span>
                         <div className="w-full max-w-[64px] bg-emerald-500/30 border-t-2 border-emerald-400 rounded-t-lg" style={{ height: `${pt.overall * 1.25}px` }} />
@@ -3948,7 +3999,7 @@ export default function App() {
           {/* ================================================================= */}
           {/* TAB 12: CRAWL DIAGNOSTICS (DYNAMIC ON-PAGE MATRIX)                */}
           {/* ================================================================= */}
-          {activeTab === "diagnostics" && (
+          {shownTab === "diagnostics" && (
             <div className="bg-white rounded-2xl p-6 border border-slate-200 space-y-6">
               <h2 className="text-lg font-extrabold text-slate-900 font-heading">
                 {isPolish ? "Diagnostyka Indeksowania i Struktury On-Page (Wyliczona dla Badanej Domeny)" : "Dynamic Crawl Diagnostics & On-Page Matrix"}
@@ -3989,7 +4040,7 @@ export default function App() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs font-mono tabular-nums">
-                    {(currentReport.demo?.onPageSeoAnalysis || SAMPLE_AUDIT.demo!.onPageSeoAnalysis).map((row) => (
+                    {(currentReport.demo?.onPageSeoAnalysis || []).map((row) => (
                       <tr key={row.id}>
                         <td className="py-3 px-3 font-sans font-bold text-slate-900">{row.name}</td>
                         <td className="py-3 px-3 text-right">{row.missing}</td>
@@ -4090,7 +4141,7 @@ export default function App() {
           {/* ================================================================= */}
           {/* TAB 13: WCAG 2.1 AA ACCESSIBILITY & EAA LEGAL AUDIT               */}
           {/* ================================================================= */}
-          {activeTab === "accessibility" && (
+          {shownTab === "accessibility" && (
             <div className="bg-white rounded-2xl p-6 border border-slate-200 space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
                 <div>
@@ -4196,7 +4247,7 @@ export default function App() {
           {/* ================================================================= */}
           {/* TAB 14: INTERACTIVE REMEDIATION CHECKLIST                         */}
           {/* ================================================================= */}
-          {activeTab === "checklist" && (
+          {shownTab === "checklist" && (
             <div className="bg-white rounded-2xl p-6 border border-slate-200 space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
                 <div>

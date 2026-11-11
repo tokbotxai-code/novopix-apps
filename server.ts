@@ -30,6 +30,7 @@ import {
 } from "./server/database";
 import { performDeepLiveSeoInspection } from "./server/seoCrawler";
 import { performScan } from "./server/scanService";
+import { sendMail, ALERT_RECIPIENT } from "./server/mailer";
 import { registerAgencyOfferRoutes } from "./server/routes/agencyOffers";
 import { registerAgencyBulkRoutes } from "./server/routes/agencyBulk";
 import {
@@ -476,7 +477,7 @@ async function handleContact(req: any, res: any, internal = false) {
       name: record.name || "Klient ze Skanera",
       company: (record.website || "Domena").replace(/^https?:\/\//, "").split("/")[0],
       email: record.email,
-      phone: record.phone || "-",
+      phone: record.phone || "",
       website: record.website,
       status: "lead",
       contractValue: Number(estimatedBudget) || 1200,
@@ -485,6 +486,7 @@ async function handleContact(req: any, res: any, internal = false) {
       retainerFee: 300,
       addedAt: timestamp,
       lastScore: record.overallScore || 0,
+      source: "scanner",
       notes: record.details || "Nowe zapytanie ofertowe z formularza audytu.",
       activityLog: [
         {
@@ -499,6 +501,14 @@ async function handleContact(req: any, res: any, internal = false) {
     db.agencyClients.unshift(newClient);
     saveDb();
 
+    // Powiadomienie o nowym zgłoszeniu (tylko gdy SMTP jest skonfigurowane; bez SMTP zgłoszenie i tak jest w CRM).
+    void sendMail({
+      to: ALERT_RECIPIENT,
+      subject: `[NovoPix] Nowe zgłoszenie ze skanera: ${record.website}`,
+      text: `Nowe zgłoszenie w CRM.\n\nStrona: ${record.website}\nOsoba: ${record.name || "-"}\nE-mail: ${record.email}\nTelefon: ${record.phone || "-"}\nWynik: ${record.overallScore ?? "brak pomiaru"}\n\nWiadomość:\n${record.details || "-"}\n\nOtwórz panel agencji, aby wykonać skan, przygotować i zatwierdzić ofertę.`,
+      replyTo: record.email,
+    }).catch(() => {});
+
     return res.status(200).json({ success: true, leadId });
   } catch (err: any) {
     return res.status(500).json({ error: "Błąd serwera. Spróbuj ponownie." });
@@ -512,6 +522,7 @@ app.get("/api/crm/clients", requireAgencyAuth, (_req, res) => {
 
 app.post("/api/crm/clients", requireAgencyAuth, (req, res) => {
   const { name, company, email, phone, website, contractValue, hourlyRate, estimatedHours, retainerFee, lastScore, notes, cmsTech } = req.body;
+  if (!website || typeof website !== "string" || !website.trim()) return res.status(400).json({ error: "Podaj adres strony klienta." });
   const hrs = Number(estimatedHours) || 8;
   const rate = Number(hourlyRate) || 150;
   const now = new Date().toISOString();
@@ -519,9 +530,9 @@ app.post("/api/crm/clients", requireAgencyAuth, (req, res) => {
     id: `cli_${Date.now()}`,
     name: name || "Nowy Klient",
     company: company || (website ? String(website).replace(/^https?:\/\//, "").split("/")[0] : "Firma"),
-    email: email || "kontakt@firma.pl",
-    phone: phone || "-",
-    website: website || "https://example.com",
+    email: email || "",
+    phone: phone || "",
+    website: website,
     status: "lead",
     contractValue: Number(contractValue) || hrs * rate,
     hourlyRate: rate,
@@ -529,7 +540,7 @@ app.post("/api/crm/clients", requireAgencyAuth, (req, res) => {
     retainerFee: Number(retainerFee) || 300,
     addedAt: now,
     lastScore: Number(lastScore) || 0,
-    cmsTech: cmsTech || "Wykrywanie...",
+    cmsTech: cmsTech || "",
     notes: notes || "",
     activityLog: [
       {
@@ -621,7 +632,8 @@ function handleAcceptProposal(req: any, res: any, internal = false) {
   }
 
   const { name, company, email, phone, website, contractValue, hourlyRate, estimatedHours, retainerFee, lastScore, selectedTasks } = req.body;
-  const cleanWeb = String(website || "https://example.com").trim();
+  const cleanWeb = String(website || "").trim();
+  if (!cleanWeb) return res.status(400).json({ error: "Brak adresu strony." });
   const existing = db.agencyClients.find((c) => c.website.replace(/\/$/, "") === cleanWeb.replace(/\/$/, ""));
 
   const taskSummary = Array.isArray(selectedTasks) && selectedTasks.length > 0 ? ` Zakres: ${selectedTasks.join(", ")}.` : "";
@@ -653,8 +665,8 @@ function handleAcceptProposal(req: any, res: any, internal = false) {
     id: `cli_${Date.now()}`,
     name: name || "Klient (Akceptacja Online)",
     company: company || cleanWeb.replace(/^https?:\/\//, "").split("/")[0].toUpperCase(),
-    email: email || "akceptacja@klient.pl",
-    phone: phone || "-",
+    email: email || "",
+    phone: phone || "",
     website: cleanWeb,
     status: "proposal_accepted",
     contractValue: Number(contractValue) || 1350,
