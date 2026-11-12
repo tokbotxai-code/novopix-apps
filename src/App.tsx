@@ -22,6 +22,7 @@ const BulkTab = lazy(() => import("./tabs/BulkTab"));
 const PackagesTab = lazy(() => import("./tabs/PackagesTab"));
 const RoiCalculatorTab = lazy(() => import("./tabs/RoiCalculatorTab"));
 const MonitoringTab = lazy(() => import("./tabs/MonitoringTab"));
+const StatusTab = lazy(() => import("./tabs/StatusTab"));
 const CrmTab = lazy(() => import("./tabs/CrmTab"));
 const ReportsTab = lazy(() => import("./tabs/ReportsTab"));
 
@@ -82,6 +83,7 @@ export default function App() {
     strategy,
     toastMsg,
     unseenAlerts,
+    statusDown,
     urlInput,
     viewMode,
     workspaceTabs,
@@ -196,6 +198,7 @@ export default function App() {
                       <IconComponent className={`w-4 h-4 shrink-0 ${isActive ? "text-[#4de0ff]" : item.highlight ? "text-[#ffc233]" : "text-[#8fd8ff]/70"}`} />
                       <span className="truncate">{item.label}</span>
                     </span>
+                    {item.id === "status" && statusDown > 0 && <span className="ml-2 w-2.5 h-2.5 rounded-full bg-rose-600" aria-label="status down" />}
                     {item.id === "monitoring" && unseenAlerts.length > 0 && (
                       <span className="ml-2 shrink-0 min-w-5 h-5 px-1.5 rounded-full bg-rose-600 text-white text-[10px] font-extrabold flex items-center justify-center" aria-label={isPolish ? `Nowe alerty: ${unseenAlerts.length}` : `New alerts: ${unseenAlerts.length}`}>
                         {unseenAlerts.length}
@@ -576,6 +579,7 @@ export default function App() {
                   >
                     <IconComp className={`w-3.5 h-3.5 ${active ? "text-emerald-400" : "text-emerald-600"}`} />
                     <span>{tab.short}</span>
+                    {tab.id === "status" && statusDown > 0 && <span className="w-2.5 h-2.5 rounded-full bg-rose-600" aria-label="status down" />}
                     {tab.id === "monitoring" && unseenAlerts.length > 0 && (
                       <span className="min-w-4 h-4 px-1 rounded-full bg-rose-600 text-white text-[10px] font-extrabold flex items-center justify-center" aria-label={isPolish ? `Nowe alerty: ${unseenAlerts.length}` : `New alerts: ${unseenAlerts.length}`}>
                         {unseenAlerts.length}
@@ -704,6 +708,16 @@ export default function App() {
                     {isPolish ? "Zaloguj" : "Log in"}
                   </button>
                 </div>
+              )}
+            </Suspense>
+          )}
+
+          {shownTab === "status" && viewMode === "agency" && (
+            <Suspense fallback={<TabFallback isPolish={isPolish} />}>
+              {agencyToken ? <StatusTab ctx={agencyCtx} /> : (
+                <button type="button" onClick={() => setIsPinModalOpen(true)} className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold cursor-pointer">
+                  {isPolish ? "Zaloguj kodem PIN" : "Log in with PIN"}
+                </button>
               )}
             </Suspense>
           )}

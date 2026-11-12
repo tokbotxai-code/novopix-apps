@@ -88,6 +88,7 @@ find "$DEST" -name 'panel-data-*.tar.gz' -mtime +30 -delete
 BK
 chmod 0755 /usr/local/bin/novopix-backup
 echo '17 3 * * * root /usr/local/bin/novopix-backup' > /etc/cron.d/novopix-backup
+install -m 0755 /opt/novopix/deploy/vps/novopix-restore-test /usr/local/bin/novopix-restore-test
 
 # Aktualizacje: co 5 minut pobiera zmiany z GitHuba i przebudowuje tylko przy nowych commitach
 cat > /usr/local/bin/novopix-update <<'UP'

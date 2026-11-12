@@ -37,6 +37,7 @@ import { registerPanelFunnel, registerPublicFunnel } from "./server/funnel";
 import { sendMail, alertRecipient } from "./server/mailer";
 import { registerAgencyOfferRoutes } from "./server/routes/agencyOffers";
 import { registerAgencyBulkRoutes } from "./server/routes/agencyBulk";
+import { registerAgencyStatusRoutes, registerPublicStatusRoutes } from "./server/uptimeMonitor";
 import {
   performRealDomainCheck,
   runPsiOncePerDay,
@@ -108,6 +109,7 @@ if (APP_MODE === "public") {
     return relayContact(req, res);
   });
   registerPublicFunnel(app, forwardToAgency);
+  registerPublicStatusRoutes(app, forwardToAgency as any);
   app.post("/api/crm/accept-proposal", relay("/api/internal/accept-proposal", "accept", 10));
   app.get("/api/proposals/:id", async (req, res) => {
     try {
@@ -128,6 +130,7 @@ if (APP_MODE === "agency") {
   startMonitoringScheduler();
   registerAgencyOfferRoutes(app);
   registerAgencyBulkRoutes(app);
+  registerAgencyStatusRoutes(app);
   registerPanelFunnel(app, requireInternal);
 }
 

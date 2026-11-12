@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Test przywracania kopii panelu (nic nie nadpisuje produkcji).
+# Rozpakowuje NAJNOWSZĄ kopię wolumenu novopix_panel-data (/var/backups/novopix/panel-data-*.tar.gz,
+# robi ją /usr/local/bin/novopix-backup) do katalogu tymczasowego, wczytuje scanner-db.json
+# i wypisuje liczby klientów / leadów / ofert oraz wynik OK / BŁĄD.
+# Zmienna BACKUP_DIR pozwala wskazać inny katalog z kopiami (do testów).
+set -uo pipefail
+BACKUP_DIR="${BACKUP_DIR:-/var/backups/novopix}"
+LATEST="$(ls -1t "$BACKUP_DIR"/panel-data-*.tar.gz 2>/dev/null | head -n1 || true)"
+if [ -z "$LATEST" ]; then echo "BŁĄD: brak kopii w $BACKUP_DIR"; exit 1; fi
+
+TMP="$(mktemp -d /tmp/novopix-restore-test.XXXXXX)"
+trap 'rm -rf "$TMP"' EXIT
+
+echo "Kopia: $LATEST ($(date -r "$LATEST" '+%Y-%m-%d %H:%M'), $(du -h "$LATEST" | cut -f1))"
+if ! tar xzf "$LATEST" -C "$TMP" 2>/dev/null; then echo "BŁĄD: nie da się rozpakować archiwum"; exit 1; fi
+if [ ! -s "$TMP/scanner-db.json" ]; then echo "BŁĄD: w kopii brak pliku scanner-db.json"; exit 1; fi
+
+python3 -I - "$TMP/scanner-db.json" <<'PY'
+import json, sys
+try:
+    d = json.load(open(sys.argv[1], encoding="utf-8"))
+    assert isinstance(d, dict)
+    n = lambda k: len(d.get(k) or [])
+    print(f"Klienci: {n('agencyClients')}")
+    print(f"Leady:   {n('leads')}")
+    print(f"Oferty:  {len(d.get('offers') or {})}")
+    print("Wynik: OK (scanner-db.json wczytany poprawnie)")
+except Exception as e:
+    print(f"Wynik: BŁĄD (scanner-db.json nie wczytuje się: {e})")
+    sys.exit(1)
+PY

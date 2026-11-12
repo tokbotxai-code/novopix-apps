@@ -19,3 +19,19 @@ cd /opt/novopix && read -rp "SMTP host: " H && read -rp "Port [587]: " P && read
 ```
 
 Port 465 włącza TLS automatycznie, port 587 używa STARTTLS. Opcjonalnie `SMTP_FROM` (adres nadawcy, domyślnie użytkownik SMTP) i `ALERT_EMAIL` (odbiorca alertów, domyślnie contact@novopix.uk) można dopisać do `.env` ręcznie.
+
+## Test przywracania kopii
+
+`novopix-restore-test` rozpakowuje **najnowszą** kopię `/var/backups/novopix/panel-data-*.tar.gz` (wolumen `novopix_panel-data`, tar.gz z zawartością `/app/data`) do katalogu tymczasowego, wczytuje `scanner-db.json`, wypisuje liczby klientów, leadów i ofert oraz `OK` lub `BŁĄD`. Niczego nie nadpisuje, katalog tymczasowy jest usuwany. Kod wyjścia 0 = OK. `BACKUP_DIR=/inny/katalog` wskazuje inne miejsce kopii.
+
+Jedna komenda w konsoli VPS (jako root): pobiera, instaluje w `/usr/local/bin` i uruchamia:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/tokbotxai-code/novopix-apps/main/deploy/vps/novopix-restore-test -o /usr/local/bin/novopix-restore-test && chmod 755 /usr/local/bin/novopix-restore-test && novopix-restore-test
+```
+
+Przykładowy wynik: `Kopia: …`, `Klienci: N`, `Leady: N`, `Oferty: N`, `Wynik: OK`. Przy `BŁĄD` kopia jest uszkodzona lub pusta: uruchom `novopix-backup` i powtórz test.
+
+## Monitoring usług
+
+Panel sprawdza co 5 min pięć adresów i publikuje `/status` (skaner i panel); szczegóły i zewnętrzny strażnik: `docs/monitoring.md`. Do alertów mailowych potrzebne jest SMTP (sekcja wyżej); zmienne SMTP są już przekazywane do kontenera panelu.

@@ -262,7 +262,7 @@ export function useAppState() {
 
   // Prevent client view from staying on internal agency tabs
   useEffect(() => {
-    if (viewMode === "client" && (activeTab === "crm" || activeTab === "monitoring" || activeTab === "bulk" || activeTab === "packages")) {
+    if (viewMode === "client" && (activeTab === "crm" || activeTab === "monitoring" || activeTab === "bulk" || activeTab === "packages" || activeTab === "status")) {
       setActiveTab("overview");
     }
   }, [viewMode, activeTab]);
@@ -1117,6 +1117,7 @@ export function useAppState() {
     { id: "insights", label: isPolish ? "Wykryte Problemy & Waga" : "Issues & Page Weight", short: isPolish ? "Problemy & Waga" : "Issues & Weight", icon: Layers },
     { id: "compare", label: isPolish ? "Porównanie z Konkurencją" : "Competitor 1:1", short: isPolish ? "Konkurencja" : "Compare", icon: Scale },
     { id: "monitoring", label: isPolish ? "Monitoring 24/7 (Retainer)" : "24/7 Monitoring", short: "Monitoring 24/7", icon: Bell, highlight: true, agencyOnly: true },
+    { id: "status", label: isPolish ? "Status usług" : "Service status", short: isPolish ? "Status usług" : "Status", icon: Activity, agencyOnly: true },
     { id: "crm", label: isPolish ? "Panel Agencji (CRM)" : "Agency CRM", short: isPolish ? "Panel Agencji" : "Agency CRM", icon: Briefcase, highlight: true, agencyOnly: true },
     { id: "bulk", label: isPolish ? "Skan wielu stron i leady" : "Bulk scan & leads", short: isPolish ? "Leady" : "Leads", icon: ListOrdered, highlight: true, agencyOnly: true },
     { id: "packages", label: isPolish ? "Pakiety i skaner publiczny" : "Packages & public scanner", short: isPolish ? "Pakiety" : "Packages", icon: Package, highlight: true, agencyOnly: true },
@@ -1187,6 +1188,24 @@ export function useAppState() {
     return () => clearInterval(t);
   }, [agencyToken, isPublicMode]);
 
+  // Czerwony znacznik przy zakładce „Status usług” (odświeżany co minutę po zalogowaniu).
+  const [statusDown, setStatusDown] = useState(0);
+  useEffect(() => {
+    if (!agencyToken || isPublicMode) return;
+    const poll = async () => {
+      try {
+        const r = await fetch("/api/status/details", { headers: getAuthHeaders() });
+        if (r.ok) {
+          const d = await r.json();
+          setStatusDown((d.services || []).filter((x: any) => x.ok === false).length);
+        }
+      } catch {}
+    };
+    poll();
+    const t = setInterval(poll, 60000);
+    return () => clearInterval(t);
+  }, [agencyToken, isPublicMode]);
+
   const handleMarkAlertsSeen = async () => {
     const r = await fetch("/api/monitoring/alerts/seen", { method: "POST", headers: getAuthHeaders() }).catch(() => null);
     if (r && r.ok) {
@@ -1210,7 +1229,7 @@ export function useAppState() {
   const hasScan = currentReport.id !== "empty";
   // Scenariusz przychodowy pokazujemy tylko, gdy ktoś sam wpisał założenia (ruch, konwersja, wartość zamówienia, wzrost).
   const hasRoiAssumptions = monthlyVisitors > 0 && currentConvRate > 0 && avgOrderValue > 0 && projectedLiftPct > 0;
-  const shownTab = !hasScan && !["roi-calculator", "monitoring", "crm", "bulk", "packages"].includes(activeTab) ? "empty-state" : activeTab;
+  const shownTab = !hasScan && !["roi-calculator", "monitoring", "crm", "bulk", "packages", "status"].includes(activeTab) ? "empty-state" : activeTab;
 
   const pageWeight = currentReport.pageWeight || { totalKb: 0, requestCount: 0, jsKb: 0, imagesKb: 0, cssKb: 0, fontsKb: 0, serverResponseMs: 0, thirdPartyBlockingMs: 0 };
 
@@ -1375,6 +1394,7 @@ export function useAppState() {
     filteredCrmClients,
     crmMetrics,
     unseenAlerts,
+    statusDown,
     handleMarkAlertsSeen,
     handleRunPsi,
     hasScan,
