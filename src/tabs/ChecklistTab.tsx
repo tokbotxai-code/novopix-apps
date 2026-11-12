@@ -68,7 +68,7 @@ export default function ChecklistTab({ app }: { app: AppState }) {
                         <div className="text-[11px] text-slate-500 mt-0.5">{act.description}</div>
                       </div>
                     </div>
-                    <span className="text-xs font-mono font-bold text-emerald-700 shrink-0">{act.impact}</span>
+                    <span className="text-xs font-mono font-bold text-emerald-700 shrink-0">{app.roiAllowed ? act.impact : act.impact.replace(/^[\d.,]+h\s*·\s*/, "")}</span>
                   </div>
                 ))}
               </div>

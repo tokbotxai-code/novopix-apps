@@ -185,7 +185,7 @@ export default function OverviewTab({ app }: { app: AppState }) {
 
                     )}
 
-                    {(viewMode === "client" || isPublicMode) && (
+                    {app.roiAllowed && (
 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
                       <div className="text-xs font-semibold text-slate-500">
                         {isPolish ? "Koszt kompleksowej naprawy" : "Turnkey Remediation Cost"}
@@ -227,8 +227,8 @@ export default function OverviewTab({ app }: { app: AppState }) {
                               ? "Poproś o wycenę napraw"
                               : "Request a quote for the fixes"
                             : isPolish
-                            ? `Akceptuję Kosztorys (${scopeSummary.netPrice} ${currency}) i Zamawiam Wdrożenie`
-                            : `Accept Proposal (${scopeSummary.netPrice} ${currency}) & Order Fix`}
+                            ? "Akceptuję ofertę i zamawiam wdrożenie"
+                            : "Accept proposal & order the fix"}
                         </span>
                       </button>
                     ) : (
@@ -360,10 +360,12 @@ export default function OverviewTab({ app }: { app: AppState }) {
                         </div>
                         <div className="flex items-center gap-3 text-xs font-mono tabular-nums">
                           {issue.displayValue && <span className="text-emerald-700 font-semibold">{issue.displayValue}</span>}
+{app.roiAllowed && (<>
                           <span className="text-slate-400">·</span>
                           <span className="font-bold text-slate-700">
                             {issue.estimatedHours ?? 2.0}h ({Math.round((issue.estimatedHours ?? 2.0) * hourlyRate)} {currency})
                           </span>
+</>)}
                         </div>
                       </div>
                       <p className="text-xs text-slate-600">{issue.description}</p>

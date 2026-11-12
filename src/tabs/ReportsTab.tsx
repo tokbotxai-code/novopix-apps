@@ -74,6 +74,7 @@ export default function ReportsTab({ app }: { app: AppState }) {
                     />
                   </div>
 
+                  {app.roiAllowed && (
                   <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
                     <input
                       type="checkbox"
@@ -87,6 +88,7 @@ export default function ReportsTab({ app }: { app: AppState }) {
                         : `Include hourly quote (${scopeSummary.totalHours}h = ${scopeSummary.netPrice} ${currency}) & ROI table in exported report`}
                     </span>
                   </label>
+                  )}
 
                   <div className="flex flex-wrap gap-3 pt-2">
                     <button

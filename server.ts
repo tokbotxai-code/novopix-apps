@@ -212,6 +212,20 @@ app.post("/api/settings/change-pin", requireAgencyAuth, (_req, res) => {
 });
 
 // --- AI Growth Advisor & Sales Pitch Endpoint (Legally Safe Engineering Claims) ---
+// Tryb publiczny: odpowiedź AI Advisor bez godzin, kwot i skryptów sprzedażowych (te widzi tylko agencja).
+function publicAdvisor(a: any): any {
+  if (APP_MODE !== "public" || !a || typeof a !== "object") return a;
+  const money = /\b\d[\d\s.,]*\s?(PLN|GBP|EUR|zł|£|€)|[£€]\s?\d[\d.,]*|\b\d+([.,]\d+)?\s?(h|rbh|godz\w*|hours?|roboczogodzin\w*)\b/gi;
+  const clean = (v: any): any => (typeof v === "string" ? v.replace(money, "").replace(/\(\s*\)/g, "").replace(/\s{2,}/g, " ").trim() : v);
+  const out: any = { ...a, summary: clean(a.summary), businessLossAnalysis: clean(a.businessLossAnalysis) };
+  if (Array.isArray(a.topOpportunities)) out.topOpportunities = a.topOpportunities.map((o: any) => ({ title: clean(o.title), impact: clean(o.impact), action: clean(o.action), roiLift: clean(o.roiLift) }));
+  if (Array.isArray(a.remediationPlan)) out.remediationPlan = a.remediationPlan.map((ph: any) => ({ step: ph.step, title: clean(ph.title), desc: clean(ph.desc) }));
+  delete out.salesScripts;
+  delete out.clientPitch;
+  delete out.estimatedRoi;
+  return out;
+}
+
 app.post("/api/ai-advisor", async (req, res) => {
   // Ochrona klucza AI: limit na IP (8 / 10 min) i dzienny limit całkowity (300).
   const advisorIp = req.ip || "local";
@@ -313,7 +327,7 @@ app.post("/api/ai-advisor", async (req, res) => {
     });
 
     if (!ai) {
-      return res.json({ advisor: buildFallbackAdvisor() });
+      return res.json({ advisor: publicAdvisor(buildFallbackAdvisor()) });
     }
 
     const prompt = `You are a Principal Web Performance & Technical SEO Agency Strategist at NovoPix Digital Studio.
@@ -397,11 +411,11 @@ Respond strictly in JSON matching the schema.`;
 
     const jsonStr = (response.text ?? "{}").trim();
     const advisorData = JSON.parse(jsonStr);
-    return res.json({ advisor: advisorData });
+    return res.json({ advisor: publicAdvisor(advisorData) });
   } catch (err: any) {
     console.warn("AI Advisor fallback used:", err?.message);
     return res.json({
-      advisor: {
+      advisor: publicAdvisor({
         summary: `Audyt techniczny domeny ${req.body?.website || ""} wykazał wynik ${req.body?.overallScore || 65}/100. Optymalizacja wskaźników Core Web Vitals oraz uporządkowanie struktury H1-H6 i meta tagów poprawi szybkość ładowania na urządzeniach mobilnych oraz czytelność dla robotów Google.`,
         businessLossAnalysis:
           "Strony ładujące się wolniej na urządzeniach mobilnych częściej tracą odwiedzających przed zapoznaniem się z ofertą.",
@@ -440,7 +454,7 @@ Respond strictly in JSON matching the schema.`;
         },
         clientPitch: `Optymalizacja inżynieryjna strony ${req.body?.website || ""} ukierunkowana na wynik 90+ z raportem przed i po wdrożeniu.`,
         estimatedRoi: "Mniejsza utrata odwiedzających na telefonach i lepsza indeksacja w Google",
-      },
+      }),
     });
   }
 });

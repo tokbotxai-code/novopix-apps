@@ -96,10 +96,12 @@ export default function InsightsTab({ app }: { app: AppState }) {
                           <span className={issue.priority === "high" ? "text-rose-700 font-bold uppercase" : "text-amber-700 font-bold uppercase"}>
                             {issue.priority}
                           </span>
+{app.roiAllowed && (<>
                           <span>·</span>
                           <span className="font-bold text-slate-800">
                             {issue.estimatedHours ?? 2}h ({Math.round((issue.estimatedHours ?? 2) * hourlyRate)} {currency})
                           </span>
+</>)}
                         </div>
                       </div>
                       <p className="text-xs text-slate-600">{issue.description}</p>

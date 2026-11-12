@@ -56,15 +56,42 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
 
   try {
     const psiApiKey = process.env.PAGESPEED_API_KEY || "";
-    const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(
+    const psiBase = process.env.PSI_API_BASE || "https://www.googleapis.com"; // nadpisywane tylko w testach (atrapa)
+    const apiUrl = `${psiBase}/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(
       targetUrl
     )}&strategy=${strategy}&category=PERFORMANCE&category=SEO&category=ACCESSIBILITY&category=BEST_PRACTICES${
       psiApiKey ? `&key=${psiApiKey}` : ""
     }`;
 
-    const psiResponse = await fetch(apiUrl, { signal: AbortSignal.timeout(20000) });
-    if (psiResponse.ok) {
-      const data = await psiResponse.json();
+    // Pełny pomiar bywa chwilowo niedostępny (timeout, 5xx, brak wyniku Lighthouse): jedno ponowienie po 3 s,
+    // dopiero potem pomiar częściowy. Błędy 4xx (np. limit zapytań) nie są ponawiane. Łącznie maks. ok. 53 s.
+    let psiData: any = null;
+    const psiAttempt = async (ms: number): Promise<{ response: Response; retry: boolean }> => {
+      const response = await fetch(apiUrl, { signal: AbortSignal.timeout(ms) });
+      if (response.ok) {
+        psiData = await response.clone().json().catch(() => null);
+        const complete = !!psiData?.lighthouseResult?.categories?.performance;
+        if (!complete) psiData = null;
+        return { response, retry: !complete };
+      }
+      return { response, retry: response.status >= 500 };
+    };
+    let psiResponse: Response;
+    let psiIncomplete = false;
+    try {
+      const first = await psiAttempt(20000);
+      if (first.retry) throw new Error("retry");
+      psiResponse = first.response;
+    } catch {
+      await new Promise((r) => setTimeout(r, Number(process.env.PSI_RETRY_PAUSE_MS) || 3000));
+      const second = await psiAttempt(30000);
+      psiResponse = second.response;
+      psiIncomplete = second.retry && second.response.ok;
+    }
+    if (psiIncomplete) {
+      psiErrorReason = "Google PageSpeed API nie zwróciło wyniku Lighthouse";
+    } else if (psiResponse.ok) {
+      const data = psiData;
       const lighthouse = data.lighthouseResult || {};
       const categories = lighthouse.categories || {};
       const audits = lighthouse.audits || {};

@@ -252,10 +252,12 @@ export default function App() {
         {/* Sidebar Footer Summary */}
         <div className="p-4 border-t border-[#8fd8ff]/15">
           <div className="p-3 rounded-xl bg-[#103247]/90 border border-[#8fd8ff]/20 mb-2">
+            {app.roiAllowed && (
             <div className="text-[11px] font-bold text-white mb-0.5">
               {isPolish ? "Bieżąca Wycena Naprawy" : "Current Fix Quote"}
             </div>
-            {hasScan ? (
+            )}
+            {!app.roiAllowed ? null : hasScan ? (
               <div className="text-base font-mono font-extrabold text-[#ffc233] tabular-nums">
                 {scopeSummary.netPrice} {currency} <span className="text-[10px] font-normal text-[#bcd6e6]">({scopeSummary.totalHours}h)</span>
               </div>
@@ -364,8 +366,8 @@ export default function App() {
                   : "Request a quote"
                 : viewMode === "client"
                 ? isPolish
-                  ? `Akceptuję Kosztorys (${scopeSummary.netPrice} ${currency})`
-                  : `Accept Proposal (${scopeSummary.netPrice} ${currency})`
+                  ? "Akceptuję ofertę"
+                  : "Accept proposal"
                 : isPolish
                 ? "Utwórz ofertę"
                 : "Create offer"}
@@ -397,8 +399,8 @@ export default function App() {
                 <strong>{isPolish ? `Oficjalny Pokój Ofertowy dla: ${clientName}` : `Official Proposal Deal Room for: ${clientName}`}</strong>{" "}
                 —{" "}
                 {isPolish
-                  ? `Kompleksowe wdrożenie audytu (${scopeSummary.totalHours}h = ${scopeSummary.netPrice} ${currency} netto) ukierunkowane na wynik 90+ z raportem przed i po wdrożeniu. Poufne moduły wewnętrzne agencji są ukryte.`
-                  : `Turnkey engineering remediation (${scopeSummary.totalHours}h = ${scopeSummary.netPrice} ${currency} net) targeting 90+ scores with documented before/after measurements.`}
+                  ? "Wyniki pomiaru i lista problemów Twojej strony. Wycenę otrzymasz w ofercie od NovoPix."
+                  : "Measurement results and the list of issues for your website. You will receive the quote in the offer from NovoPix."}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -434,6 +436,8 @@ export default function App() {
                       ? isPolish ? "brak pomiaru ogólnego (pomiar częściowy)" : "no overall score (partial measurement)"
                       : `${currentReport.overallScore}/100 (${currentReport.overallLabel})`}
                   </span>
+                  {app.roiAllowed && (
+                    <>
                   <span aria-hidden="true">·</span>
                   <span>
                     {isPolish ? "Wstępna wycena:" : "Preliminary quote:"}{" "}
@@ -441,6 +445,8 @@ export default function App() {
                       {scopeSummary.netPrice} {currency} ({scopeSummary.totalHours}h)
                     </strong>
                   </span>
+                    </>
+                  )}
                   <span aria-hidden="true">·</span>
                   <span className="text-slate-400 font-mono tabular-nums">
                     {new Date(currentReport.scannedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}

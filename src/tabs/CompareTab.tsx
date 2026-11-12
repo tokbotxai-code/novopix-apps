@@ -134,8 +134,8 @@ export default function CompareTab({ app }: { app: AppState }) {
                         <p className="text-xs text-slate-300 leading-relaxed">
                           {delta < 0
                             ? isPolish
-                              ? `Strona konkurenta wyprzedza badaną witrynę o ${Math.abs(delta)} punktów. Po wdrożeniu naszego planu naprawczego (${scopeSummary.totalHours}h) wynik wzrośnie do ~94/100, dając bezpośrednią przewagę w Google.`
-                              : `Competitor leads by ${Math.abs(delta)} points. Implementing our ${scopeSummary.totalHours}h remediation lifts the score to ~94/100, overtaking them.`
+                              ? `Strona konkurenta wyprzedza badaną witrynę o ${Math.abs(delta)} punktów w tym pomiarze. Lista problemów pokazuje, co warto poprawić w pierwszej kolejności.`
+                              : `The competitor leads by ${Math.abs(delta)} points in this measurement. The issue list shows what to fix first.`
                             : isPolish
                             ? `Badana witryna ma obecnie przewagę +${delta} pkt, ale dalsza optymalizacja LCP i Schema.org pozwoli trwale zablokować konkurencję na pozycjach TOP 3.`
                             : `Your site currently leads by +${delta} pts; optimizing LCP and Schema.org will lock in TOP 3 rankings.`}

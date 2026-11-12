@@ -1043,7 +1043,8 @@ export function useAppState() {
   // Standalone White-Label HTML Report Export
   const handleDownloadHtmlReport = () => {
     const domain = currentReport.scannedUrl.replace(/^https?:\/\//, "").replace(/\/.*$/, "") || "raport";
-    const quoteHtml = includeQuoteInReport
+    // Kosztorys w eksporcie HTML tylko dla zalogowanej agencji (klient i tryb publiczny nie dostają kwot ani godzin).
+    const quoteHtml = includeQuoteInReport && !isPublicMode && viewMode === "agency" && !!agencyToken
       ? `
       <div class="card" style="border: 2px solid #10b981; background: #f0fdf4;">
         <h2 style="margin-top:0; color:#065f46;">Kosztorys Wdrożenia & Prognoza Zwrotu z Inwestycji (ROI)</h2>
