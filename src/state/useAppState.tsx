@@ -5,16 +5,44 @@ import { copyText } from "../utils/clipboard";
 import { localizeDeep } from "../utils/localize";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
+// Parametry startowe z adresu, np. z formularza na novopix.uk: ?url=firma.pl&lang=pl|en&autoscan=1.
+// Skan uruchamia ta sama funkcja co przycisk „Skanuj”, więc walidacja adresu i limity po stronie serwera są identyczne.
+export function readStartParams(search: string): { lang: "pl" | "en" | null; url: string; autoscan: boolean; clientView: boolean } {
+  try {
+    const p = new URLSearchParams(search);
+    const lang = (p.get("lang") || "").toLowerCase();
+    return {
+      lang: lang === "pl" || lang === "en" ? lang : null,
+      url: (p.get("url") || "").trim().slice(0, 300),
+      autoscan: p.get("autoscan") === "1",
+      clientView: p.get("clientView") === "1",
+    };
+  } catch {
+    return { lang: null, url: "", autoscan: false, clientView: false };
+  }
+}
+
+// Tryb aplikacji wpisany przez serwer do HTML (meta app-mode); w trybie deweloperskim brak znacznika, wtedy decyduje /api/config.
+function readInitialPublicMode(): boolean {
+  try {
+    return document.querySelector('meta[name="app-mode"]')?.getAttribute("content") === "public";
+  } catch {
+    return false;
+  }
+}
+
 export function useAppState() {
-  const [isPolish, setIsPolish] = useState<boolean>(true);
+  const startParams = useRef(readStartParams(typeof window !== "undefined" ? window.location.search : "")).current;
+  const initialPublic = useRef(readInitialPublicMode()).current;
+  const [isPolish, setIsPolish] = useState<boolean>(startParams.lang ? startParams.lang === "pl" : true);
   const [activeTab, setActiveTab] = useState<string>("overview");
-  const [urlInput, setUrlInput] = useState<string>("");
+  const [urlInput, setUrlInput] = useState<string>(startParams.clientView ? "" : startParams.url);
   const [strategy, setStrategy] = useState<"mobile" | "desktop">("mobile");
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   // Agency Mode vs Client Pitch Mode (protects know-how & hides internal CRM)
-  const [viewMode, setViewMode] = useState<"agency" | "client">("agency");
+  const [viewMode, setViewMode] = useState<"agency" | "client">(initialPublic ? "client" : "agency");
 
   // Core Audit & Live SEO State
   const [rawReport, setCurrentReport] = useState<AuditReport>(EMPTY_AUDIT);
@@ -94,8 +122,8 @@ export function useAppState() {
   const [isAcceptProposalOpen, setIsAcceptProposalOpen] = useState<boolean>(false);
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState<boolean>(false);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState<boolean>(false);
-  const [isClientLinkLocked, setIsClientLinkLocked] = useState<boolean>(false);
-  const [isPublicMode, setIsPublicMode] = useState<boolean>(false);
+  const [isClientLinkLocked, setIsClientLinkLocked] = useState<boolean>(initialPublic);
+  const [isPublicMode, setIsPublicMode] = useState<boolean>(initialPublic);
   const [isPinModalOpen, setIsPinModalOpen] = useState<boolean>(false);
   const [pinAttempt, setPinAttempt] = useState<string>("");
   const [pinError, setPinError] = useState<string | null>(null);
@@ -367,6 +395,24 @@ export function useAppState() {
       }
     }
   }, []);
+
+  // Start z adresu (?url=...&autoscan=1): skan rusza po pierwszym renderze, tą samą ścieżką co przycisk „Skanuj”.
+  const [autoscanPending, setAutoscanPending] = useState<boolean>(false);
+  useEffect(() => {
+    if (!startParams.clientView && startParams.url && startParams.autoscan) setAutoscanPending(true);
+  }, []);
+  useEffect(() => {
+    if (!autoscanPending) return;
+    setAutoscanPending(false);
+    // Usuń autoscan z adresu, żeby odświeżenie strony nie uruchamiało skanu drugi raz.
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.delete("autoscan");
+      const q = u.searchParams.toString();
+      window.history.replaceState(null, "", u.pathname + (q ? "?" + q : "") + u.hash);
+    } catch {}
+    handleRunScan(startParams.url);
+  }, [autoscanPending]);
 
   // Load saved history and check server-side session token status on mount
   useEffect(() => {

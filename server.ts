@@ -75,6 +75,25 @@ app.get("/api/config", (_req, res) => {
   res.json({ mode: APP_MODE });
 });
 
+// Panel agencji nie jest dla wyszukiwarek: nagłówek noindex na każdej odpowiedzi.
+if (APP_MODE === "agency") {
+  app.use((_req, res, next) => {
+    res.setHeader("X-Robots-Tag", "noindex, nofollow");
+    next();
+  });
+}
+
+// Prawdziwy robots.txt (wcześniej zwracany był HTML aplikacji).
+const ROBOTS_TXT =
+  APP_MODE === "agency"
+    ? "User-agent: *\nDisallow: /\n"
+    : // Wyszukiwarki: bez /api/ i /r/. Podglądy linków w komunikatorach i mediach społecznościowych nadal mogą pobrać /r/<id> (strona ma noindex).
+      "User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /r/\n\n" +
+      "User-agent: Twitterbot\nUser-agent: facebookexternalhit\nUser-agent: LinkedInBot\nUser-agent: Slackbot\nUser-agent: WhatsApp\nUser-agent: TelegramBot\nAllow: /r/\nDisallow: /api/\n";
+app.get("/robots.txt", (_req, res) => {
+  res.type("text/plain").set("Cache-Control", "public, max-age=3600").send(ROBOTS_TXT);
+});
+
 // --- Public scanner mode: no CRM, no auth, no data. Leads are forwarded to the agency service. ---
 async function forwardToAgency(pathname: string, method: "GET" | "POST" | "DELETE", body?: unknown) {
   const base = String(process.env.AGENCY_API_URL || "").replace(/\/$/, "");
@@ -911,10 +930,20 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    app.use(express.static("dist"));
-    app.get("*", (_req, res) => {
-      res.sendFile(path.join(process.cwd(), "dist", "index.html"));
-    });
+    const dist = path.join(process.cwd(), "dist");
+    // Tryb aplikacji trafia do HTML, żeby pierwszy render nie przeskakiwał między widokami (mniejsze CLS).
+    const indexHtml = fs
+      .readFileSync(path.join(dist, "index.html"), "utf8")
+      .replace("<head>", `<head>\n    <meta name="app-mode" content="${APP_MODE}" />`);
+    const sendIndex = (_req: express.Request, res: express.Response) => {
+      res.type("html").set("Cache-Control", "no-cache").send(indexHtml);
+    };
+    app.get(["/", "/index.html"], sendIndex);
+    // Pliki z hashem w nazwie (dist/assets) nie zmieniają się: długi cache. Brak pliku = 404, nie HTML aplikacji.
+    app.use("/assets", express.static(path.join(dist, "assets"), { immutable: true, maxAge: "1y", index: false }));
+    app.use("/assets", (_req, res) => res.status(404).type("text/plain").send("Not found"));
+    app.use(express.static(dist, { index: false, maxAge: "1h" }));
+    app.get("*", sendIndex);
   }
 
   app.listen(PORT, () => {

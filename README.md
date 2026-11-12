@@ -20,4 +20,8 @@ Nic nie wychodzi do klienta bez zatwierdzenia. Zmiana treści po zatwierdzeniu w
 - **Zmienne środowiskowe** (tylko w `.env` na serwerze, nigdy w repozytorium): `AGENCY_PIN`, `INTERNAL_TOKEN`, `PAGESPEED_API_KEY`, `GEMINI_API_KEY`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, opcjonalnie `SMTP_FROM`, `ALERT_EMAIL`. Konfiguracja SMTP: `deploy/vps/README.md`.
 - **Dane**: `data/scanner-db.json` (wolumen). Nowe pola są opcjonalne, więc starsza baza wczytuje się bez zmian.
 
-Struktura kodu frontendu: `src/state/useAppState.tsx` (stan i akcje), `src/tabs/*` (zakładki; agencyjne ładowane leniwie, publiczny skaner ich nie pobiera), `src/components/*` (wspólne komponenty), `src/agencyTypes.ts` (typy panelu).
+- **Start z adresu** (np. formularz na novopix.uk): `?url=firma.pl&lang=pl|en&autoscan=1`. `lang` ustawia język, `url` wypełnia pole, `autoscan=1` uruchamia skan tą samą ścieżką co przycisk (ta sama walidacja adresu i limity); po starcie `autoscan` znika z adresu.
+- **Wyszukiwarki**: `/robots.txt` jest prawdziwym plikiem tekstowym (skaner: bez `/api/` i `/r/`; panel: `Disallow: /` oraz nagłówek `X-Robots-Tag: noindex, nofollow`). Pliki z hashem w `dist/assets` mają długi cache, HTML `no-cache`.
+- **Nagłówki bezpieczeństwa** wszystkich hostów VPS ustawia `deploy/vps/Caddyfile` (HSTS, `nosniff`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`; aparat dozwolony tylko w FridgeBite).
+
+Struktura kodu frontendu: `src/state/useAppState.tsx` (stan i akcje), `src/tabs/*` (wszystkie zakładki, lejek i okna modalne ładowane leniwie, dopiero gdy są potrzebne), `src/components/*` (wspólne komponenty), `src/agencyTypes.ts` (typy panelu).

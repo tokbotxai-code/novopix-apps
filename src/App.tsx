@@ -1,23 +1,26 @@
-import PublicFunnel from "./components/PublicFunnel";
-import { AcceptProposalModal } from "./components/AcceptProposalModal";
 import { AuditIntegrityBanner } from "./components/AuditIntegrityBanner";
 import { Calculator, CheckCircle2, CircleHelp, Copy, Download, Eye, Globe, Lock, Monitor, Printer, RefreshCw, Search, Share2, Shield, ShieldCheck, Smartphone, X } from "lucide-react";
 import { InfoModal } from "./components/InfoModal";
 import { NovoPixAnimatedMark } from "./components/NovoPixAnimatedMark";
-import { QuoteModal } from "./components/QuoteModal";
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useEffect, useRef } from "react";
 import { useAppState } from "./state/useAppState";
-import OverviewTab from "./tabs/OverviewTab";
-import AiAdvisorTab from "./tabs/AiAdvisorTab";
-import SeoTab from "./tabs/SeoTab";
-import PerformanceTab from "./tabs/PerformanceTab";
-import InsightsTab from "./tabs/InsightsTab";
-import CompareTab from "./tabs/CompareTab";
-import WebScoreTab from "./tabs/WebScoreTab";
-import DiagnosticsTab from "./tabs/DiagnosticsTab";
-import AccessibilityTab from "./tabs/AccessibilityTab";
-import ChecklistTab from "./tabs/ChecklistTab";
 
+// Wszystkie zakładki, lejek i okna modalne ładują się dopiero wtedy, gdy są potrzebne (mniejszy plik startowy).
+const loadOverviewTab = () => import("./tabs/OverviewTab");
+const loadPublicFunnel = () => import("./components/PublicFunnel");
+const OverviewTab = lazy(loadOverviewTab);
+const PublicFunnel = lazy(loadPublicFunnel);
+const AiAdvisorTab = lazy(() => import("./tabs/AiAdvisorTab"));
+const SeoTab = lazy(() => import("./tabs/SeoTab"));
+const PerformanceTab = lazy(() => import("./tabs/PerformanceTab"));
+const InsightsTab = lazy(() => import("./tabs/InsightsTab"));
+const CompareTab = lazy(() => import("./tabs/CompareTab"));
+const WebScoreTab = lazy(() => import("./tabs/WebScoreTab"));
+const DiagnosticsTab = lazy(() => import("./tabs/DiagnosticsTab"));
+const AccessibilityTab = lazy(() => import("./tabs/AccessibilityTab"));
+const ChecklistTab = lazy(() => import("./tabs/ChecklistTab"));
+const QuoteModal = lazy(() => import("./components/QuoteModal").then((m) => ({ default: m.QuoteModal })));
+const AcceptProposalModal = lazy(() => import("./components/AcceptProposalModal").then((m) => ({ default: m.AcceptProposalModal })));
 const BulkTab = lazy(() => import("./tabs/BulkTab"));
 const PackagesTab = lazy(() => import("./tabs/PackagesTab"));
 const RoiCalculatorTab = lazy(() => import("./tabs/RoiCalculatorTab"));
@@ -25,6 +28,12 @@ const MonitoringTab = lazy(() => import("./tabs/MonitoringTab"));
 const StatusTab = lazy(() => import("./tabs/StatusTab"));
 const CrmTab = lazy(() => import("./tabs/CrmTab"));
 const ReportsTab = lazy(() => import("./tabs/ReportsTab"));
+
+function useLatch(value: boolean): boolean {
+  const ref = useRef(false);
+  if (value) ref.current = true;
+  return ref.current;
+}
 
 function TabFallback({ isPolish }: { isPolish: boolean }) {
   return <div className="text-xs text-slate-500 p-3">{isPolish ? "Ładowanie…" : "Loading…"}</div>;
@@ -88,6 +97,15 @@ export default function App() {
     viewMode,
     workspaceTabs,
   } = app;
+  // Okna modalne: kod pobierany przy pierwszym otwarciu, potem okno zostaje zamontowane (stan formularza jak dotąd).
+  const quoteEverOpen = useLatch(isQuoteOpen);
+  const acceptEverOpen = useLatch(isAcceptProposalOpen);
+  // Gdy rusza skan, pobierz z wyprzedzeniem widok wyników, żeby pojawił się bez opóźnienia.
+  useEffect(() => {
+    if (!isScanning) return;
+    loadOverviewTab().catch(() => {});
+    if (isPublicMode) loadPublicFunnel().catch(() => {});
+  }, [isScanning, isPublicMode]);
   return (
     <div className="min-h-screen bg-[#F4F6F9] flex flex-col lg:flex-row text-slate-800 font-sans selection:bg-emerald-500/30">
       {/* Login status badge (agency panel only) */}
@@ -523,7 +541,7 @@ export default function App() {
                   type="button"
                   onClick={() => setStrategy("mobile")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                    strategy === "mobile" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
+                    strategy === "mobile" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-800"
                   }`}
                 >
                   <Smartphone className="w-3.5 h-3.5" />
@@ -533,7 +551,7 @@ export default function App() {
                   type="button"
                   onClick={() => setStrategy("desktop")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                    strategy === "desktop" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-800"
+                    strategy === "desktop" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-800"
                   }`}
                 >
                   <Monitor className="w-3.5 h-3.5" />
@@ -544,7 +562,7 @@ export default function App() {
               <button
                 type="submit"
                 disabled={isScanning}
-                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer whitespace-nowrap"
+                className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer whitespace-nowrap"
               >
                 {isScanning ? (
                   <>
@@ -631,15 +649,23 @@ export default function App() {
           {/* TAB 1: OVERVIEW (AURA EXECUTIVE OVERVIEW)                         */}
           {/* ================================================================= */}
           {shownTab === "overview" && (
-            <OverviewTab app={app} />
+            <Suspense fallback={<TabFallback isPolish={isPolish} />}>
+              <OverviewTab app={app} />
+            </Suspense>
           )}
-          {shownTab === "overview" && isPublicMode && <PublicFunnel app={app} />}
+          {shownTab === "overview" && isPublicMode && (
+            <Suspense fallback={null}>
+              <PublicFunnel app={app} />
+            </Suspense>
+          )}
 
           {/* ================================================================= */}
           {/* TAB 2: AI GROWTH ADVISOR & SALES SCRIPT GENERATOR                 */}
           {/* ================================================================= */}
           {shownTab === "ai-advisor" && (
-            <AiAdvisorTab app={app} />
+            <Suspense fallback={<TabFallback isPolish={isPolish} />}>
+              <AiAdvisorTab app={app} />
+            </Suspense>
           )}
 
           {/* ================================================================= */}
@@ -655,28 +681,36 @@ export default function App() {
           {/* TAB 4: DEEP TECHNICAL SEO & LIVE HTML INSPECTOR                   */}
           {/* ================================================================= */}
           {shownTab === "seo" && (
-            <SeoTab app={app} />
+            <Suspense fallback={<TabFallback isPolish={isPolish} />}>
+              <SeoTab app={app} />
+            </Suspense>
           )}
 
           {/* ================================================================= */}
           {/* TAB 5: ADVANCED PERFORMANCE & CORE WEB VITALS                     */}
           {/* ================================================================= */}
           {shownTab === "performance" && (
-            <PerformanceTab app={app} />
+            <Suspense fallback={<TabFallback isPolish={isPolish} />}>
+              <PerformanceTab app={app} />
+            </Suspense>
           )}
 
           {/* ================================================================= */}
           {/* TAB 6: INSIGHTS, RESOURCE PAGE WEIGHT & ISSUE DETECTION           */}
           {/* ================================================================= */}
           {shownTab === "insights" && (
-            <InsightsTab app={app} />
+            <Suspense fallback={<TabFallback isPolish={isPolish} />}>
+              <InsightsTab app={app} />
+            </Suspense>
           )}
 
           {/* ================================================================= */}
           {/* TAB 7: COMPETITOR ANALYSIS (HEAD-TO-HEAD 1:1 + DELTA VERDICT)     */}
           {/* ================================================================= */}
           {shownTab === "compare" && (
-            <CompareTab app={app} />
+            <Suspense fallback={<TabFallback isPolish={isPolish} />}>
+              <CompareTab app={app} />
+            </Suspense>
           )}
 
           {/* ================================================================= */}
@@ -750,28 +784,36 @@ export default function App() {
           {/* TAB 11: WEBSCORE EVOLUTION & LOCAL SCAN HISTORY                   */}
           {/* ================================================================= */}
           {shownTab === "webscore" && (
-            <WebScoreTab app={app} />
+            <Suspense fallback={<TabFallback isPolish={isPolish} />}>
+              <WebScoreTab app={app} />
+            </Suspense>
           )}
 
           {/* ================================================================= */}
           {/* TAB 12: CRAWL DIAGNOSTICS (DYNAMIC ON-PAGE MATRIX)                */}
           {/* ================================================================= */}
           {shownTab === "diagnostics" && (
-            <DiagnosticsTab app={app} />
+            <Suspense fallback={<TabFallback isPolish={isPolish} />}>
+              <DiagnosticsTab app={app} />
+            </Suspense>
           )}
 
           {/* ================================================================= */}
           {/* TAB 13: WCAG 2.1 AA ACCESSIBILITY & EAA LEGAL AUDIT               */}
           {/* ================================================================= */}
           {shownTab === "accessibility" && (
-            <AccessibilityTab app={app} />
+            <Suspense fallback={<TabFallback isPolish={isPolish} />}>
+              <AccessibilityTab app={app} />
+            </Suspense>
           )}
 
           {/* ================================================================= */}
           {/* TAB 14: INTERACTIVE REMEDIATION CHECKLIST                         */}
           {/* ================================================================= */}
           {shownTab === "checklist" && (
-            <ChecklistTab app={app} />
+            <Suspense fallback={<TabFallback isPolish={isPolish} />}>
+              <ChecklistTab app={app} />
+            </Suspense>
           )}
         </main>
 
@@ -800,6 +842,8 @@ export default function App() {
       </div>
 
       {/* 1-Click Client Proposal Acceptance Modal (Deal Room Closing) */}
+      {acceptEverOpen && (
+      <Suspense fallback={null}>
       <AcceptProposalModal
         isOpen={isAcceptProposalOpen}
         onClose={() => setIsAcceptProposalOpen(false)}
@@ -823,8 +867,12 @@ export default function App() {
           showToast(isPolish ? "Oferta zaakceptowana! Zaktualizowano status w CRM na Zaakceptowano." : "Proposal accepted! CRM updated.");
         }}
       />
+      </Suspense>
+      )}
 
       {/* Quote & Lead Capture Modal */}
+      {quoteEverOpen && (
+      <Suspense fallback={null}>
       <QuoteModal
         isOpen={isQuoteOpen}
         onClose={() => setIsQuoteOpen(false)}
@@ -839,6 +887,8 @@ export default function App() {
           }
         }}
       />
+      </Suspense>
+      )}
 
       {/* Sales & How It Works Modal */}
       {isHowItWorksOpen && (
