@@ -97,7 +97,7 @@ if (APP_MODE === "public") {
       const out = await forwardToAgency(path, "POST", req.body);
       return res.status(out.status).json(out.data);
     } catch {
-      return res.status(502).json({ error: "Nie udało się przekazać zgłoszenia do agencji. Spróbuj ponownie za minutę lub napisz na contact@pepsafe.info." });
+      return res.status(502).json({ error: "Nie udało się przekazać zgłoszenia do agencji. Spróbuj ponownie za minutę lub napisz na contact@novopix.uk." });
     }
   };
   // Zgłoszenie z formularza wyceny: wynik pomiaru dołączamy po stronie serwera (scanId), nie z przeglądarki.

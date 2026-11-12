@@ -90,7 +90,7 @@ export function QuoteModal({
       const body = encodeURIComponent(
         `Name: ${name}\nEmail: ${email}\nPhone: ${phone}\nWebsite: ${targetUrl}\nScore: ${report.overallScore}/100\nEstimated Quote: ${estimatedBudget} ${currency}\n\nDetails:\n${details}`
       );
-      window.location.href = `mailto:contact@pepsafe.info?subject=${subject}&body=${body}`;
+      window.location.href = `mailto:contact@novopix.uk?subject=${subject}&body=${body}`;
       setSubmitted(true);
     } finally {
       setIsSubmitting(false);

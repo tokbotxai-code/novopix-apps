@@ -260,7 +260,7 @@ export default function App() {
               </span>
             </button>
           </div>
-          <div className="text-[10px] text-[#bcd6e6]/70 text-center">NovoPix · novopix.uk · contact@pepsafe.info</div>
+          <div className="text-[10px] text-[#bcd6e6]/70 text-center">NovoPix · novopix.uk · contact@novopix.uk</div>
         </div>
       </aside>
 
@@ -775,8 +775,8 @@ export default function App() {
             <button onClick={() => setIsPrivacyOpen(true)} className="hover:text-slate-900 transition-colors cursor-pointer">
               {isPolish ? "Bezpieczeństwo i API" : "Privacy & API"}
             </button>
-            <a href="mailto:contact@pepsafe.info" className="hover:text-slate-900 font-mono">
-              contact@pepsafe.info
+            <a href="mailto:contact@novopix.uk" className="hover:text-slate-900 font-mono">
+              contact@novopix.uk
             </a>
             <a href="https://novopix.uk/" target="_blank" rel="noopener noreferrer" className="text-emerald-700 hover:text-emerald-800 font-bold">
               novopix.uk ↗
