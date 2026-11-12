@@ -2,32 +2,62 @@
 	email contact@novopix.uk
 }
 
+# Wspólne nagłówki bezpieczeństwa: każdy host importuje ten blok.
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		defer
+	}
+}
+
 scanner.novopix.uk {
 	encode gzip
+	import security_headers
+	header {
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		defer
+	}
 	reverse_proxy scanner:3000
 }
 
 skaner.novopix.uk {
+	import security_headers
 	redir https://scanner.novopix.uk{uri} permanent
 }
 
 panel.novopix.uk {
 	encode gzip
+	import security_headers
+	header {
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		X-Robots-Tag "noindex, nofollow"
+		defer
+	}
 	reverse_proxy panel:3000
 }
 
 fridgebite.novopix.uk {
 	encode gzip
+	import security_headers
+	# Aparat zostaje dozwolony na tym hoście: skan lodówki.
+	header {
+		Permissions-Policy "camera=(self), microphone=(), geolocation=(), payment=(), usb=()"
+		defer
+	}
 	reverse_proxy fridgebite:3000
 }
 
 pantrypal.novopix.uk {
 	encode gzip
+	import security_headers
+	header {
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		defer
+	}
 	root * /srv/pantrypal
 	try_files {path} /index.html
 	file_server
 }
-
-# Stare adresy -> nowe (po przepięciu DNS)
-# fridgebite.pepsafe.uk { redir https://fridgebite.novopix.uk{uri} permanent }
-# pantrypal.pepsafe.uk  { redir https://pantrypal.novopix.uk{uri} permanent }
