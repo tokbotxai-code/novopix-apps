@@ -1,6 +1,6 @@
 // FridgeBite service worker: offline app shell.
 // HTML and API: network first (fresh data), assets: cache first (fast start).
-const CACHE = "fridgebite-v3";
+const CACHE = "fridgebite-v4";
 const SHELL = ["/", "/manifest.json", "/apple-touch-icon.png", "/pwa-192x192.png", "/pwa-512x512.png"];
 
 self.addEventListener("install", (event) => {
