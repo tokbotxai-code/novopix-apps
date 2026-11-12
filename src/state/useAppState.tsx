@@ -3,7 +3,7 @@ import { AgencyClient, AiAdvisorData, AuditReport, DEFAULT_SCOPE_TASKS, EMPTY_AU
 import { AgencyCtx } from "../agencyTypes";
 import { copyText } from "../utils/clipboard";
 import { localizeDeep } from "../utils/localize";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 export function useAppState() {
   const [isPolish, setIsPolish] = useState<boolean>(true);
@@ -28,10 +28,21 @@ export function useAppState() {
   const [activeScriptTab, setActiveScriptTab] = useState<"coldEmail" | "phonePitch" | "objectionHandler">("coldEmail");
 
   // Dynamic Hourly Scope & ROI Calculator State
-  const [currency, setCurrency] = useState<"PLN" | "GBP" | "EUR">("PLN");
-  const [hourlyRate, setHourlyRate] = useState<number>(150);
-  const [retainerMonthly, setRetainerMonthly] = useState<number>(300);
+  // Domyślne stawki zależą od języka (PL: PLN, 150/h; EN: GBP, 30/h), dopóki użytkownik albo link/oferta nie ustawią własnych wartości.
+  const ratesLocked = useRef(false);
+  const [currency, setCurrencyRaw] = useState<"PLN" | "GBP" | "EUR">("PLN");
+  const [hourlyRate, setHourlyRateRaw] = useState<number>(150);
+  const [retainerMonthly, setRetainerMonthlyRaw] = useState<number>(300);
+  const setCurrency = (v: "PLN" | "GBP" | "EUR") => { ratesLocked.current = true; setCurrencyRaw(v); };
+  const setHourlyRate = (v: number) => { ratesLocked.current = true; setHourlyRateRaw(v); };
+  const setRetainerMonthly = (v: number) => { ratesLocked.current = true; setRetainerMonthlyRaw(v); };
   const [scopeTasks, setScopeTasks] = useState<ScopeTaskItem[]>(DEFAULT_SCOPE_TASKS);
+  useEffect(() => {
+    if (ratesLocked.current) return;
+    setCurrencyRaw(isPolish ? "PLN" : "GBP");
+    setHourlyRateRaw(isPolish ? 150 : 30);
+    setRetainerMonthlyRaw(isPolish ? 300 : 49);
+  }, [isPolish]);
   const [newTaskTitle, setNewTaskTitle] = useState<string>("");
   const [newTaskHours, setNewTaskHours] = useState<number>(2);
 
