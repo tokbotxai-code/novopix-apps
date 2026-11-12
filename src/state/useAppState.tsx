@@ -65,6 +65,8 @@ export function useAppState() {
   const setHourlyRate = (v: number) => { ratesLocked.current = true; setHourlyRateRaw(v); };
   const setRetainerMonthly = (v: number) => { ratesLocked.current = true; setRetainerMonthlyRaw(v); };
   const [scopeTasks, setScopeTasks] = useState<ScopeTaskItem[]>(DEFAULT_SCOPE_TASKS);
+  // Zakładka Kosztorys & ROI jest pusta, dopóki agencja sama nie doda zadań albo nie wczyta ich ze skanu.
+  const [roiStarted, setRoiStarted] = useState<boolean>(false);
   useEffect(() => {
     if (ratesLocked.current) return;
     setCurrencyRaw(isPolish ? "PLN" : "GBP");
@@ -1190,9 +1192,11 @@ export function useAppState() {
       isPublicMode
         ? allWorkspaceTabs.filter((t) => !t.agencyOnly && t.id !== "roi-calculator" && t.id !== "reports")
         : viewMode === "client"
-        ? allWorkspaceTabs.filter((t) => !t.agencyOnly)
-        : allWorkspaceTabs,
-    [viewMode, isPolish, isPublicMode]
+        ? allWorkspaceTabs.filter((t) => !t.agencyOnly && t.id !== "roi-calculator")
+        : agencyToken
+        ? allWorkspaceTabs
+        : allWorkspaceTabs.filter((t) => t.id !== "roi-calculator"),
+    [viewMode, isPolish, isPublicMode, agencyToken]
   );
 
   // Filtered Issues & Checklist
@@ -1286,7 +1290,10 @@ export function useAppState() {
   const hasScan = currentReport.id !== "empty";
   // Scenariusz przychodowy pokazujemy tylko, gdy ktoś sam wpisał założenia (ruch, konwersja, wartość zamówienia, wzrost).
   const hasRoiAssumptions = monthlyVisitors > 0 && currentConvRate > 0 && avgOrderValue > 0 && projectedLiftPct > 0;
-  const shownTab = !hasScan && !["roi-calculator", "monitoring", "crm", "bulk", "packages", "status"].includes(activeTab) ? "empty-state" : activeTab;
+  // Kosztorys & ROI: tylko zalogowana agencja (PIN); klient, tryb publiczny i adres/stan z parametrów go nie otworzą.
+  const roiAllowed = !isPublicMode && viewMode === "agency" && !!agencyToken;
+  const effectiveTab = activeTab === "roi-calculator" && !roiAllowed ? "overview" : activeTab;
+  const shownTab = !hasScan && !["roi-calculator", "monitoring", "crm", "bulk", "packages", "status"].includes(effectiveTab) ? "empty-state" : effectiveTab;
 
   const pageWeight = currentReport.pageWeight || { totalKb: 0, requestCount: 0, jsKb: 0, imagesKb: 0, cssKb: 0, fontsKb: 0, serverResponseMs: 0, thirdPartyBlockingMs: 0 };
 
@@ -1327,6 +1334,9 @@ export function useAppState() {
     setRetainerMonthly,
     scopeTasks,
     setScopeTasks,
+    roiStarted,
+    setRoiStarted,
+    roiAllowed,
     newTaskTitle,
     setNewTaskTitle,
     newTaskHours,

@@ -185,7 +185,8 @@ export default function OverviewTab({ app }: { app: AppState }) {
 
                     )}
 
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                    {(viewMode === "client" || isPublicMode) && (
+<div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
                       <div className="text-xs font-semibold text-slate-500">
                         {isPolish ? "Koszt kompleksowej naprawy" : "Turnkey Remediation Cost"}
                       </div>
@@ -196,6 +197,7 @@ export default function OverviewTab({ app }: { app: AppState }) {
                         {isPolish ? `Dopasowany nakład: ${scopeSummary.totalHours} roboczogodzin` : `Dynamic scope: ${scopeSummary.totalHours} hours`}
                       </div>
                     </div>
+)}
 
                     {hasRoiAssumptions && (
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
@@ -238,13 +240,15 @@ export default function OverviewTab({ app }: { app: AppState }) {
                           <Bot className="w-4 h-4 text-emerald-400" />
                           <span>{isPolish ? "Otwórz AI Growth Advisor i Skrypty Sprzedaży" : "Open AI Advisor & Sales Scripts"}</span>
                         </button>
-                        <button
+                        {app.roiAllowed && (
+<button
                           onClick={() => setActiveTab("roi-calculator")}
                           className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-2 cursor-pointer"
                         >
                           <Calculator className="w-4 h-4" />
                           <span>{isPolish ? "Dostosuj Kosztorys Godzinowy i ROI" : "Customize Hourly Quote & ROI"}</span>
                         </button>
+)}
                         <button
                           onClick={handleSaveCurrentToCrm}
                           className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 cursor-pointer"
@@ -326,7 +330,7 @@ export default function OverviewTab({ app }: { app: AppState }) {
                     </h3>
                   </div>
                   <button
-                    onClick={() => (viewMode === "client" && !isPublicMode ? setIsAcceptProposalOpen(true) : setIsQuoteOpen(true))}
+                    onClick={() => (viewMode === "client" && !isPublicMode ? setIsAcceptProposalOpen(true) : isPublicMode ? setIsQuoteOpen(true) : setActiveTab("crm"))}
                     className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
                   >
                     {isPublicMode
@@ -338,8 +342,8 @@ export default function OverviewTab({ app }: { app: AppState }) {
                         ? "Zaakceptuj Kosztorys i Zleć Naprawę"
                         : "Accept Quote & Order Remediation"
                       : isPolish
-                      ? "Zamów Kompleksową Naprawę w NovoPix"
-                      : "Order Turnkey Remediation"}
+                      ? "Utwórz ofertę dla klienta"
+                      : "Create client offer"}
                   </button>
                 </div>
 

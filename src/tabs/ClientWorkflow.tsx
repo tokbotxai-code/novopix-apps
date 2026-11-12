@@ -63,6 +63,7 @@ function OfferCard({ ctx, offer, client, smtp, onChanged, onClientUpdated }: { c
     }
   });
   const [to, setTo] = useState<string>(client.email || "");
+  const validTo = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to.trim());
   const [busy, setBusy] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
@@ -78,14 +79,14 @@ function OfferCard({ ctx, offer, client, smtp, onChanged, onClientUpdated }: { c
     setDirty(true);
   };
 
-  const switchLanguage = async (next: "pl" | "en") => {
-    if (next === o.language) return;
+  const switchLanguage = async (next: "pl" | "en", cur?: "PLN" | "GBP") => {
+    if (next === o.language && (!cur || cur === o.currency)) return;
     const warn = pl
       ? `Zmiana języka na ${next.toUpperCase()} wygeneruje treść oferty i maila od nowa (waluta: ${next === "pl" ? "PLN" : "GBP"}). Twoje ręczne zmiany w tekście zostaną zastąpione, a oferta wróci do szkicu. Kontynuować?`
       : `Switching to ${next.toUpperCase()} regenerates the offer and email text (currency: ${next === "pl" ? "PLN" : "GBP"}). Your manual text edits will be replaced and the offer goes back to draft. Continue?`;
     if ((dirty || approved) && !window.confirm(warn)) return;
     setBusy("lang");
-    const r = await api<any>(ctx, `/api/offers/${o.id}/language`, { method: "POST", body: { language: next } });
+    const r = await api<any>(ctx, `/api/offers/${o.id}/language`, { method: "POST", body: { language: next, currency: cur || (next === o.language ? o.currency : undefined) } });
     setBusy(null);
     if (r.ok) {
       onChanged(r.data.offer);
@@ -181,6 +182,16 @@ function OfferCard({ ctx, offer, client, smtp, onChanged, onClientUpdated }: { c
           </div>
           {busy === "lang" && <span className="ml-2 font-normal text-slate-500">{pl ? "Generuję…" : "Generating…"}</span>}
         </div>
+        <div className="text-[11px] font-bold text-slate-600">
+          <div>{pl ? "Waluta oferty" : "Offer currency"}</div>
+          <div className="mt-1 inline-flex rounded-lg border border-slate-300 overflow-hidden" role="group" aria-label={pl ? "Przełącznik waluty" : "Currency switch"}>
+            {(["PLN", "GBP"] as const).map((c) => (
+              <button key={c} type="button" disabled={busy === "lang"} onClick={() => switchLanguage(o.language, c)} aria-pressed={o.currency === c} data-testid={`offer-cur-${c}`} className={`px-3 py-1.5 text-xs font-bold cursor-pointer ${o.currency === c ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}>
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
         <label className="text-[11px] font-bold text-slate-600">
           {pl ? "Cena netto" : "Net price"} ({o.currency})
           <input type="number" min={0} step="1" className={inputCls + " mt-1 w-32"} value={o.priceNet} onChange={(e) => edit({ priceNet: Number(e.target.value) })} />
@@ -223,6 +234,21 @@ function OfferCard({ ctx, offer, client, smtp, onChanged, onClientUpdated }: { c
       )}
 
       {!approved && (
+        <div className="space-y-2">
+          <label className="block text-[11px] font-bold text-slate-600">
+            {pl ? "Adres odbiorcy" : "Recipient email"}
+            <input className={inputCls + " mt-1"} type="email" value={to} onChange={(e) => setTo(e.target.value)} />
+          </label>
+          {!validTo && (
+            <div className="text-[11px] font-bold text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-2 flex flex-wrap items-center gap-2" data-testid="no-recipient">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span>{pl ? "Brak e-maila klienta: wpisz adres, zanim wyślesz ofertę." : "No client e-mail: enter an address before sending the offer."}</span>
+              <button type="button" onClick={() => setTo("contact@novopix.uk")} className="underline cursor-pointer">{pl ? "Użyj adresu NovoPix (test)" : "Use the NovoPix address (test)"}</button>
+            </div>
+          )}
+        </div>
+      )}
+      {!approved && (
         <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 space-y-2">
           <div className="text-[11px] text-amber-900 font-semibold">
             {pl
@@ -249,8 +275,15 @@ function OfferCard({ ctx, offer, client, smtp, onChanged, onClientUpdated }: { c
             {pl ? "Adres odbiorcy" : "Recipient email"}
             <input className={inputCls + " mt-1"} type="email" value={to} onChange={(e) => setTo(e.target.value)} />
           </label>
+          {!validTo && (
+            <div className="text-[11px] font-bold text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-2 flex flex-wrap items-center gap-2" data-testid="no-recipient">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span>{pl ? "Brak e-maila klienta: wpisz adres, zanim wyślesz ofertę." : "No client e-mail: enter an address before sending the offer."}</span>
+              <button type="button" onClick={() => setTo("contact@novopix.uk")} className="underline cursor-pointer">{pl ? "Użyj adresu NovoPix (test)" : "Use the NovoPix address (test)"}</button>
+            </div>
+          )}
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={send} disabled={!smtp || busy === "send"} title={smtp ? "" : pl ? "SMTP nie skonfigurowane" : "SMTP not configured"} className={btnCls + " bg-emerald-600 hover:bg-emerald-700 text-white"}>
+            <button type="button" onClick={send} disabled={!smtp || !validTo || busy === "send"} title={smtp ? "" : pl ? "SMTP nie skonfigurowane" : "SMTP not configured"} className={btnCls + " bg-emerald-600 hover:bg-emerald-700 text-white"}>
               <Send className="w-4 h-4" />
               <span>{pl ? "Wyślij e-mailem" : "Send by email"}</span>
             </button>
@@ -296,7 +329,8 @@ export default function ClientWorkflow({ ctx, client, monitored, onClientUpdated
       return "";
     }
   });
-  const currency = lang === "pl" ? "PLN" : "GBP";
+  const [curPick, setCurPick] = useState<"PLN" | "GBP" | null>(null);
+  const currency: "PLN" | "GBP" = curPick || (lang === "pl" ? "PLN" : "GBP");
   const [strategy, setStrategy] = useState<"mobile" | "desktop">("mobile");
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -340,13 +374,29 @@ export default function ClientWorkflow({ ctx, client, monitored, onClientUpdated
   const makeOffer = async () => {
     setBusy("offer");
     setNote(null);
-    const r = await api<any>(ctx, `/api/crm/clients/${client.id}/offer`, { method: "POST", body: { language: lang, packageId: packageId || undefined } });
+    const r = await api<any>(ctx, `/api/crm/clients/${client.id}/offer`, { method: "POST", body: { language: lang, currency, packageId: packageId || undefined } });
     setBusy(null);
     if (r.ok) {
       setOffers((prev) => [r.data.offer, ...prev]);
       onClientUpdated(r.data.client);
       ctx.showToast(pl ? "Szkic oferty gotowy – sprawdź i zatwierdź." : "Offer draft ready – review and approve.");
     } else setNote(r.data.error || "Error");
+  };
+
+  // Jeden przycisk: skan (jeśli brak zapisanego) → szkic oferty z listą błędów i wyceną.
+  const fullFlow = async () => {
+    setNote(null);
+    if (!snap) {
+      setBusy("scan");
+      const r = await api<any>(ctx, `/api/crm/clients/${client.id}/scan`, { method: "POST", body: { strategy } });
+      if (!r.ok) {
+        setBusy(null);
+        setNote(r.data.error || (pl ? "Pomiar nie powiódł się." : "Measurement failed."));
+        return;
+      }
+      onClientUpdated(r.data.client);
+    }
+    await makeOffer();
   };
 
   const addMonitoring = async () => {
@@ -420,6 +470,14 @@ export default function ClientWorkflow({ ctx, client, monitored, onClientUpdated
         </div>
       )}
 
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" onClick={fullFlow} disabled={busy === "scan" || busy === "offer"} data-testid="full-flow" className={btnCls + " bg-emerald-700 hover:bg-emerald-800 text-white"}>
+          <Sparkles className="w-4 h-4" />
+          <span>{busy === "scan" ? (pl ? "Skanuję…" : "Scanning…") : busy === "offer" ? (pl ? "Tworzę ofertę…" : "Creating offer…") : pl ? "Utwórz ofertę naprawy" : "Create repair offer"}</span>
+        </button>
+        <span className="text-[11px] text-slate-600">{pl ? "Skan (jeśli brak) + lista błędów + wycena w jednym kroku. Język, walutę i pakiet wybierzesz niżej." : "Scan (if missing) + issue list + quote in one step. Choose language, currency and package below."}</span>
+      </div>
+
       <section className="space-y-2">
         <h4 className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
           <Search className="w-4 h-4" /> {pl ? "1. Skan strony klienta" : "1. Client website scan"}
@@ -465,12 +523,15 @@ export default function ClientWorkflow({ ctx, client, monitored, onClientUpdated
             <option value="pl">PL</option>
             <option value="en">EN</option>
           </select>
-          <span className="text-xs font-bold text-slate-700 px-2" title={pl ? "Waluta wynika z języka oferty" : "Currency follows the offer language"}>{currency}</span>
+          <select value={currency} onChange={(e) => setCurPick(e.target.value as "PLN" | "GBP")} className="px-2.5 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold" aria-label={pl ? "Waluta oferty" : "Offer currency"} data-testid="wf-currency">
+            <option value="PLN">PLN</option>
+            <option value="GBP">GBP</option>
+          </select>
           <select value={packageId} onChange={(e) => setPackageId(e.target.value)} className="px-2.5 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold max-w-[16rem]" aria-label={pl ? "Pakiet" : "Package"} data-testid="draft-package">
             <option value="">{pl ? "Wycena godzinowa (bez pakietu)" : "Hourly quote (no package)"}</option>
             {packages.map((p) => (
               <option key={p.id} value={p.id}>
-                {(lang === "pl" ? p.namePl : p.nameEn)} – {packageLabel(p, lang)}
+                {(lang === "pl" ? p.namePl : p.nameEn)} – {packageLabel(p, lang, currency)}
               </option>
             ))}
           </select>

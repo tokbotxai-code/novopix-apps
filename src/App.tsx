@@ -263,7 +263,7 @@ export default function App() {
               <div className="text-[11px] text-[#bcd6e6]">{isPolish ? "Wycena pojawi się po skanie strony." : "The quote appears after a website scan."}</div>
             )}
             <button
-              onClick={() => (viewMode === "client" && !isPublicMode ? setIsAcceptProposalOpen(true) : isPublicMode ? setIsQuoteOpen(true) : setActiveTab("roi-calculator"))}
+              onClick={() => (viewMode === "client" && !isPublicMode ? setIsAcceptProposalOpen(true) : isPublicMode ? setIsQuoteOpen(true) : app.roiAllowed ? setActiveTab("roi-calculator") : setIsPinModalOpen(true))}
               className="mt-1.5 text-[11px] font-bold text-[#8fe9ff] hover:text-white flex items-center gap-1 cursor-pointer"
             >
               <span>
@@ -275,6 +275,10 @@ export default function App() {
                   ? isPolish
                     ? "Akceptuj kosztorys online →"
                     : "Accept proposal online →"
+                  : !app.roiAllowed
+                  ? isPolish
+                    ? "Zaloguj się jako agencja →"
+                    : "Log in as agency →"
                   : isPolish
                   ? "Otwórz kalkulator ROI →"
                   : "Open ROI Calculator →"}
@@ -307,14 +311,13 @@ export default function App() {
             {(viewMode === "client"
               ? [
                   { id: "overview", label: isPolish ? "Przegląd Audytu" : "Audit Overview" },
-                  ...(isPublicMode ? [] : [{ id: "roi-calculator", label: isPolish ? "Kosztorys & ROI" : "Quote & ROI" }]),
                   { id: "seo", label: isPolish ? "Audyt SEO HTML" : "Deep SEO" },
                   { id: "compare", label: isPolish ? "Porównanie z Konkurencją" : "Competitor Compare" },
                 ]
               : [
                   { id: "overview", label: isPolish ? "Przegląd audytu" : "Audit overview" },
                   { id: "ai-advisor", label: "AI Advisor" },
-                  { id: "roi-calculator", label: isPolish ? "Kalkulator Wyceny & ROI" : "ROI & Pricing" },
+                  ...(app.roiAllowed ? [{ id: "roi-calculator", label: isPolish ? "Kalkulator Wyceny & ROI" : "ROI & Pricing" }] : []),
                   { id: "seo", label: isPolish ? "Audyt SEO HTML" : "Deep SEO" },
                   { id: "crm", label: isPolish ? "Panel Agencji CRM" : "Agency CRM" },
                 ]
@@ -352,7 +355,7 @@ export default function App() {
               </>
             )}
             <button
-              onClick={() => (viewMode === "client" && !isPublicMode ? setIsAcceptProposalOpen(true) : setIsQuoteOpen(true))}
+              onClick={() => (viewMode === "client" && !isPublicMode ? setIsAcceptProposalOpen(true) : isPublicMode ? setIsQuoteOpen(true) : setActiveTab("crm"))}
               className="px-4 py-2 novopix-gold-btn rounded-lg text-xs font-extrabold transition-transform hover:-translate-y-0.5 whitespace-nowrap shrink-0 cursor-pointer"
             >
               {isPublicMode
@@ -364,8 +367,8 @@ export default function App() {
                   ? `Akceptuję Kosztorys (${scopeSummary.netPrice} ${currency})`
                   : `Accept Proposal (${scopeSummary.netPrice} ${currency})`
                 : isPolish
-                ? "Zamów Wdrożenie / Lead"
-                : "Request Turnkey Fix"}
+                ? "Utwórz ofertę"
+                : "Create offer"}
             </button>
           </div>
         </header>

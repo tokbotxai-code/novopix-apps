@@ -107,10 +107,11 @@ export interface ServicePackage {
   active: boolean;
 }
 
-export const packageLabel = (p: ServicePackage, lang: "pl" | "en") => {
-  const amount = lang === "pl" ? p.pricePln : p.priceGbp;
+export const packageLabel = (p: ServicePackage, lang: "pl" | "en", cur?: "PLN" | "GBP") => {
+  const c = cur || (lang === "pl" ? "PLN" : "GBP");
+  const amount = c === "PLN" ? p.pricePln : p.priceGbp;
   const num = String(amount).replace(/\B(?=(\d{3})+(?!\d))/g, lang === "pl" ? "\u00a0" : ",");
-  return `${p.priceFrom ? (lang === "pl" ? "od " : "from ") : ""}${lang === "pl" ? `${num} zł` : `£${num}`}${p.recurring ? (lang === "pl" ? " / mies." : " / month") : ""}`;
+  return `${p.priceFrom ? (lang === "pl" ? "od " : "from ") : ""}${c === "PLN" ? `${num} zł` : `£${num}`}${p.recurring ? (lang === "pl" ? " / mies." : " / month") : ""}`;
 };
 
 export interface CompareRow {

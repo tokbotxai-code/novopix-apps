@@ -68,7 +68,7 @@ export function registerAgencyOfferRoutes(app: Express) {
     if (!client.lastScan) return res.status(409).json({ error: "Najpierw wykonaj skan strony klienta (przycisk „Skanuj”).", code: "NO_SCAN" });
     const info = languageInfo(client);
     const language: Lang = normalizeFormLang(req.body?.language) || info.language;
-    const currency = currencyForLang(language);
+    const currency = ["PLN", "GBP"].includes(req.body?.currency) ? (req.body.currency as "PLN" | "GBP") : currencyForLang(language);
     let pkg;
     if (req.body?.packageId) {
       pkg = activePackage(req.body.packageId);
@@ -105,9 +105,9 @@ export function registerAgencyOfferRoutes(app: Express) {
     if (!client) return res.status(404).json({ error: "Nie znaleziono klienta." });
     const language = normalizeFormLang(req.body?.language);
     if (!language) return res.status(400).json({ error: "Język musi mieć wartość pl albo en." });
-    if (language === o.language) return res.json({ success: true, offer: o, unchanged: true });
+    if (language === o.language && (!req.body?.currency || req.body.currency === o.currency)) return res.json({ success: true, offer: o, unchanged: true });
     const pkg = activePackage(o.packageId);
-    const currency = currencyForLang(language);
+    const currency = ["PLN", "GBP"].includes(req.body?.currency) ? (req.body.currency as "PLN" | "GBP") : currencyForLang(language);
     const { content, generatedBy, priceNet } = await generateOffer(client, language, currency, pkg);
     const now = new Date().toISOString();
     const wasApproved = o.status === "approved";

@@ -32,7 +32,33 @@ export default function RoiCalculatorTab({ app }: { app: AppState }) {
     setRetainerMonthly,
     setScopeTasks,
     viewMode,
+    roiStarted,
+    setRoiStarted,
   } = app;
+  if (!roiStarted) {
+    return (
+      <div className="bg-white rounded-2xl p-6 border border-slate-200 space-y-4" data-testid="roi-empty">
+        <h2 className="text-lg font-extrabold text-slate-900 font-heading flex items-center gap-2">
+          <Calculator className="w-5 h-5 text-emerald-600" />
+          <span>{isPolish ? "Kosztorys & ROI" : "Quote & ROI"}</span>
+        </h2>
+        <p className="text-sm text-slate-600">{isPolish ? "Dodaj zadania i stawkę, aby policzyć kosztorys." : "Add tasks and a rate to calculate the quote."}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          {(["PLN", "GBP", "EUR"] as const).map((curr) => (
+            <button key={curr} onClick={() => setCurrency(curr)} className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${currency === curr ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>{curr}</button>
+          ))}
+          <label className="text-xs font-semibold text-slate-700 flex items-center gap-2">
+            {isPolish ? `Stawka (${currency}/h)` : `Rate (${currency}/h)`}
+            <input type="number" min={0} value={hourlyRate} onChange={(e) => setHourlyRate(Number(e.target.value) || 0)} className="w-24 px-2 py-1.5 border border-slate-200 rounded-lg text-sm font-mono" />
+          </label>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => setRoiStarted(true)} className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold cursor-pointer">{isPolish ? "Wczytaj zadania ze skanu" : "Load tasks from the scan"}</button>
+          <button onClick={() => { setScopeTasks([]); setRoiStarted(true); }} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-bold cursor-pointer">{isPolish ? "Zacznij od pustej listy" : "Start with an empty list"}</button>
+        </div>
+      </div>
+    );
+  }
   return (
             <div className="space-y-6">
               <div className="bg-white rounded-2xl p-6 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

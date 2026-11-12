@@ -30,18 +30,19 @@ export const DEFAULT_PACKAGES: ServicePackage[] = [
 
 export const clonePackages = (): ServicePackage[] => DEFAULT_PACKAGES.map((p) => ({ ...p }));
 
-export function packagePrice(p: ServicePackage, lang: "pl" | "en"): { amount: number; currency: "PLN" | "GBP" } {
-  return lang === "pl" ? { amount: p.pricePln, currency: "PLN" } : { amount: p.priceGbp, currency: "GBP" };
+// Waluta domyślnie wynika z języka, ale można ją wybrać osobno (np. firma PL płaci w PLN, czyta po angielsku).
+export function packagePrice(p: ServicePackage, lang: "pl" | "en", cur?: "PLN" | "GBP"): { amount: number; currency: "PLN" | "GBP" } {
+  const c = cur || (lang === "pl" ? "PLN" : "GBP");
+  return c === "PLN" ? { amount: p.pricePln, currency: "PLN" } : { amount: p.priceGbp, currency: "GBP" };
 }
 
-export function packageLabel(p: ServicePackage, lang: "pl" | "en"): string {
-  const { amount, currency } = packagePrice(p, lang);
+export function packageLabel(p: ServicePackage, lang: "pl" | "en", cur?: "PLN" | "GBP"): string {
+  const { amount, currency } = packagePrice(p, lang, cur);
   // Ręczne grupowanie tysięcy (Intl w pl-PL nie grupuje liczb czterocyfrowych): „5 490” / „5,490”.
   const num = String(Math.round(amount * 100) / 100).replace(/\B(?=(\d{3})+(?!\d))/g, lang === "pl" ? "\u00a0" : ",");
-  const money = lang === "pl" ? `${num} zł` : `£${num}`;
+  const money = currency === "PLN" ? `${num} zł` : `£${num}`;
   const from = p.priceFrom ? (lang === "pl" ? "od " : "from ") : "";
   const per = p.recurring ? (lang === "pl" ? " / mies." : " / month") : "";
-  void currency;
   return `${from}${money}${per}`;
 }
 

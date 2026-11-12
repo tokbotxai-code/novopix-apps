@@ -141,12 +141,14 @@ export default function CompareTab({ app }: { app: AppState }) {
                             : `Your site currently leads by +${delta} pts; optimizing LCP and Schema.org will lock in TOP 3 rankings.`}
                         </p>
                       </div>
-                      <button
+                      {app.roiAllowed && (
+<button
                         onClick={() => setActiveTab("roi-calculator")}
                         className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shrink-0 cursor-pointer"
                       >
                         {isPolish ? "Zobacz Kosztorys Wyprzedzenia Konkurencji →" : "View Remediation Quote →"}
                       </button>
+)}
                     </div>
                   </>
                 );

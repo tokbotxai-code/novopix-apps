@@ -45,6 +45,13 @@ function PackageRow({ ctx, p, onSaved, onDeleted }: { ctx: AgencyCtx; p: Service
   };
   return (
     <div className={`border rounded-xl p-3 space-y-2 bg-white ${d.active ? "border-slate-200" : "border-slate-200 opacity-70"}`} data-testid="package-row">
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100" data-testid="package-summary">
+        <div className="font-extrabold text-sm text-slate-900">{pl ? d.namePl : d.nameEn}{!d.active && <span className="ml-2 text-[10px] font-bold text-slate-500">{pl ? "(wyłączony)" : "(inactive)"}</span>}</div>
+        <div className="flex gap-2 text-xs font-extrabold">
+          <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200">PLN: {packageLabel(d, "pl", "PLN")}</span>
+          <span className="px-2.5 py-1 rounded-lg bg-sky-50 text-sky-900 border border-sky-200">GBP: {packageLabel(d, "en", "GBP")}</span>
+        </div>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <label className="text-[11px] font-bold text-slate-600">
           {pl ? "Nazwa (PL)" : "Name (PL)"}
@@ -55,11 +62,11 @@ function PackageRow({ ctx, p, onSaved, onDeleted }: { ctx: AgencyCtx; p: Service
           <input className={inputCls + " mt-1"} value={d.nameEn} onChange={(e) => set({ nameEn: e.target.value })} />
         </label>
         <label className="text-[11px] font-bold text-slate-600">
-          {pl ? "Cena netto PLN (oferty PL)" : "Net price PLN (PL offers)"}
+          {pl ? "Cena netto PLN" : "Net price PLN"}
           <input type="number" min={0} className={inputCls + " mt-1"} value={d.pricePln} onChange={(e) => set({ pricePln: Number(e.target.value) })} />
         </label>
         <label className="text-[11px] font-bold text-slate-600">
-          {pl ? "Cena netto GBP (oferty EN)" : "Net price GBP (EN offers)"}
+          {pl ? "Cena netto GBP" : "Net price GBP"}
           <input type="number" min={0} className={inputCls + " mt-1"} value={d.priceGbp} onChange={(e) => set({ priceGbp: Number(e.target.value) })} />
         </label>
         <label className="text-[11px] font-bold text-slate-600">
@@ -83,7 +90,7 @@ function PackageRow({ ctx, p, onSaved, onDeleted }: { ctx: AgencyCtx; p: Service
         <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={d.priceFrom} onChange={(e) => set({ priceFrom: e.target.checked })} /> {pl ? "Cena „od”" : "“From” price"}</label>
         <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={d.recurring} onChange={(e) => set({ recurring: e.target.checked })} /> {pl ? "Miesięcznie" : "Monthly"}</label>
         <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={d.active} onChange={(e) => set({ active: e.target.checked })} /> {pl ? "Aktywny w wycenie" : "Active in quotes"}</label>
-        <span className="font-normal text-slate-500">PL: {packageLabel(d, "pl")} · EN: {packageLabel(d, "en")}</span>
+        
         <span className="flex gap-2 ml-auto">
           <button type="button" onClick={save} disabled={!dirty || busy} className={btnCls + " bg-slate-900 text-white hover:bg-slate-800"}>
             <Save className="w-3.5 h-3.5" /> {pl ? "Zapisz" : "Save"}

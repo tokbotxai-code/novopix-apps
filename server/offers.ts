@@ -63,12 +63,12 @@ export interface OfferContent {
 }
 
 // Opis pakietu do oferty: tylko to, co zapisano w panelu (nazwa, zakres, czas, cena) – bez dopowiadania.
-export function packageBlock(pkg: ServicePackage, lang: "pl" | "en"): { name: string; price: string; lines: string[] } {
+export function packageBlock(pkg: ServicePackage, lang: "pl" | "en", cur?: "PLN" | "GBP"): { name: string; price: string; lines: string[] } {
   const pl = lang === "pl";
   const name = pl ? pkg.namePl : pkg.nameEn;
   const scope = (pl ? pkg.scopePl : pkg.scopeEn).trim();
   const duration = (pl ? pkg.durationPl : pkg.durationEn).trim();
-  const price = packageLabel(pkg, lang);
+  const price = packageLabel(pkg, lang, cur);
   const lines = [`${pl ? "Pakiet" : "Package"}: ${name}`];
   if (scope) lines.push(`${pl ? "Zakres" : "Scope"}: ${scope}`);
   if (duration) lines.push(`${pl ? "Czas realizacji" : "Delivery time"}: ${duration}`);
@@ -92,7 +92,7 @@ export function templateOffer(client: AgencyClient, snap0: ScanSnapshot | undefi
   const disclaimer = pl
     ? "Wyniki pochodzą ze wstępnej kontroli automatycznej i nie stanowią certyfikatu ani gwarancji wyniku."
     : "Results come from a preliminary automated check and are not a certificate or a guarantee of any outcome.";
-  const pb = pkg ? packageBlock(pkg, lang) : null;
+  const pb = pkg ? packageBlock(pkg, lang, currency === "PLN" ? "PLN" : "GBP") : null;
   const price = pb
     ? pb.lines.join(pl ? ". " : ". ") + "."
     : pl
@@ -120,7 +120,7 @@ async function aiOffer(client: AgencyClient, snap0: ScanSnapshot, lang: "pl" | "
   if (!ai) return null;
   const pl = lang === "pl";
   const snap = localizeSnapshot(snap0, lang);
-  const quoteLine = pkg ? `Fixed-price package (use exactly these facts, do not add scope or deadlines that are not listed): ${packageBlock(pkg, lang).lines.join(" | ")}` : `Quote: ${hours} working hours, ${priceNet} ${currency} net.`;
+  const quoteLine = pkg ? `Fixed-price package (use exactly these facts, do not add scope or deadlines that are not listed): ${packageBlock(pkg, lang, currency === "PLN" ? "PLN" : "GBP").lines.join(" | ")}` : `Quote: ${hours} working hours, ${priceNet} ${currency} net.`;
   const prompt = `You are drafting a commercial offer and a short outreach email for NovoPix Digital Studio (web performance & technical SEO). A human will review and approve it before anything is sent.
 STRICT LEGAL & ETHICAL RULES:
 1. NEVER promise guaranteed revenue, ROI, conversion lift or any percentage uplift. You may say faster sites typically lose fewer visitors.
@@ -182,7 +182,7 @@ export async function generateOffer(
   pkg?: ServicePackage
 ): Promise<{ content: OfferContent; generatedBy: "ai" | "template"; priceNet: number; hours: number }> {
   const hours = client.estimatedHours || 8;
-  const priceNet = pkg ? packagePrice(pkg, lang).amount : client.contractValue || hours * (client.hourlyRate || 150);
+  const priceNet = pkg ? packagePrice(pkg, lang, currency === "PLN" ? "PLN" : "GBP").amount : client.contractValue || hours * (client.hourlyRate || 150);
   const snap = client.lastScan;
   const fromAi = snap ? await aiOffer(client, snap, lang, currency, priceNet, hours, pkg) : null;
   if (fromAi) return { content: fromAi, generatedBy: "ai", priceNet, hours };
