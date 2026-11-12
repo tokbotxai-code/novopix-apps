@@ -282,8 +282,8 @@ export default function OverviewTab({ app }: { app: AppState }) {
                     </div>
                   </div>
                   <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                    <span>HTTPS / SSL: {liveSeo.https ? "Aktywny (Bezpieczna)" : "Brak SSL!"}</span>
-                    <span className="font-mono tabular-nums">Waga: {pageWeight.totalKb} KB · TTFB: {liveSeo.responseTimeMs} ms</span>
+                    <span>HTTPS / SSL: {liveSeo.https ? (isPolish ? "Aktywny (Bezpieczna)" : "Active (Secure)") : (isPolish ? "Brak SSL!" : "No SSL!")}</span>
+                    <span className="font-mono tabular-nums">{isPolish ? "Waga" : "Weight"}: {pageWeight.totalKb} KB · TTFB: {liveSeo.responseTimeMs} ms</span>
                   </div>
                 </div>
               </div>
