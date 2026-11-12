@@ -259,6 +259,8 @@ export interface DatabaseSchema {
   packages?: ServicePackage[];
   sharedResults?: Record<string, SharedResult>;
   settings?: PanelSettings;
+  // Dzienne sumy odwiedzin i zdarzeń (server/stats.ts); bez adresów IP i identyfikatorów.
+  stats?: Record<string, { pages: Record<string, { v: number; u: number }>; refs: Record<string, number>; langs: Record<string, number>; events: Record<string, number> }>;
   agencyPin: string;
   lastSavedAt?: string;
 }
@@ -300,6 +302,7 @@ export function loadDb(): DatabaseSchema {
         // Starsza baza nie ma pakietów/ustawień: dosiewamy domyślne (istniejące dane nie są zmieniane).
         packages: Array.isArray(parsed.packages) && parsed.packages.length ? parsed.packages : clonePackages(),
         sharedResults: parsed.sharedResults && typeof parsed.sharedResults === "object" ? parsed.sharedResults : {},
+        stats: parsed.stats && typeof parsed.stats === "object" ? parsed.stats : {},
         settings: { autoSendReport: !!parsed.settings?.autoSendReport },
         agencyPin:
           typeof parsed.agencyPin === "string" && parsed.agencyPin.trim()

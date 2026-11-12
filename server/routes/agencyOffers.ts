@@ -10,6 +10,7 @@ import { buildComparison } from "../beforeAfter";
 import { smtpConfigured, smtpFrom, sendMail, buildEml } from "../mailer";
 import { suggestLanguage, currencyForLang, effectiveLanguage, normalizeFormLang, Lang } from "../language";
 import { sanitizePackage, packagePrice } from "../packages";
+import { trackEvent, scanEventName } from "../stats";
 
 const findClient = (id: string) => db.agencyClients.find((c) => c.id === id);
 const offersMap = () => (db.offers ||= {});
@@ -30,6 +31,7 @@ export function registerAgencyOfferRoutes(app: Express) {
     if (!client) return res.status(404).json({ error: "Nie znaleziono klienta." });
     const strategy = req.body?.strategy === "desktop" ? "desktop" : "mobile";
     const out = await performScan(client.website, strategy);
+    trackEvent(scanEventName("panel", out.body?.measurementStatus));
     const snap = snapshotFromScan(out.body, strategy, client.website);
     if (!snap) return res.status(out.status >= 400 ? out.status : 422).json({ error: out.body?.error || "Pomiar nie powiódł się.", measurementStatus: "failed" });
     client.lastScan = snap;
@@ -189,6 +191,7 @@ export function registerAgencyOfferRoutes(app: Express) {
       return res.status(422).json({ error: "Treść zawiera sformułowania niedozwolone (gwarancja wyniku, obietnica ROI/przychodu lub „certyfikacja WCAG”). Popraw treść przed zatwierdzeniem.", code: "LEGAL_RULES" });
     }
     o.status = "approved";
+    trackEvent("offer_approved");
     o.approvedBy = reviewer;
     o.approvedAt = new Date().toISOString();
     o.sendLog = [...(o.sendLog || []), { at: o.approvedAt, action: "approved", detail: reviewer }];
@@ -252,6 +255,7 @@ export function registerAgencyOfferRoutes(app: Express) {
       return res.status(502).json({ error: `Nie udało się wysłać wiadomości (${out.error || out.reason}).`, code: "SEND_FAILED" });
     }
     o.sentAt = now;
+    trackEvent("offer_sent");
     o.sentTo = to;
     o.sendLog = [...(o.sendLog || []), { at: now, action: "sent", detail: to }];
     logActivity(client, "email_sent", `Wysłano ofertę e-mailem do ${to} (zatwierdził: ${o.approvedBy})`);
@@ -267,6 +271,7 @@ export function registerAgencyOfferRoutes(app: Express) {
     const { o, client } = ctx;
     const now = new Date().toISOString();
     o.sentAt = now;
+    trackEvent("offer_sent");
     o.sentTo = String(req.body?.to || client.email || "").slice(0, 200);
     o.sendLog = [...(o.sendLog || []), { at: now, action: "marked_sent_manually", detail: o.sentTo }];
     logActivity(client, "email_sent", `Oferta oznaczona jako wysłana ręcznie (${o.sentTo})`);
@@ -299,6 +304,7 @@ export function registerAgencyOfferRoutes(app: Express) {
     if (!before) return res.status(409).json({ error: "Brak skanu „przed” – najpierw wykonaj skan strony klienta.", code: "NO_BASELINE" });
     const strategy = req.body?.strategy === "desktop" ? "desktop" : req.body?.strategy === "mobile" ? "mobile" : before.strategy;
     const out = await performScan(client.website, strategy);
+    trackEvent(scanEventName("panel", out.body?.measurementStatus));
     const after = snapshotFromScan(out.body, strategy, client.website);
     if (!after) return res.status(out.status >= 400 ? out.status : 422).json({ error: out.body?.error || "Pomiar nie powiódł się.", measurementStatus: "failed" });
     // Nowy skan „po” unieważnia wcześniejsze zatwierdzenie raportu.

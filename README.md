@@ -24,4 +24,6 @@ Nic nie wychodzi do klienta bez zatwierdzenia. Zmiana treści po zatwierdzeniu w
 - **Wyszukiwarki**: `/robots.txt` jest prawdziwym plikiem tekstowym (skaner: bez `/api/` i `/r/`; panel: `Disallow: /` oraz nagłówek `X-Robots-Tag: noindex, nofollow`). Pliki z hashem w `dist/assets` mają długi cache, HTML `no-cache`.
 - **Nagłówki bezpieczeństwa** wszystkich hostów VPS ustawia `deploy/vps/Caddyfile` (HSTS, `nosniff`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`; aparat dozwolony tylko w FridgeBite).
 
+- **Statystyki** (zakładka w panelu, za PIN-em): `POST /api/hit` przyjmuje trafienia tylko z naszych domen (nagłówek Origin), bez ciasteczek; nie zapisuje adresów IP ani identyfikatorów, pomija boty i Do Not Track, limit 60/IP/godz. W bazie panelu są wyłącznie dzienne sumy (odsłony, unikalni dziennie, źródła, język, skany, lejek), retencja 400 dni, eksport CSV. Kod: `server/stats.ts`, `src/tabs/StatsTab.tsx`.
+
 Struktura kodu frontendu: `src/state/useAppState.tsx` (stan i akcje), `src/tabs/*` (wszystkie zakładki, lejek i okna modalne ładowane leniwie, dopiero gdy są potrzebne), `src/components/*` (wspólne komponenty), `src/agencyTypes.ts` (typy panelu).

@@ -37,6 +37,7 @@ import { registerPanelFunnel, registerPublicFunnel } from "./server/funnel";
 import { sendMail, alertRecipient } from "./server/mailer";
 import { registerAgencyOfferRoutes } from "./server/routes/agencyOffers";
 import { registerAgencyBulkRoutes } from "./server/routes/agencyBulk";
+import { registerHitEndpoint, registerStatsRoutes, recordHit, setEventSink, trackEvent, scanEventName } from "./server/stats";
 import { registerAgencyStatusRoutes, registerPublicStatusRoutes } from "./server/uptimeMonitor";
 import {
   performRealDomainCheck,
@@ -110,6 +111,9 @@ async function forwardToAgency(pathname: string, method: "GET" | "POST" | "DELET
 }
 
 if (APP_MODE === "public") {
+  // Liczniki: skaner publiczny nie ma własnej bazy, więc trafienia i zdarzenia przekazuje do panelu.
+  registerHitEndpoint(app, (hit) => { forwardToAgency("/api/internal/stats", "POST", { hit }).catch(() => {}); });
+  setEventSink((event) => { forwardToAgency("/api/internal/stats", "POST", { event }).catch(() => {}); });
   const relay = (path: string, bucket: string, max: number) => async (req: any, res: any) => {
     const limit = checkRateLimit(`${bucket}_${req.ip || "local"}`, max, 10 * 60 * 1000);
     if (!limit.allowed) return res.status(429).json({ error: "Zbyt wiele żądań. Spróbuj ponownie za chwilę." });
@@ -151,6 +155,8 @@ if (APP_MODE === "agency") {
   registerAgencyBulkRoutes(app);
   registerAgencyStatusRoutes(app);
   registerPanelFunnel(app, requireInternal);
+  registerHitEndpoint(app, recordHit);
+  registerStatsRoutes(app, requireInternal);
 }
 
 // --- Auth & Security Status Endpoints ---
@@ -926,6 +932,7 @@ app.post("/api/scan", async (req, res) => {
   const { url, strategy = "mobile" } = req.body || {};
   const strat = strategy === "desktop" ? "desktop" : "mobile";
   const out = await performScan(url, strat);
+  trackEvent(scanEventName(APP_MODE === "public" ? "public" : "panel", out.body?.measurementStatus));
   // scanId pozwala powiązać późniejsze zgłoszenie (lead, raport PDF, publiczny link) z wynikiem zmierzonym przez serwer.
   const snap = snapshotFromScan(out.body, strat, String(url || ""));
   if (snap) out.body.scanId = rememberScan(snap);

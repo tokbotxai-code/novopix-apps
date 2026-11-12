@@ -1,3 +1,4 @@
+import { trackEvent, scanEventName } from "../stats";
 import crypto from "crypto";
 import type { Express } from "express";
 import { requireAgencyAuth, validateSafePublicUrl, checkRateLimit } from "../security";
@@ -43,6 +44,7 @@ async function runJob(job: BulkScanJob) {
       row.status = "running";
       try {
         const out = await performScan(row.url, job.strategy);
+        trackEvent(scanEventName("panel", out.body?.measurementStatus));
         const snap = snapshotFromScan(out.body, job.strategy, row.url);
         if (!snap) {
           row.status = "failed";

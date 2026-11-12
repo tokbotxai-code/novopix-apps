@@ -1,3 +1,4 @@
+import { trackEvent } from "./stats";
 import crypto from "crypto";
 import type { Express, Request, Response } from "express";
 import { db, saveDb, logActivity, advanceStage, AgencyClient, LeadRecord, ScanSnapshot, SharedResult } from "./database";
@@ -150,6 +151,7 @@ export function registerPanelFunnel(app: Express, requireInternal: (req: any, re
   app.post("/api/internal/report-request", requireInternal, async (req, res) => {
     const out = createReportLead(req.body);
     if (out.status !== 200) return res.status(out.status).json(out.data);
+    trackEvent("report_request");
     const lead = leads().find((l) => l.id === out.data.leadId)!;
     let autoSent = false;
     if (db.settings?.autoSendReport && smtpConfigured()) {
@@ -289,6 +291,7 @@ export function registerPanelFunnel(app: Express, requireInternal: (req: any, re
     // Snapshot bez danych osobowych: tylko wynik pomiaru publicznej strony (bez i18n spoza użytych tekstów).
     const rec: SharedResult = { id, createdAt: new Date(now).toISOString(), expiresAt: new Date(now + RESULT_TTL_MS).toISOString(), deleteTokenHash: sha(deleteToken), snapshot: snap };
     results()[id] = rec;
+    trackEvent("share_link");
     saveDb();
     return res.json({ success: true, id, deleteToken, expiresAt: rec.expiresAt });
   });
