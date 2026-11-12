@@ -83,7 +83,9 @@ export function templateOffer(client: AgencyClient, snap0: ScanSnapshot | undefi
   const host = site.replace(/^https?:\/\//, "").replace(/\/$/, "");
   const lines = measuredLines(snap, pl);
   const top = (snap?.issues || []).slice(0, 5);
-  const greeting = pl ? (client.name && !/^klient/i.test(client.name) ? `Dzień dobry ${client.name},` : "Dzień dobry,") : client.name && !/^client/i.test(client.name) ? `Hello ${client.name},` : "Hello,";
+  // Nazwy zastępcze z CRM („Klient ze Skanera”, „Nowy Klient”, „Client…”) nie trafiają do powitania.
+  const realName = client.name && !/^(klient|nowy klient|client|new client)\b/i.test(client.name.trim()) ? client.name.trim() : "";
+  const greeting = pl ? (realName ? `Dzień dobry ${realName},` : "Dzień dobry,") : realName ? `Hello ${realName},` : "Hello,";
   const issueBlock = top.length
     ? top.map((i, n) => `${n + 1}. ${i.title}`).join("\n")
     : pl ? "(brak zmierzonych problemów w ostatnim skanie)" : "(no issues recorded in the latest scan)";

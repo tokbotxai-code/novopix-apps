@@ -93,3 +93,9 @@ test("localizeSnapshot tłumaczy teksty skanu tylko dla EN", () => {
   assert.equal(localizeSnapshot(snap, "en").issues[0].title, "No Schema.org structured data (application/ld+json)");
   assert.match(templateOffer(client(), snap, "pl", "PLN", 1200, 8).mailBody, /Brak danych strukturalnych/);
 });
+
+test("powitanie nie używa nazw zastępczych z CRM", () => {
+  assert.match(templateOffer(client({ name: "Klient ze Skanera" }), snap, "en", "GBP", 1200, 8).mailBody, /^Hello,/);
+  assert.match(templateOffer(client({ name: "Klient ze Skanera" }), snap, "pl", "PLN", 1200, 8).mailBody, /^Dzień dobry,/);
+  assert.match(templateOffer(client({ name: "Anna Kowalska" }), snap, "en", "GBP", 1200, 8).mailBody, /^Hello Anna Kowalska,/);
+});

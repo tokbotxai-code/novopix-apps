@@ -530,7 +530,7 @@ export default function ClientWorkflow({ ctx, client, monitored, onClientUpdated
                       <td className="p-2 font-bold text-slate-800">{r.label}</td>
                       <td className={`p-2 text-right font-mono ${r.b === null ? "text-amber-700" : ""}`}>{r.b === null ? (pl ? "brak pomiaru" : "not measured") : r.b}</td>
                       <td className={`p-2 text-right font-mono ${r.a === null ? "text-amber-700" : ""}`}>{r.a === null ? (pl ? "brak pomiaru" : "not measured") : r.a}</td>
-                      <td className={`p-2 text-right font-mono font-bold ${r.d === null ? "text-slate-400" : r.d > 0 ? "text-emerald-700" : r.d < 0 ? "text-rose-700" : ""}`}>{r.d === null ? "–" : r.d > 0 ? `+${r.d}` : r.d}</td>
+                      <td className={`p-2 text-right font-mono font-bold ${r.d === null ? "text-slate-400" : r.d === 0 ? "" : (r.d > 0) !== (r.k === "rt") ? "text-emerald-700" : "text-rose-700"}`}>{r.d === null ? "–" : r.d > 0 ? `+${r.d}` : r.d}</td>
                     </tr>
                   ))}
                 </tbody>

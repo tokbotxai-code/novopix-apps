@@ -250,6 +250,7 @@ export function buildBeforeAfterPdf(client: AgencyClient, before: ScanSnapshot, 
       const y = doc.y;
       doc.font("B").fontSize(10).fillColor("#0e2733").text(k + ":", 50, y, { width: 110 });
       doc.font("R").fontSize(10).fillColor("#222").text(v, 165, y, { width: W - 115 });
+      doc.y = Math.max(doc.y, y + 14);
       doc.moveDown(0.3);
     }
     const colX = [50 + W - 270, 50 + W - 180, 50 + W - 90];
@@ -261,7 +262,7 @@ export function buildBeforeAfterPdf(client: AgencyClient, before: ScanSnapshot, 
       doc.y = y + 26;
     };
     const cell = (v: number | string | null) => (v === null ? t.nomeas : String(v));
-    const line = (label: string, b: number | string | null, a: number | string | null, d: number | null) => {
+    const line = (label: string, b: number | string | null, a: number | string | null, d: number | null, lowerIsBetter = false) => {
       if (doc.y > doc.page.height - 110) {
         doc.addPage();
         head();
@@ -271,13 +272,13 @@ export function buildBeforeAfterPdf(client: AgencyClient, before: ScanSnapshot, 
       doc.font("R").fontSize(10).fillColor("#0e2733").text(label, 58, y + 6, { width: W - 290 });
       doc.fillColor(b === null ? "#8a6d00" : "#222").text(cell(b), colX[0], y + 6, { width: 80, align: "right" });
       doc.fillColor(a === null ? "#8a6d00" : "#222").text(cell(a), colX[1], y + 6, { width: 80, align: "right" });
-      doc.font("B").fillColor(d === null ? "#8a6d00" : d > 0 ? "#0a7d3b" : d < 0 ? "#b3261e" : "#222").text(d === null ? "–" : d > 0 ? `+${d}` : String(d), colX[2], y + 6, { width: 80, align: "right" });
+      doc.font("B").fillColor(d === null ? "#8a6d00" : d === 0 ? "#222" : (d > 0) !== lowerIsBetter ? "#0a7d3b" : "#b3261e").text(d === null ? "–" : d > 0 ? `+${d}` : String(d), colX[2], y + 6, { width: 80, align: "right" });
       doc.y = y + 26;
     };
     doc.moveDown(0.8);
     head();
     for (const r of cmp.rows) line(lang === "pl" ? r.labelPl : r.labelEn, r.before, r.after, r.delta);
-    line(t.rt, cmp.responseTimeMs.before, cmp.responseTimeMs.after, cmp.responseTimeMs.delta);
+    line(t.rt, cmp.responseTimeMs.before, cmp.responseTimeMs.after, cmp.responseTimeMs.delta, true);
     if (cmp.cwv.length) {
       doc.moveDown(0.6);
       doc.font("B").fontSize(12).fillColor("#0e2733").text(t.cwv, 50);
