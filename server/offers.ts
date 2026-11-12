@@ -1,5 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import type { AgencyClient, OfferDraft, ScanSnapshot } from "./database";
+import type { AgencyClient, OfferDraft, ScanSnapshot, ServicePackage } from "./database";
+import { localizeSnapshot } from "./scanSnapshot";
+import { packageLabel, packagePrice } from "./packages";
 
 const ai = process.env.GEMINI_API_KEY
   ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions: { headers: { "User-Agent": "aistudio-build" } } })
@@ -60,8 +62,23 @@ export interface OfferContent {
   offerSections: Array<{ heading: string; body: string }>;
 }
 
-export function templateOffer(client: AgencyClient, snap: ScanSnapshot | undefined, lang: "pl" | "en", currency: string, priceNet: number, hours: number): OfferContent {
+// Opis pakietu do oferty: tylko to, co zapisano w panelu (nazwa, zakres, czas, cena) – bez dopowiadania.
+export function packageBlock(pkg: ServicePackage, lang: "pl" | "en"): { name: string; price: string; lines: string[] } {
   const pl = lang === "pl";
+  const name = pl ? pkg.namePl : pkg.nameEn;
+  const scope = (pl ? pkg.scopePl : pkg.scopeEn).trim();
+  const duration = (pl ? pkg.durationPl : pkg.durationEn).trim();
+  const price = packageLabel(pkg, lang);
+  const lines = [`${pl ? "Pakiet" : "Package"}: ${name}`];
+  if (scope) lines.push(`${pl ? "Zakres" : "Scope"}: ${scope}`);
+  if (duration) lines.push(`${pl ? "Czas realizacji" : "Delivery time"}: ${duration}`);
+  lines.push(`${pl ? "Cena" : "Price"}: ${price} ${pl ? "netto" : "net"}`);
+  return { name, price, lines };
+}
+
+export function templateOffer(client: AgencyClient, snap0: ScanSnapshot | undefined, lang: "pl" | "en", currency: string, priceNet: number, hours: number, pkg?: ServicePackage): OfferContent {
+  const pl = lang === "pl";
+  const snap = snap0 ? localizeSnapshot(snap0, lang) : snap0;
   const site = snap?.finalUrl || client.website;
   const host = site.replace(/^https?:\/\//, "").replace(/\/$/, "");
   const lines = measuredLines(snap, pl);
@@ -73,7 +90,10 @@ export function templateOffer(client: AgencyClient, snap: ScanSnapshot | undefin
   const disclaimer = pl
     ? "Wyniki pochodzą ze wstępnej kontroli automatycznej i nie stanowią certyfikatu ani gwarancji wyniku."
     : "Results come from a preliminary automated check and are not a certificate or a guarantee of any outcome.";
-  const price = pl
+  const pb = pkg ? packageBlock(pkg, lang) : null;
+  const price = pb
+    ? pb.lines.join(pl ? ". " : ". ") + "."
+    : pl
     ? `Szacowany zakres: ok. ${hours} roboczogodzin, wycena ${priceNet} ${currency} netto (do uzgodnienia po analizie).`
     : `Estimated scope: about ${hours} working hours, quoted at ${priceNet} ${currency} net (to be confirmed after review).`;
   const subject = pl ? `Wstępna kontrola techniczna strony ${host}` : `Preliminary technical check of ${host}`;
@@ -94,9 +114,11 @@ export function templateOffer(client: AgencyClient, snap: ScanSnapshot | undefin
   return { subject, mailBody, offerTitle: pl ? `Oferta: poprawa techniczna strony ${host}` : `Proposal: technical improvements for ${host}`, offerSections: sections };
 }
 
-async function aiOffer(client: AgencyClient, snap: ScanSnapshot, lang: "pl" | "en", currency: string, priceNet: number, hours: number): Promise<OfferContent | null> {
+async function aiOffer(client: AgencyClient, snap0: ScanSnapshot, lang: "pl" | "en", currency: string, priceNet: number, hours: number, pkg?: ServicePackage): Promise<OfferContent | null> {
   if (!ai) return null;
   const pl = lang === "pl";
+  const snap = localizeSnapshot(snap0, lang);
+  const quoteLine = pkg ? `Fixed-price package (use exactly these facts, do not add scope or deadlines that are not listed): ${packageBlock(pkg, lang).lines.join(" | ")}` : `Quote: ${hours} working hours, ${priceNet} ${currency} net.`;
   const prompt = `You are drafting a commercial offer and a short outreach email for NovoPix Digital Studio (web performance & technical SEO). A human will review and approve it before anything is sent.
 STRICT LEGAL & ETHICAL RULES:
 1. NEVER promise guaranteed revenue, ROI, conversion lift or any percentage uplift. You may say faster sites typically lose fewer visitors.
@@ -112,7 +134,7 @@ Measurement type: ${snap.measurementStatus}
 Overall: ${snap.overallScore}; Categories: ${JSON.stringify(snap.categories)}
 Core Web Vitals: ${JSON.stringify(snap.cwv)}
 Issues: ${JSON.stringify(snap.issues.slice(0, 8))}
-Quote: ${hours} working hours, ${priceNet} ${currency} net.
+${quoteLine}
 Return JSON: subject, mailBody, offerTitle, offerSections (3-5 sections with heading and body: current state, findings, proposed scope with the quote, disclaimer).`;
   try {
     const r = await ai.models.generateContent({
@@ -151,13 +173,18 @@ Return JSON: subject, mailBody, offerTitle, offerSections (3-5 sections with hea
   }
 }
 
-export async function generateOffer(client: AgencyClient, lang: "pl" | "en", currency: "PLN" | "EUR" | "GBP"): Promise<{ content: OfferContent; generatedBy: "ai" | "template"; priceNet: number; hours: number }> {
+export async function generateOffer(
+  client: AgencyClient,
+  lang: "pl" | "en",
+  currency: "PLN" | "EUR" | "GBP",
+  pkg?: ServicePackage
+): Promise<{ content: OfferContent; generatedBy: "ai" | "template"; priceNet: number; hours: number }> {
   const hours = client.estimatedHours || 8;
-  const priceNet = client.contractValue || hours * (client.hourlyRate || 150);
+  const priceNet = pkg ? packagePrice(pkg, lang).amount : client.contractValue || hours * (client.hourlyRate || 150);
   const snap = client.lastScan;
-  const fromAi = snap ? await aiOffer(client, snap, lang, currency, priceNet, hours) : null;
+  const fromAi = snap ? await aiOffer(client, snap, lang, currency, priceNet, hours, pkg) : null;
   if (fromAi) return { content: fromAi, generatedBy: "ai", priceNet, hours };
-  return { content: templateOffer(client, snap, lang, currency, priceNet, hours), generatedBy: "template", priceNet, hours };
+  return { content: templateOffer(client, snap, lang, currency, priceNet, hours, pkg), generatedBy: "template", priceNet, hours };
 }
 
 export function offerToPlainText(o: OfferDraft, client: AgencyClient): string {

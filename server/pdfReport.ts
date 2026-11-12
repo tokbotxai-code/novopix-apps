@@ -2,6 +2,8 @@ import PDFDocument from "pdfkit";
 import path from "path";
 import { createRequire } from "module";
 import type { AgencyClient, ScanSnapshot } from "./database";
+import { localizeSnapshot } from "./scanSnapshot";
+import type { Comparison } from "./beforeAfter";
 
 const require_ = createRequire(import.meta.url);
 function fontPath(file: string): string {
@@ -79,8 +81,9 @@ const EN_NAMES: Record<string, string> = {
 };
 const EN_VALUES = (v: string) => v.replace(/ skryptów?$/, " scripts");
 
-export function buildReportPdf(client: AgencyClient, snap: ScanSnapshot, lang: "pl" | "en"): Promise<Buffer> {
+export function buildReportPdf(client: AgencyClient, snap0: ScanSnapshot, lang: "pl" | "en"): Promise<Buffer> {
   const t = L[lang];
+  const snap = localizeSnapshot(snap0, lang);
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margins: { top: 56, bottom: 64, left: 50, right: 50 }, bufferPages: true, info: { Title: `${t.title} – ${snap.finalUrl}`, Author: "NovoPix" } });
     const chunks: Buffer[] = [];
@@ -166,6 +169,132 @@ export function buildReportPdf(client: AgencyClient, snap: ScanSnapshot, lang: "
     doc.rect(50, dy, W, h + 18).fill("#f4f7f9");
     doc.fillColor("#444").text(t.disclaimer, 60, dy + 9, { width: W - 20 });
 
+    const range = doc.bufferedPageRange();
+    for (let i = 0; i < range.count; i++) {
+      doc.switchToPage(range.start + i);
+      doc.page.margins.bottom = 0;
+      doc.font("R").fontSize(8).fillColor("#8a98a1").text(`NovoPix · ${t.page} ${i + 1}/${range.count}`, 50, doc.page.height - 40, { width: W, align: "center", lineBreak: false });
+    }
+    doc.end();
+  });
+}
+
+const BA = {
+  pl: {
+    title: "Raport przed i po wdrożeniu",
+    site: "Strona",
+    client: "Klient",
+    before: "Przed",
+    after: "Po",
+    change: "Zmiana",
+    metric: "Wskaźnik",
+    nomeas: "brak pomiaru",
+    rt: "Czas odpowiedzi serwera (ms)",
+    cwv: "Wskaźniki czasu i Core Web Vitals",
+    dates: "Daty pomiarów",
+    approved: "Zatwierdził(a)",
+    notes: {
+      measurement_type_differs: "Uwaga: pomiary „przed” i „po” wykonano różnymi metodami (Lighthouse vs analiza HTML/HTTP), więc nie są w pełni porównywalne.",
+      strategy_differs: "Uwaga: pomiary „przed” i „po” wykonano dla różnych urządzeń (telefon vs komputer).",
+    } as Record<string, string>,
+    disclaimer: "Zastrzeżenie: dokument zestawia wyniki dwóch automatycznych pomiarów. Nie jest certyfikatem, audytem zgodności (w tym WCAG) ani gwarancją wyniku. Wartości mogą różnić się między pomiarami; pole „brak pomiaru” oznacza, że wartości nie zmierzono.",
+    page: "Strona",
+  },
+  en: {
+    title: "Before and after report",
+    site: "Website",
+    client: "Client",
+    before: "Before",
+    after: "After",
+    change: "Change",
+    metric: "Metric",
+    nomeas: "not measured",
+    rt: "Server response time (ms)",
+    cwv: "Timing metrics and Core Web Vitals",
+    dates: "Measurement dates",
+    approved: "Approved by",
+    notes: {
+      measurement_type_differs: "Note: the “before” and “after” measurements used different methods (Lighthouse vs HTML/HTTP analysis), so they are not fully comparable.",
+      strategy_differs: "Note: the “before” and “after” measurements were made for different devices (mobile vs desktop).",
+    } as Record<string, string>,
+    disclaimer: "Disclaimer: this document compares the results of two automated measurements. It is not a certificate, a compliance audit (including WCAG) or a guarantee of any outcome. Values may differ between measurements; “not measured” means the value was not measured.",
+    page: "Page",
+  },
+};
+
+export function buildBeforeAfterPdf(client: AgencyClient, before: ScanSnapshot, after: ScanSnapshot, cmp: Comparison, lang: "pl" | "en", approvedBy: string): Promise<Buffer> {
+  const t = BA[lang];
+  const loc = (d: string) => new Date(d).toLocaleString(lang === "pl" ? "pl-PL" : "en-GB", { timeZone: "Europe/Warsaw" });
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ size: "A4", margins: { top: 56, bottom: 64, left: 50, right: 50 }, bufferPages: true, info: { Title: `${t.title} – ${after.finalUrl}`, Author: "NovoPix" } });
+    const chunks: Buffer[] = [];
+    doc.on("data", (c) => chunks.push(c));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+    doc.registerFont("R", fontPath("DejaVuSans.ttf"));
+    doc.registerFont("B", fontPath("DejaVuSans-Bold.ttf"));
+    const W = doc.page.width - 100;
+    drawLogo(doc, 50, 50, 40);
+    doc.font("B").fontSize(18).fillColor("#0e2733").text("NovoPix", 100, 54);
+    doc.font("R").fontSize(9).fillColor("#5b6b75").text("novopix.uk · contact@novopix.uk", 100, 76);
+    doc.moveTo(50, 102).lineTo(50 + W, 102).strokeColor("#ffc233").lineWidth(2).stroke();
+    doc.font("B").fontSize(17).fillColor("#0e2733").text(t.title, 50, 118, { width: W });
+    doc.moveDown(0.5);
+    const meta: Array<[string, string]> = [
+      [t.site, after.finalUrl],
+      [t.client, client.company || client.name],
+      [t.dates, `${t.before}: ${loc(before.scannedAt)} · ${t.after}: ${loc(after.scannedAt)}`],
+      [t.approved, approvedBy],
+    ];
+    for (const [k, v] of meta) {
+      const y = doc.y;
+      doc.font("B").fontSize(10).fillColor("#0e2733").text(k + ":", 50, y, { width: 110 });
+      doc.font("R").fontSize(10).fillColor("#222").text(v, 165, y, { width: W - 115 });
+      doc.moveDown(0.3);
+    }
+    const colX = [50 + W - 270, 50 + W - 180, 50 + W - 90];
+    const head = () => {
+      const y = doc.y;
+      doc.rect(50, y, W, 22).fill("#0e2733");
+      doc.font("B").fontSize(10).fillColor("#ffffff").text(t.metric, 58, y + 6, { width: W - 290 });
+      [t.before, t.after, t.change].forEach((h, i) => doc.text(h, colX[i], y + 6, { width: 80, align: "right" }));
+      doc.y = y + 26;
+    };
+    const cell = (v: number | string | null) => (v === null ? t.nomeas : String(v));
+    const line = (label: string, b: number | string | null, a: number | string | null, d: number | null) => {
+      if (doc.y > doc.page.height - 110) {
+        doc.addPage();
+        head();
+      }
+      const y = doc.y;
+      doc.rect(50, y, W, 22).fill("#f4f7f9");
+      doc.font("R").fontSize(10).fillColor("#0e2733").text(label, 58, y + 6, { width: W - 290 });
+      doc.fillColor(b === null ? "#8a6d00" : "#222").text(cell(b), colX[0], y + 6, { width: 80, align: "right" });
+      doc.fillColor(a === null ? "#8a6d00" : "#222").text(cell(a), colX[1], y + 6, { width: 80, align: "right" });
+      doc.font("B").fillColor(d === null ? "#8a6d00" : d > 0 ? "#0a7d3b" : d < 0 ? "#b3261e" : "#222").text(d === null ? "–" : d > 0 ? `+${d}` : String(d), colX[2], y + 6, { width: 80, align: "right" });
+      doc.y = y + 26;
+    };
+    doc.moveDown(0.8);
+    head();
+    for (const r of cmp.rows) line(lang === "pl" ? r.labelPl : r.labelEn, r.before, r.after, r.delta);
+    line(t.rt, cmp.responseTimeMs.before, cmp.responseTimeMs.after, cmp.responseTimeMs.delta);
+    if (cmp.cwv.length) {
+      doc.moveDown(0.6);
+      doc.font("B").fontSize(12).fillColor("#0e2733").text(t.cwv, 50);
+      doc.moveDown(0.3);
+      head();
+      for (const c of cmp.cwv) line(`${c.acronym} – ${lang === "en" ? (localizeSnapshot(after, "en").cwv.find((x) => x.acronym === c.acronym)?.name ?? c.name) : c.name}`, c.before === null ? null : lang === "en" ? EN_VALUES(c.before) : c.before, c.after === null ? null : lang === "en" ? EN_VALUES(c.after) : c.after, null);
+    }
+    for (const note of cmp.notes) {
+      doc.moveDown(0.5);
+      doc.font("B").fontSize(9).fillColor("#8a6d00").text(t.notes[note], 50, doc.y, { width: W });
+    }
+    doc.moveDown(0.8);
+    if (doc.y > doc.page.height - 130) doc.addPage();
+    const dy = doc.y;
+    const h = doc.font("R").fontSize(9).heightOfString(t.disclaimer, { width: W - 20 });
+    doc.rect(50, dy, W, h + 18).fill("#f4f7f9");
+    doc.fillColor("#444").text(t.disclaimer, 60, dy + 9, { width: W - 20 });
     const range = doc.bufferedPageRange();
     for (let i = 0; i < range.count; i++) {
       doc.switchToPage(range.start + i);

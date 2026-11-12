@@ -57,51 +57,51 @@ export default function AccessibilityTab({ app }: { app: AppState }) {
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs">
                     <tr>
-                      <td className="py-3 px-3 font-bold text-slate-900">1.1.1 Tekst alternatywny dla grafik (img[alt])</td>
+                      <td className="py-3 px-3 font-bold text-slate-900">{isPolish ? "1.1.1 Tekst alternatywny dla grafik (img[alt])" : "1.1.1 Text alternatives for images (img[alt])"}</td>
                       <td className="py-3 px-3 font-mono">
                         {liveSeo.images.missingAlt === 0
-                          ? `Wszystkie ${liveSeo.images.total} obrazów posiada atrybut alt`
-                          : `Wykryto ${liveSeo.images.missingAlt} obrazów bez atrybutu alt (na ${liveSeo.images.total} ogółem)`}
+                          ? (isPolish ? `Wszystkie ${liveSeo.images.total} obrazów posiada atrybut alt` : `All ${liveSeo.images.total} images have an alt attribute`)
+                          : (isPolish ? `Wykryto ${liveSeo.images.missingAlt} obrazów bez atrybutu alt (na ${liveSeo.images.total} ogółem)` : `${liveSeo.images.missingAlt} images without an alt attribute (of ${liveSeo.images.total} total)`)}
                       </td>
                       <td className="py-3 px-3 text-right font-bold">
                         <span className={liveSeo.images.missingAlt === 0 ? "text-emerald-700" : "text-amber-700"}>
-                          {liveSeo.images.missingAlt === 0 ? "Zgodny (AA)" : "Wymaga uzupełnienia"}
+                          {liveSeo.images.missingAlt === 0 ? (isPolish ? "Zgodny (AA)" : "Passed (AA)") : (isPolish ? "Wymaga uzupełnienia" : "Needs completing")}
                         </span>
                       </td>
                     </tr>
                     <tr>
-                      <td className="py-3 px-3 font-bold text-slate-900">3.1.1 Język strony w znaczniku &lt;html lang&gt;</td>
-                      <td className="py-3 px-3 font-mono">{liveSeo.htmlLang ? `lang="${liveSeo.htmlLang}"` : "Brak zdefiniowanego języka!"}</td>
+                      <td className="py-3 px-3 font-bold text-slate-900">{isPolish ? "3.1.1 Język strony w znaczniku &lt;html lang&gt;" : "3.1.1 Page language in the &lt;html lang&gt; tag"}</td>
+                      <td className="py-3 px-3 font-mono">{liveSeo.htmlLang ? `lang="${liveSeo.htmlLang}"` : (isPolish ? "Brak zdefiniowanego języka!" : "No language defined!")}</td>
                       <td className="py-3 px-3 text-right font-bold">
                         <span className={liveSeo.htmlLang ? "text-emerald-700" : "text-rose-700"}>
-                          {liveSeo.htmlLang ? "Zgodny (AA)" : "Błąd czytników ekranu"}
+                          {liveSeo.htmlLang ? (isPolish ? "Zgodny (AA)" : "Passed (AA)") : (isPolish ? "Błąd czytników ekranu" : "Screen reader issue")}
                         </span>
                       </td>
                     </tr>
                     <tr>
-                      <td className="py-3 px-3 font-bold text-slate-900">1.4.4 Skalowanie tekstu i responsywność Viewport</td>
-                      <td className="py-3 px-3 font-mono truncate max-w-xs">{liveSeo.viewport || "Brak meta viewport"}</td>
+                      <td className="py-3 px-3 font-bold text-slate-900">{isPolish ? "1.4.4 Skalowanie tekstu i responsywność Viewport" : "1.4.4 Text resize and responsive viewport"}</td>
+                      <td className="py-3 px-3 font-mono truncate max-w-xs">{liveSeo.viewport || (isPolish ? "Brak meta viewport" : "No meta viewport")}</td>
                       <td className="py-3 px-3 text-right font-bold">
                         <span className={liveSeo.viewport ? "text-emerald-700" : "text-rose-700"}>
-                          {liveSeo.viewport ? "Zgodny (AA)" : "Brak responsywności"}
+                          {liveSeo.viewport ? (isPolish ? "Zgodny (AA)" : "Passed (AA)") : (isPolish ? "Brak responsywności" : "Not responsive")}
                         </span>
                       </td>
                     </tr>
                     <tr>
-                      <td className="py-3 px-3 font-bold text-slate-900">1.3.1 Hierarchia nagłówków dla osób niewidomych (H1–H6)</td>
+                      <td className="py-3 px-3 font-bold text-slate-900">{isPolish ? "1.3.1 Hierarchia nagłówków dla osób niewidomych (H1–H6)" : "1.3.1 Heading hierarchy for blind users (H1–H6)"}</td>
                       <td className="py-3 px-3 font-mono">H1: {liveSeo.headings.h1} · H2: {liveSeo.headings.h2} · H3: {liveSeo.headings.h3}</td>
                       <td className="py-3 px-3 text-right font-bold">
                         <span className={liveSeo.headings.h1 === 1 ? "text-emerald-700" : "text-amber-700"}>
-                          {liveSeo.headings.h1 === 1 ? "Zgodny (AA)" : "Wymaga korekty H1"}
+                          {liveSeo.headings.h1 === 1 ? (isPolish ? "Zgodny (AA)" : "Passed (AA)") : (isPolish ? "Wymaga korekty H1" : "H1 needs fixing")}
                         </span>
                       </td>
                     </tr>
                     <tr>
-                      <td className="py-3 px-3 font-bold text-slate-900">1.4.3 Kontrast kolorystyczny (min. 4.5:1)</td>
-                      <td className="py-3 px-3 font-mono">Wskaźnik kontrastu Lighthouse: {currentReport.accessibilityBreakdown.contrast ?? "nie zmierzono"}{currentReport.accessibilityBreakdown.contrast != null ? "%" : ""}</td>
+                      <td className="py-3 px-3 font-bold text-slate-900">{isPolish ? "1.4.3 Kontrast kolorystyczny (min. 4.5:1)" : "1.4.3 Colour contrast (min. 4.5:1)"}</td>
+                      <td className="py-3 px-3 font-mono">{isPolish ? "Wskaźnik kontrastu Lighthouse" : "Lighthouse contrast score"}: {currentReport.accessibilityBreakdown.contrast ?? (isPolish ? "nie zmierzono" : "not measured")}{currentReport.accessibilityBreakdown.contrast != null ? "%" : ""}</td>
                       <td className="py-3 px-3 text-right font-bold">
                         <span className={currentReport.accessibilityBreakdown.contrast == null ? "text-slate-500" : currentReport.accessibilityBreakdown.contrast >= 85 ? "text-emerald-700" : "text-amber-700"}>
-                          {currentReport.accessibilityBreakdown.contrast == null ? "Nie zmierzono (wymaga Lighthouse)" : currentReport.accessibilityBreakdown.contrast >= 85 ? "Wynik Lighthouse: wysoki" : "Niski kontrast elementów"}
+                          {currentReport.accessibilityBreakdown.contrast == null ? (isPolish ? "Nie zmierzono (wymaga Lighthouse)" : "Not measured (requires Lighthouse)") : currentReport.accessibilityBreakdown.contrast >= 85 ? (isPolish ? "Wynik Lighthouse: wysoki" : "Lighthouse score: high") : (isPolish ? "Niski kontrast elementów" : "Low element contrast")}
                         </span>
                       </td>
                     </tr>

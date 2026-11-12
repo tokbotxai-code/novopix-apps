@@ -30,6 +30,10 @@ import {
 } from "./server/database";
 import { performDeepLiveSeoInspection } from "./server/seoCrawler";
 import { performScan } from "./server/scanService";
+import { snapshotFromScan } from "./server/scanSnapshot";
+import { rememberScan, recallScan } from "./server/scanCache";
+import { normalizeFormLang } from "./server/language";
+import { registerPanelFunnel, registerPublicFunnel } from "./server/funnel";
 import { sendMail, alertRecipient } from "./server/mailer";
 import { registerAgencyOfferRoutes } from "./server/routes/agencyOffers";
 import { registerAgencyBulkRoutes } from "./server/routes/agencyBulk";
@@ -71,14 +75,14 @@ app.get("/api/config", (_req, res) => {
 });
 
 // --- Public scanner mode: no CRM, no auth, no data. Leads are forwarded to the agency service. ---
-async function forwardToAgency(pathname: string, method: "GET" | "POST", body?: unknown) {
+async function forwardToAgency(pathname: string, method: "GET" | "POST" | "DELETE", body?: unknown) {
   const base = String(process.env.AGENCY_API_URL || "").replace(/\/$/, "");
   const token = String(process.env.INTERNAL_TOKEN || "");
   if (!base || token.length < 24) throw new Error("AGENCY_API_URL / INTERNAL_TOKEN not configured");
   const r = await fetch(base + pathname, {
     method,
     headers: { "content-type": "application/json", "x-internal-token": token },
-    body: method === "POST" ? JSON.stringify(body ?? {}) : undefined,
+    body: method === "GET" ? undefined : JSON.stringify(body ?? {}),
     signal: AbortSignal.timeout(65000),
   });
   const data = await r.json().catch(() => ({}));
@@ -96,7 +100,14 @@ if (APP_MODE === "public") {
       return res.status(502).json({ error: "Nie udało się przekazać zgłoszenia do agencji. Spróbuj ponownie za minutę lub napisz na contact@pepsafe.info." });
     }
   };
-  app.post("/api/contact", relay("/api/internal/contact", "contact", 10));
+  // Zgłoszenie z formularza wyceny: wynik pomiaru dołączamy po stronie serwera (scanId), nie z przeglądarki.
+  const relayContact = relay("/api/internal/contact", "contact", 10);
+  app.post("/api/contact", (req, res) => {
+    const { snapshot: _ignored, ...rest } = req.body || {};
+    req.body = { ...rest, snapshot: recallScan(rest.scanId) || undefined };
+    return relayContact(req, res);
+  });
+  registerPublicFunnel(app, forwardToAgency);
   app.post("/api/crm/accept-proposal", relay("/api/internal/accept-proposal", "accept", 10));
   app.get("/api/proposals/:id", async (req, res) => {
     try {
@@ -117,6 +128,7 @@ if (APP_MODE === "agency") {
   startMonitoringScheduler();
   registerAgencyOfferRoutes(app);
   registerAgencyBulkRoutes(app);
+  registerPanelFunnel(app, requireInternal);
 }
 
 // --- Auth & Security Status Endpoints ---
@@ -441,7 +453,7 @@ async function handleContact(req: any, res: any, internal = false) {
       return res.status(429).json({ error: "Zbyt wiele wysłanych formularzy. Spróbuj ponownie za chwilę." });
     }
 
-    const { name, email, phone, website, details, overallScore, scores, cwv, isSample, hp, estimatedBudget } = req.body;
+    const { name, email, phone, website, details, overallScore, scores, cwv, isSample, hp, estimatedBudget, lang, scanId } = req.body;
 
     if (hp && String(hp).trim().length > 0) {
       return res.status(200).json({ success: true, ignored: true });
@@ -468,7 +480,11 @@ async function handleContact(req: any, res: any, internal = false) {
       isSample: !!isSample,
       userAgent: req.headers["user-agent"],
       ip: req.ip,
+      kind: "quote",
+      ...(normalizeFormLang(lang) ? { lang: normalizeFormLang(lang)! } : {}),
     };
+    // Wynik zmierzony przez serwer skanera (przekazany przez bramkę publiczną) – tylko z zaufanego kanału wewnętrznego.
+    const trustedSnap = internal && req.body.snapshot && typeof req.body.snapshot === "object" && req.body.snapshot.measurementStatus ? req.body.snapshot : recallScan(scanId);
 
     db.leads.unshift(record);
 
@@ -487,6 +503,8 @@ async function handleContact(req: any, res: any, internal = false) {
       addedAt: timestamp,
       lastScore: record.overallScore || 0,
       source: "scanner",
+      ...(record.lang ? { leadLang: record.lang } : {}),
+      ...(trustedSnap ? { lastScan: trustedSnap } : {}),
       notes: record.details || "Nowe zapytanie ofertowe z formularza audytu.",
       activityLog: [
         {
@@ -498,6 +516,8 @@ async function handleContact(req: any, res: any, internal = false) {
       ],
     };
 
+    if (trustedSnap) newClient.status = "scanned";
+    record.clientId = newClient.id;
     db.agencyClients.unshift(newClient);
     saveDb();
 
@@ -558,7 +578,7 @@ app.post("/api/crm/clients", requireAgencyAuth, (req, res) => {
 
 app.put("/api/crm/clients/:id", requireAgencyAuth, (req, res) => {
   const { id } = req.params;
-  const { status, notes, contractValue, hourlyRate, estimatedHours, retainerFee, lastScore, activityNote } = req.body;
+  const { status, notes, contractValue, hourlyRate, estimatedHours, retainerFee, lastScore, activityNote, language } = req.body;
   const client = db.agencyClients.find((c) => c.id === id);
   if (client) {
     if (!Array.isArray(client.activityLog)) {
@@ -587,6 +607,7 @@ app.put("/api/crm/clients/:id", requireAgencyAuth, (req, res) => {
     if (estimatedHours !== undefined) client.estimatedHours = Number(estimatedHours);
     if (retainerFee !== undefined) client.retainerFee = Number(retainerFee);
     if (lastScore !== undefined) client.lastScore = Number(lastScore);
+    if (language !== undefined && normalizeFormLang(language)) client.language = normalizeFormLang(language)!;
     saveDb();
     return res.json({ success: true, client });
   }
@@ -867,7 +888,11 @@ app.post("/api/scan", async (req, res) => {
     });
   }
   const { url, strategy = "mobile" } = req.body || {};
-  const out = await performScan(url, strategy === "desktop" ? "desktop" : "mobile");
+  const strat = strategy === "desktop" ? "desktop" : "mobile";
+  const out = await performScan(url, strat);
+  // scanId pozwala powiązać późniejsze zgłoszenie (lead, raport PDF, publiczny link) z wynikiem zmierzonym przez serwer.
+  const snap = snapshotFromScan(out.body, strat, String(url || ""));
+  if (snap) out.body.scanId = rememberScan(snap);
   return res.status(out.status).json(out.body);
 });
 

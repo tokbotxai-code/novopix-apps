@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Copy, Download, FileText, Mail, Search, Send, ShieldCheck, Sparkles, Bell, CheckCircle2, AlertTriangle } from "lucide-react";
-import { AgencyCtx, OfferDraft, STAGES, ScanSnapshot, stageLabel } from "../agencyTypes";
+import { Copy, Download, FileText, Mail, Search, Send, ShieldCheck, Sparkles, Bell, CheckCircle2, AlertTriangle, GitCompare } from "lucide-react";
+import { AgencyCtx, Comparison, OfferDraft, STAGES, ScanSnapshot, ServicePackage, packageLabel, stageLabel } from "../agencyTypes";
 import type { AgencyClient, MonitoredDomain } from "../scannerTypes";
 import { api, copyText, downloadFile } from "./agencyApi";
 
@@ -78,9 +78,26 @@ function OfferCard({ ctx, offer, client, smtp, onChanged, onClientUpdated }: { c
     setDirty(true);
   };
 
+  const switchLanguage = async (next: "pl" | "en") => {
+    if (next === o.language) return;
+    const warn = pl
+      ? `Zmiana języka na ${next.toUpperCase()} wygeneruje treść oferty i maila od nowa (waluta: ${next === "pl" ? "PLN" : "GBP"}). Twoje ręczne zmiany w tekście zostaną zastąpione, a oferta wróci do szkicu. Kontynuować?`
+      : `Switching to ${next.toUpperCase()} regenerates the offer and email text (currency: ${next === "pl" ? "PLN" : "GBP"}). Your manual text edits will be replaced and the offer goes back to draft. Continue?`;
+    if ((dirty || approved) && !window.confirm(warn)) return;
+    setBusy("lang");
+    const r = await api<any>(ctx, `/api/offers/${o.id}/language`, { method: "POST", body: { language: next } });
+    setBusy(null);
+    if (r.ok) {
+      onChanged(r.data.offer);
+      setO(r.data.offer);
+      setDirty(false);
+      setMsg({ kind: "ok", text: pl ? `Treść wygenerowana ponownie w języku ${next.toUpperCase()}.` : `Text regenerated in ${next.toUpperCase()}.` });
+    } else setMsg({ kind: "err", text: r.data.error || "Error" });
+  };
+
   const save = async (): Promise<boolean> => {
     setBusy("save");
-    const r = await api<any>(ctx, `/api/offers/${o.id}`, { method: "PUT", body: { subject: o.subject, mailBody: o.mailBody, offerTitle: o.offerTitle, offerSections: o.offerSections } });
+    const r = await api<any>(ctx, `/api/offers/${o.id}`, { method: "PUT", body: { subject: o.subject, mailBody: o.mailBody, offerTitle: o.offerTitle, offerSections: o.offerSections, priceNet: o.priceNet, currency: o.currency } });
     setBusy(null);
     if (r.ok) {
       onChanged(r.data.offer);
@@ -136,8 +153,10 @@ function OfferCard({ ctx, offer, client, smtp, onChanged, onClientUpdated }: { c
   return (
     <div className="border border-slate-200 rounded-xl p-4 space-y-3 bg-white" data-testid="offer-card">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-xs font-bold text-slate-900 flex items-center gap-2">
-          <span>{o.language.toUpperCase()} · {o.priceNet} {o.currency} {pl ? "netto" : "net"}</span>
+        <div className="text-xs font-bold text-slate-900 flex flex-wrap items-center gap-2">
+          <span data-testid="offer-language-badge" className="px-2 py-0.5 rounded-md bg-slate-900 text-white">{pl ? "Język oferty" : "Offer language"}: {o.language.toUpperCase()}</span>
+          <span>{o.priceNet} {o.currency} {pl ? "netto" : "net"}</span>
+          {o.packageName && <span className="font-normal text-slate-600">{pl ? "pakiet" : "package"}: {o.packageName}</span>}
           <span className="text-[10px] font-normal text-slate-500">{o.generatedBy === "ai" ? (pl ? "wygenerowano: AI" : "generated: AI") : pl ? "wygenerowano: szablon (bez AI)" : "generated: template (no AI)"}</span>
         </div>
         <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${approved ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
@@ -150,6 +169,23 @@ function OfferCard({ ctx, offer, client, smtp, onChanged, onClientUpdated }: { c
         </div>
       )}
 
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="text-[11px] font-bold text-slate-600">
+          <div>{pl ? "Język oferty, maila i PDF" : "Offer, email & PDF language"}</div>
+          <div className="mt-1 inline-flex rounded-lg border border-slate-300 overflow-hidden" role="group" aria-label={pl ? "Przełącznik języka" : "Language switch"}>
+            {(["pl", "en"] as const).map((l) => (
+              <button key={l} type="button" disabled={busy === "lang"} onClick={() => switchLanguage(l)} aria-pressed={o.language === l} data-testid={`offer-lang-${l}`} className={`px-3 py-1.5 text-xs font-bold cursor-pointer ${o.language === l ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}>
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          {busy === "lang" && <span className="ml-2 font-normal text-slate-500">{pl ? "Generuję…" : "Generating…"}</span>}
+        </div>
+        <label className="text-[11px] font-bold text-slate-600">
+          {pl ? "Cena netto" : "Net price"} ({o.currency})
+          <input type="number" min={0} step="1" className={inputCls + " mt-1 w-32"} value={o.priceNet} onChange={(e) => edit({ priceNet: Number(e.target.value) })} />
+        </label>
+      </div>
       <label className="block text-[11px] font-bold text-slate-600">
         {pl ? "Temat maila" : "Email subject"}
         <input className={inputCls + " mt-1"} value={o.subject} onChange={(e) => edit({ subject: e.target.value })} />
@@ -197,7 +233,7 @@ function OfferCard({ ctx, offer, client, smtp, onChanged, onClientUpdated }: { c
             <input className={inputCls} placeholder={pl ? "Imię i nazwisko zatwierdzającego" : "Reviewer full name"} value={reviewer} onChange={(e) => setReviewer(e.target.value)} />
             <button type="button" onClick={approve} disabled={busy === "approve" || reviewer.trim().length < 3} className={btnCls + " bg-emerald-600 hover:bg-emerald-700 text-white shrink-0"}>
               <ShieldCheck className="w-4 h-4" />
-              <span>{pl ? "Zatwierdzam ofertę" : "Approve offer"}</span>
+              <span>{pl ? `Zatwierdzam ofertę (${o.language.toUpperCase()}, ${o.currency})` : `Approve offer (${o.language.toUpperCase()}, ${o.currency})`}</span>
             </button>
           </div>
         </div>
@@ -248,8 +284,19 @@ export default function ClientWorkflow({ ctx, client, monitored, onClientUpdated
   const pl = ctx.isPolish;
   const [offers, setOffers] = useState<OfferDraft[]>([]);
   const [smtp, setSmtp] = useState<boolean>(false);
-  const [lang, setLang] = useState<"pl" | "en">(pl ? "pl" : "en");
-  const [currency, setCurrency] = useState<"PLN" | "EUR" | "GBP">("PLN");
+  const [lang, setLang] = useState<"pl" | "en">("pl");
+  const [langInfo, setLangInfo] = useState<{ source: string; suggestion: { language: "pl" | "en"; source: string } } | null>(null);
+  const [packages, setPackages] = useState<ServicePackage[]>([]);
+  const [packageId, setPackageId] = useState<string>("");
+  const [cmp, setCmp] = useState<{ comparison: Comparison; state: any } | null>(null);
+  const [reviewer, setReviewer] = useState<string>(() => {
+    try {
+      return localStorage.getItem("novopix_reviewer") || "";
+    } catch {
+      return "";
+    }
+  });
+  const currency = lang === "pl" ? "PLN" : "GBP";
   const [strategy, setStrategy] = useState<"mobile" | "desktop">("mobile");
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -257,10 +304,22 @@ export default function ClientWorkflow({ ctx, client, monitored, onClientUpdated
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [o, m] = await Promise.all([api<any>(ctx, `/api/crm/clients/${client.id}/offers`), api<any>(ctx, "/api/mail/status")]);
+      const [o, m, l, pk, ba] = await Promise.all([
+        api<any>(ctx, `/api/crm/clients/${client.id}/offers`),
+        api<any>(ctx, "/api/mail/status"),
+        api<any>(ctx, `/api/crm/clients/${client.id}/language`),
+        api<any>(ctx, "/api/packages"),
+        api<any>(ctx, `/api/crm/clients/${client.id}/before-after`),
+      ]);
       if (!alive) return;
       if (o.ok) setOffers(o.data.offers || []);
       if (m.ok) setSmtp(!!m.data.configured);
+      if (l.ok) {
+        setLang(l.data.language === "en" ? "en" : "pl");
+        setLangInfo({ source: l.data.source, suggestion: l.data.suggestion });
+      }
+      if (pk.ok) setPackages((pk.data.packages || []).filter((p: ServicePackage) => p.active));
+      if (ba.ok && ba.data.comparison) setCmp({ comparison: ba.data.comparison, state: ba.data.state });
     })();
     return () => {
       alive = false;
@@ -281,7 +340,7 @@ export default function ClientWorkflow({ ctx, client, monitored, onClientUpdated
   const makeOffer = async () => {
     setBusy("offer");
     setNote(null);
-    const r = await api<any>(ctx, `/api/crm/clients/${client.id}/offer`, { method: "POST", body: { language: lang, currency } });
+    const r = await api<any>(ctx, `/api/crm/clients/${client.id}/offer`, { method: "POST", body: { language: lang, packageId: packageId || undefined } });
     setBusy(null);
     if (r.ok) {
       setOffers((prev) => [r.data.offer, ...prev]);
@@ -300,6 +359,47 @@ export default function ClientWorkflow({ ctx, client, monitored, onClientUpdated
       if (r.data.client) onClientUpdated(r.data.client);
       ctx.showToast(pl ? "Domena dodana do monitoringu." : "Domain added to monitoring.");
     } else setNote(r.data.error || "Error");
+  };
+
+  const scanAfter = async (rebase = false) => {
+    setBusy("after");
+    setNote(null);
+    const r = await api<any>(ctx, `/api/crm/clients/${client.id}/scan-after`, { method: "POST", body: { rebase } });
+    if (r.ok) {
+      onClientUpdated(r.data.client);
+      const ba = await api<any>(ctx, `/api/crm/clients/${client.id}/before-after`);
+      if (ba.ok && ba.data.comparison) setCmp({ comparison: ba.data.comparison, state: ba.data.state });
+      ctx.showToast(pl ? "Skan po wdrożeniu zapisany." : "Post-delivery scan saved.");
+    } else setNote(r.data.error || (pl ? "Pomiar nie powiódł się." : "Measurement failed."));
+    setBusy(null);
+  };
+
+  const approveBA = async () => {
+    setBusy("baapprove");
+    const r = await api<any>(ctx, `/api/crm/clients/${client.id}/before-after/approve`, { method: "POST", body: { reviewer, language: cmp?.state?.language } });
+    if (r.ok) {
+      try {
+        localStorage.setItem("novopix_reviewer", reviewer);
+      } catch {}
+      onClientUpdated(r.data.client);
+      const ba = await api<any>(ctx, `/api/crm/clients/${client.id}/before-after`);
+      if (ba.ok && ba.data.comparison) setCmp({ comparison: ba.data.comparison, state: ba.data.state });
+      setNote(null);
+      ctx.showToast(pl ? "Raport przed/po zatwierdzony." : "Before/after report approved.");
+    } else setNote(r.data.error || "Error");
+    setBusy(null);
+  };
+
+  const sendBA = async () => {
+    setBusy("basend");
+    const r = await api<any>(ctx, `/api/crm/clients/${client.id}/before-after/send`, { method: "POST", body: { to: client.email } });
+    if (r.ok) {
+      onClientUpdated(r.data.client);
+      ctx.showToast(pl ? `Wysłano do ${client.email}.` : `Sent to ${client.email}.`);
+      const ba = await api<any>(ctx, `/api/crm/clients/${client.id}/before-after`);
+      if (ba.ok && ba.data.comparison) setCmp({ comparison: ba.data.comparison, state: ba.data.state });
+    } else setNote(r.data.error || "Error");
+    setBusy(null);
   };
 
   const curIdx = STAGES.findIndex((s) => s.id === client.status);
@@ -353,15 +453,26 @@ export default function ClientWorkflow({ ctx, client, monitored, onClientUpdated
         <h4 className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
           <Sparkles className="w-4 h-4" /> {pl ? "2. Szkic oferty i maila → zatwierdzenie → wysyłka" : "2. Offer & email draft → approval → sending"}
         </h4>
+        {langInfo && (
+          <p className="text-[11px] text-slate-600" data-testid="lang-suggestion">
+            {pl ? "Proponowany język" : "Suggested language"}: <strong>{langInfo.suggestion.language.toUpperCase()}</strong> (
+            {{ form: pl ? "język formularza wyceny / raportu" : "quote / report form language", html: pl ? "atrybut <html lang> strony klienta" : "client site <html lang> attribute", tld: pl ? "końcówka domeny" : "domain ending" }[langInfo.suggestion.source] || langInfo.suggestion.source}
+            ){langInfo.source === "client" ? (pl ? ` · zapisany przy kliencie: ${lang.toUpperCase()}` : ` · saved for the client: ${lang.toUpperCase()}`) : ""}. {pl ? "Możesz zmienić poniżej." : "You can change it below."}
+          </p>
+        )}
         <div className="flex flex-wrap gap-2 items-center">
-          <select value={lang} onChange={(e) => setLang(e.target.value as any)} className="px-2.5 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold" aria-label={pl ? "Język oferty" : "Offer language"}>
+          <select value={lang} onChange={(e) => setLang(e.target.value as any)} className="px-2.5 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold" aria-label={pl ? "Język oferty" : "Offer language"} data-testid="draft-language">
             <option value="pl">PL</option>
             <option value="en">EN</option>
           </select>
-          <select value={currency} onChange={(e) => setCurrency(e.target.value as any)} className="px-2.5 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold" aria-label={pl ? "Waluta" : "Currency"}>
-            <option value="PLN">PLN</option>
-            <option value="EUR">EUR</option>
-            <option value="GBP">GBP</option>
+          <span className="text-xs font-bold text-slate-700 px-2" title={pl ? "Waluta wynika z języka oferty" : "Currency follows the offer language"}>{currency}</span>
+          <select value={packageId} onChange={(e) => setPackageId(e.target.value)} className="px-2.5 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold max-w-[16rem]" aria-label={pl ? "Pakiet" : "Package"} data-testid="draft-package">
+            <option value="">{pl ? "Wycena godzinowa (bez pakietu)" : "Hourly quote (no package)"}</option>
+            {packages.map((p) => (
+              <option key={p.id} value={p.id}>
+                {(lang === "pl" ? p.namePl : p.nameEn)} – {packageLabel(p, lang)}
+              </option>
+            ))}
           </select>
           <button type="button" onClick={makeOffer} disabled={!snap || busy === "offer"} title={snap ? "" : pl ? "Najpierw wykonaj skan" : "Run a scan first"} className={btnCls + " bg-emerald-600 hover:bg-emerald-700 text-white"}>
             <Sparkles className="w-4 h-4" />
@@ -381,9 +492,94 @@ export default function ClientWorkflow({ ctx, client, monitored, onClientUpdated
         ))}
       </section>
 
+      <section className="space-y-2" data-testid="before-after">
+        <h4 className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
+          <GitCompare className="w-4 h-4" /> {pl ? "3. Skan po wdrożeniu i raport przed/po" : "3. Post-delivery scan and before/after report"}
+        </h4>
+        <div className="flex flex-wrap gap-2 items-center">
+          <button type="button" onClick={() => scanAfter(false)} disabled={!snap || busy === "after"} title={snap ? "" : pl ? "Najpierw wykonaj skan „przed”" : "Run the “before” scan first"} className={btnCls + " bg-slate-900 text-white hover:bg-slate-800"}>
+            <Search className="w-4 h-4" />
+            <span>{busy === "after" ? (pl ? "Mierzę…" : "Measuring…") : pl ? "Skan po wdrożeniu" : "Post-delivery scan"}</span>
+          </button>
+          {cmp && (
+            <button type="button" onClick={() => window.confirm(pl ? "Ustawić ostatni skan klienta jako nowy stan „przed”?" : "Use the latest client scan as the new “before” baseline?") && scanAfter(true)} disabled={busy === "after"} className={btnCls + " bg-white border border-slate-300 text-slate-800 hover:bg-slate-50"}>
+              {pl ? "Nowy punkt odniesienia „przed”" : "New “before” baseline"}
+            </button>
+          )}
+        </div>
+        {!cmp && <p className="text-[11px] text-slate-500">{pl ? "Po wdrożeniu kliknij „Skan po wdrożeniu”: porównamy go ze skanem zapisanym wcześniej („przed”)." : "After delivery click “Post-delivery scan”: it is compared with the previously saved scan (“before”)."}</p>}
+        {cmp && (
+          <div className="space-y-2">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs border border-slate-200 rounded-lg bg-white" data-testid="compare-table">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-700">
+                    <th className="text-left p-2">{pl ? "Wskaźnik" : "Metric"}</th>
+                    <th className="text-right p-2">{pl ? "Przed" : "Before"}</th>
+                    <th className="text-right p-2">{pl ? "Po" : "After"}</th>
+                    <th className="text-right p-2">{pl ? "Zmiana" : "Change"}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ...cmp.comparison.rows.map((r) => ({ k: r.key, label: pl ? r.labelPl : r.labelEn, b: r.before, a: r.after, d: r.delta })),
+                    { k: "rt", label: pl ? "Czas odpowiedzi serwera (ms)" : "Server response time (ms)", b: cmp.comparison.responseTimeMs.before, a: cmp.comparison.responseTimeMs.after, d: cmp.comparison.responseTimeMs.delta },
+                    ...cmp.comparison.cwv.map((c) => ({ k: `cwv-${c.acronym}`, label: `${c.acronym}`, b: c.before, a: c.after, d: null as number | null })),
+                  ].map((r) => (
+                    <tr key={r.k} className="border-t border-slate-100">
+                      <td className="p-2 font-bold text-slate-800">{r.label}</td>
+                      <td className={`p-2 text-right font-mono ${r.b === null ? "text-amber-700" : ""}`}>{r.b === null ? (pl ? "brak pomiaru" : "not measured") : r.b}</td>
+                      <td className={`p-2 text-right font-mono ${r.a === null ? "text-amber-700" : ""}`}>{r.a === null ? (pl ? "brak pomiaru" : "not measured") : r.a}</td>
+                      <td className={`p-2 text-right font-mono font-bold ${r.d === null ? "text-slate-400" : r.d > 0 ? "text-emerald-700" : r.d < 0 ? "text-rose-700" : ""}`}>{r.d === null ? "–" : r.d > 0 ? `+${r.d}` : r.d}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {cmp.comparison.notes.length > 0 && (
+              <p className="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2" role="note">
+                {cmp.comparison.notes.includes("measurement_type_differs") && (pl ? "Pomiary „przed” i „po” wykonano różnymi metodami (Lighthouse vs analiza HTML/HTTP) – nie są w pełni porównywalne. " : "The “before” and “after” scans used different methods (Lighthouse vs HTML/HTTP analysis) – not fully comparable. ")}
+                {cmp.comparison.notes.includes("strategy_differs") && (pl ? "Pomiary dotyczą różnych urządzeń." : "The scans are for different devices.")}
+              </p>
+            )}
+            {cmp.state?.status === "approved" ? (
+              <div className="flex flex-wrap gap-2 items-center">
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">{pl ? `Zatwierdzone przez ${cmp.state.approvedBy} (PDF: ${String(cmp.state.language).toUpperCase()})` : `Approved by ${cmp.state.approvedBy} (PDF: ${String(cmp.state.language).toUpperCase()})`}</span>
+                <button type="button" onClick={() => downloadFile(ctx, `/api/crm/clients/${client.id}/before-after.pdf`, "before-after.pdf")} className={btnCls + " bg-white border border-slate-300 text-slate-800 hover:bg-slate-50"}>
+                  <FileText className="w-4 h-4" />
+                  <span>{pl ? "Pobierz raport PDF przed/po" : "Download before/after PDF"}</span>
+                </button>
+                <button type="button" onClick={sendBA} disabled={!smtp || !client.email || busy === "basend"} title={!smtp ? (pl ? "SMTP nie skonfigurowane" : "SMTP not configured") : ""} className={btnCls + " bg-emerald-600 hover:bg-emerald-700 text-white"}>
+                  <Send className="w-4 h-4" />
+                  <span>{pl ? "Wyślij e-mailem" : "Send by email"}</span>
+                </button>
+                {cmp.state.sentAt && <span className="text-[11px] font-bold text-emerald-800">{pl ? "Wysłano" : "Sent"}: {new Date(cmp.state.sentAt).toLocaleString(pl ? "pl-PL" : "en-GB")} → {cmp.state.sentTo}</span>}
+              </div>
+            ) : (
+              <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 space-y-2">
+                <div className="text-[11px] text-amber-900 font-semibold">
+                  {pl ? "Raport PDF przed/po wymaga zatwierdzenia przez człowieka. Wybierz język raportu i podaj imię i nazwisko." : "The before/after PDF needs human approval. Choose the report language and enter your full name."}
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <select value={cmp.state?.language || "pl"} onChange={(e) => setCmp({ ...cmp, state: { ...cmp.state, language: e.target.value } })} className="px-2.5 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold" aria-label={pl ? "Język raportu" : "Report language"}>
+                    <option value="pl">PL</option>
+                    <option value="en">EN</option>
+                  </select>
+                  <input className={inputCls} placeholder={pl ? "Imię i nazwisko zatwierdzającego" : "Reviewer full name"} value={reviewer} onChange={(e) => setReviewer(e.target.value)} />
+                  <button type="button" onClick={approveBA} disabled={busy === "baapprove" || reviewer.trim().length < 3} className={btnCls + " bg-emerald-600 hover:bg-emerald-700 text-white shrink-0"}>
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>{pl ? "Zatwierdzam raport" : "Approve report"}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
       <section className="space-y-2">
         <h4 className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
-          <Bell className="w-4 h-4" /> {pl ? "3. Monitoring po wdrożeniu" : "3. Monitoring after delivery"}
+          <Bell className="w-4 h-4" /> {pl ? "4. Monitoring po wdrożeniu" : "4. Monitoring after delivery"}
         </h4>
         {monitored ? (
           <p className="text-xs font-bold text-emerald-800">

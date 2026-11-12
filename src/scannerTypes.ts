@@ -187,6 +187,9 @@ export interface AgencyClient {
   notes: string;
   cmsTech?: string;
   activityLog?: ClientActivityEntry[];
+  language?: "pl" | "en";
+  leadLang?: "pl" | "en";
+  beforeAfter?: { status: "draft" | "approved"; language?: "pl" | "en"; approvedBy?: string; approvedAt?: string; sentAt?: string; sentTo?: string };
 }
 
 export interface MonitoringAlertEntry {
@@ -244,6 +247,9 @@ export interface PageWeightBreakdown {
 
 export interface AuditReport {
   id: string;
+  i18n?: Record<string, string>;
+  // Identyfikator wyniku zmierzonego przez serwer (powiązanie zgłoszeń, raportu PDF i linku publicznego).
+  scanId?: string;
   isSample: boolean;
   scannedUrl: string;
   finalUrl: string;
@@ -519,7 +525,7 @@ export function buildDynamicAuditArtifacts(
       category: "accessibility",
       status: seo.images.missingAlt === 0 ? "checked" : "pending",
       priority: "medium",
-      impact: `${wcagHours}h · Kryteria WCAG 2.1 AA`,
+      impact: `${wcagHours}h · ${isPolish ? "Kryteria WCAG 2.1 AA" : "WCAG 2.1 AA criteria"}`,
       description: isPolish
         ? "Zapewnienie opisów alternatywnych dla czytników ekranowych i indeksacji w Google Grafika."
         : "Ensure screen reader accessibility and image search indexing.",
@@ -578,7 +584,7 @@ export function buildDynamicAuditArtifacts(
     },
     {
       id: "headings",
-      name: `Struktura Nagłówków (H1: ${seo.headings.h1}, H2: ${seo.headings.h2}, H3: ${seo.headings.h3})`,
+      name: `${isPolish ? "Struktura nagłówków" : "Heading structure"} (H1: ${seo.headings.h1}, H2: ${seo.headings.h2}, H3: ${seo.headings.h3})`,
       missing: seo.headings.h1 === 0 ? 1 : 0,
       tooShort: 0,
       tooLong: seo.headings.h1 > 1 ? seo.headings.h1 - 1 : 0,
@@ -587,7 +593,7 @@ export function buildDynamicAuditArtifacts(
     },
     {
       id: "alt-text",
-      name: `Atrybuty Obrazów ALT (Razem: ${seo.images.total})`,
+      name: `${isPolish ? "Atrybuty obrazów ALT" : "Image ALT attributes"} (${isPolish ? "razem" : "total"}: ${seo.images.total})`,
       missing: seo.images.missingAlt,
       tooShort: 0,
       tooLong: 0,
@@ -596,7 +602,7 @@ export function buildDynamicAuditArtifacts(
     },
     {
       id: "canonical",
-      name: "Tagi Canonical & Indeksowanie",
+      name: isPolish ? "Tagi Canonical i indeksowanie" : "Canonical tags & indexing",
       missing: seo.canonical.url ? 0 : 1,
       tooShort: 0,
       tooLong: 0,
@@ -605,7 +611,7 @@ export function buildDynamicAuditArtifacts(
     },
     {
       id: "schema",
-      name: "Dane Strukturalne Schema.org (JSON-LD)",
+      name: isPolish ? "Dane strukturalne Schema.org (JSON-LD)" : "Schema.org structured data (JSON-LD)",
       missing: seo.social.schemaJsonLdCount === 0 ? 1 : 0,
       tooShort: 0,
       tooLong: 0,

@@ -1,3 +1,4 @@
+import PublicFunnel from "./components/PublicFunnel";
 import { AcceptProposalModal } from "./components/AcceptProposalModal";
 import { AuditIntegrityBanner } from "./components/AuditIntegrityBanner";
 import { Calculator, CheckCircle2, CircleHelp, Copy, Download, Eye, Globe, Lock, Monitor, Printer, RefreshCw, Search, Share2, Shield, ShieldCheck, Smartphone, X } from "lucide-react";
@@ -18,6 +19,7 @@ import AccessibilityTab from "./tabs/AccessibilityTab";
 import ChecklistTab from "./tabs/ChecklistTab";
 
 const BulkTab = lazy(() => import("./tabs/BulkTab"));
+const PackagesTab = lazy(() => import("./tabs/PackagesTab"));
 const RoiCalculatorTab = lazy(() => import("./tabs/RoiCalculatorTab"));
 const MonitoringTab = lazy(() => import("./tabs/MonitoringTab"));
 const CrmTab = lazy(() => import("./tabs/CrmTab"));
@@ -120,7 +122,7 @@ export default function App() {
           <div className="p-6 pb-5 flex items-center gap-3 border-b border-[#8fd8ff]/15">
             <div
               className="w-10 h-10 rounded-xl bg-[#103247] border border-[#8fd8ff]/30 flex items-center justify-center shadow-md shadow-black/30 shrink-0"
-              title="Najedź lub kliknij — animowana matryca 5x5 N-O-V-O-P-I-X"
+              title={isPolish ? "Najedź lub kliknij — animowana matryca 5x5 N-O-V-O-P-I-X" : "Hover or click — animated 5x5 N-O-V-O-P-I-X matrix"}
             >
               <NovoPixAnimatedMark sizeClass="w-6 h-6" />
             </div>
@@ -270,7 +272,7 @@ export default function App() {
           <div className="flex items-center gap-2.5 shrink-0">
             <div
               className="w-8 h-8 rounded-lg bg-[#0b2230] flex items-center justify-center shrink-0"
-              title="Najedź lub kliknij — animowane logo N-O-V-O-P-I-X"
+              title={isPolish ? "Najedź lub kliknij — animowane logo N-O-V-O-P-I-X" : "Hover or click — animated N-O-V-O-P-I-X logo"}
             >
               <NovoPixAnimatedMark sizeClass="w-5 h-5" />
             </div>
@@ -627,6 +629,7 @@ export default function App() {
           {shownTab === "overview" && (
             <OverviewTab app={app} />
           )}
+          {shownTab === "overview" && isPublicMode && <PublicFunnel app={app} />}
 
           {/* ================================================================= */}
           {/* TAB 2: AI GROWTH ADVISOR & SALES SCRIPT GENERATOR                 */}
@@ -687,6 +690,21 @@ export default function App() {
           {shownTab === "crm" && viewMode === "agency" && (
             <Suspense fallback={<TabFallback isPolish={isPolish} />}>
               <CrmTab app={app} />
+            </Suspense>
+          )}
+
+          {shownTab === "packages" && viewMode === "agency" && (
+            <Suspense fallback={<TabFallback isPolish={isPolish} />}>
+              {agencyToken ? (
+                <PackagesTab ctx={agencyCtx} />
+              ) : (
+                <div className="bg-white rounded-2xl p-6 border border-slate-200 text-sm text-slate-700 space-y-3">
+                  <p>{isPolish ? "Ta funkcja wymaga zalogowania kodem PIN." : "This feature requires PIN login."}</p>
+                  <button type="button" onClick={() => setIsPinModalOpen(true)} className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold cursor-pointer">
+                    {isPolish ? "Zaloguj" : "Log in"}
+                  </button>
+                </div>
+              )}
             </Suspense>
           )}
 
@@ -818,13 +836,24 @@ export default function App() {
         >
           <div className="space-y-4 text-xs text-slate-600 leading-relaxed">
             <p>
-              <strong>1. Skanowanie Hybrydowe (Google PSI + Deep HTML):</strong> System pobiera oficjalne metryki Core Web Vitals, wagę zasobów (KB) oraz bezpośrednio bada kod źródłowy HTML strony klienta (Title, Meta, H1-H6, ALT, Schema.org, nagłówki bezpieczeństwa HTTP).
+              <strong>{isPolish ? "1. Skanowanie hybrydowe (Google PSI + Deep HTML):" : "1. Hybrid scan (Google PSI + Deep HTML):"}</strong>{" "}
+              {isPolish
+                ? "System pobiera oficjalne metryki Core Web Vitals, wagę zasobów (KB) oraz bezpośrednio bada kod źródłowy HTML strony klienta (Title, Meta, H1-H6, ALT, Schema.org, nagłówki bezpieczeństwa HTTP)."
+                : "The system fetches the official Core Web Vitals metrics, resource weight (KB) and directly inspects the page's HTML source (Title, Meta, H1-H6, ALT, Schema.org, HTTP security headers)."}
             </p>
             <p>
-              <strong>2. Automatyczny Kosztorys Godzinowy:</strong> Liczba roboczogodzin i zadań dopasowuje się dynamicznie do faktycznej skali błędów wykrytych na badanej stronie.
+              <strong>{isPolish ? "2. Automatyczny kosztorys godzinowy:" : "2. Automatic hourly quote:"}</strong>{" "}
+              {isPolish
+                ? "Liczba roboczogodzin i zadań dopasowuje się dynamicznie do faktycznej skali błędów wykrytych na badanej stronie."
+                : "The number of working hours and tasks adapts to the actual scale of the issues found on the scanned page."}
             </p>
             <p>
-              <strong>3. Izolowany Pokój Ofertowy Klienta (Widok Klienta):</strong> Wysyłając klientowi link <code>?clientView=1</code>, ukrywasz swój wewnętrzny CRM oraz skrypty sprzedażowe, a klient może jednym kliknięciem zaakceptować kosztorys online.
+              <strong>{isPolish ? "3. Izolowany pokój ofertowy klienta (widok klienta):" : "3. Isolated client deal room (client view):"}</strong>{" "}
+              {isPolish ? (
+                <>Wysyłając klientowi link <code>?clientView=1</code>, ukrywasz swój wewnętrzny CRM oraz skrypty sprzedażowe, a klient może jednym kliknięciem zaakceptować kosztorys online.</>
+              ) : (
+                <>By sending the client the link <code>?clientView=1</code> you hide your internal CRM and sales scripts, and the client can accept the quote online with one click.</>
+              )}
             </p>
           </div>
         </InfoModal>
@@ -839,8 +868,8 @@ export default function App() {
           isPolish={isPolish}
         >
           <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
-            <p>· Wszystkie klucze API (Google PageSpeed Insights oraz Gemini AI) działają wyłącznie po stronie serwera Express i nigdy nie są ujawniane w przeglądarce.</p>
-            <p>· Baza klientów CRM, zaakceptowane oferty, snapshoty wycen oraz monitorowane domeny są trwale zapisywane na serwerze w pliku JSON oraz synchronizowane z LocalStorage.</p>
+            <p>{isPolish ? "· Wszystkie klucze API (Google PageSpeed Insights oraz Gemini AI) działają wyłącznie po stronie serwera Express i nigdy nie są ujawniane w przeglądarce." : "· All API keys (Google PageSpeed Insights and Gemini AI) are used only on the Express server and are never exposed in the browser."}</p>
+            <p>{isPolish ? "· Baza klientów CRM, zaakceptowane oferty, snapshoty wycen oraz monitorowane domeny są trwale zapisywane na serwerze w pliku JSON oraz synchronizowane z LocalStorage." : "· The CRM client base, accepted offers, quote snapshots and monitored domains are stored persistently on the server in a JSON file and synced with LocalStorage."}</p>
           </div>
         </InfoModal>
       )}

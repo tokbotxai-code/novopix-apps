@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { clonePackages } from "./packages";
 
 export interface LeadRecord {
   id: string;
@@ -15,6 +16,55 @@ export interface LeadRecord {
   isSample: boolean;
   userAgent?: string;
   ip?: string;
+  // Język interfejsu w chwili wysłania formularza (pl/en) – pierwsza reguła wyboru języka oferty.
+  lang?: "pl" | "en";
+  // Zgłoszenie „Wyślij mi pełny raport PDF”: zgoda i status raportu (raport czeka na zatwierdzenie przez człowieka).
+  kind?: "quote" | "report";
+  consent?: { reportAndInfo: boolean; at: string; text: string; policyUrl: string };
+  report?: ReportRequestState;
+  clientId?: string;
+}
+
+export interface ReportRequestState {
+  status: "pending" | "sent" | "rejected";
+  requestedAt: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  sentAt?: string;
+  sentTo?: string;
+  auto?: boolean;
+  snapshot?: ScanSnapshot;
+  log?: Array<{ at: string; action: string; detail?: string }>;
+}
+
+export interface ServicePackage {
+  id: string;
+  group: "web" | "speed" | "a11y" | "app" | "care" | "other";
+  sort: number;
+  namePl: string;
+  nameEn: string;
+  scopePl: string;
+  scopeEn: string;
+  durationPl: string;
+  durationEn: string;
+  pricePln: number;
+  priceGbp: number;
+  priceFrom: boolean;
+  recurring: boolean;
+  active: boolean;
+}
+
+// Publiczny, statyczny snapshot wyniku (/r/<id>): bez danych osobowych, wygasa po 90 dniach.
+export interface SharedResult {
+  id: string;
+  createdAt: string;
+  expiresAt: string;
+  deleteTokenHash: string;
+  snapshot: ScanSnapshot;
+}
+
+export interface PanelSettings {
+  autoSendReport: boolean;
 }
 
 export interface ClientActivityEntry {
@@ -64,6 +114,10 @@ export interface ScanSnapshot {
   responseTimeMs?: number | null;
   https?: boolean;
   cmsTech?: string | null;
+  // Atrybut <html lang> strony (null = brak) – druga reguła wyboru języka oferty.
+  htmlLang?: string | null;
+  // Tłumaczenia PL→EN tekstów skanu, użyte w tej migawce (do ofert i PDF w języku angielskim).
+  i18n?: Record<string, string>;
 }
 
 export interface OfferDraft {
@@ -77,6 +131,8 @@ export interface OfferDraft {
   offerSections: Array<{ heading: string; body: string }>;
   priceNet: number;
   currency: "PLN" | "EUR" | "GBP";
+  packageId?: string;
+  packageName?: string;
   generatedBy: "ai" | "template";
   createdAt: string;
   updatedAt: string;
@@ -111,6 +167,18 @@ export interface BulkScanJob {
   rows: BulkScanRow[];
 }
 
+// Skan „przed i po wdrożeniu”: stan „przed” jest zamrożony przy pierwszym skanie po wdrożeniu.
+export interface BeforeAfterState {
+  before: ScanSnapshot;
+  after: ScanSnapshot;
+  status: "draft" | "approved";
+  language?: "pl" | "en";
+  approvedBy?: string;
+  approvedAt?: string;
+  sentAt?: string;
+  sentTo?: string;
+}
+
 export interface AgencyClient {
   id: string;
   name: string;
@@ -130,6 +198,11 @@ export interface AgencyClient {
   activityLog?: ClientActivityEntry[];
   lastScan?: ScanSnapshot;
   source?: string;
+  // Język oferty/maila/PDF (opcjonalny; stare rekordy bez pola = pl). leadLang = język formularza.
+  language?: "pl" | "en";
+  leadLang?: "pl" | "en";
+  // Skan „po wdrożeniu” (lastScan = stan „przed”) i zatwierdzenie raportu przed/po przez człowieka.
+  beforeAfter?: BeforeAfterState;
 }
 
 export interface MonitoringAlertEntry {
@@ -183,11 +256,14 @@ export interface DatabaseSchema {
   proposals: Record<string, any>;
   offers?: Record<string, OfferDraft>;
   bulkScans?: BulkScanJob[];
+  packages?: ServicePackage[];
+  sharedResults?: Record<string, SharedResult>;
+  settings?: PanelSettings;
   agencyPin: string;
   lastSavedAt?: string;
 }
 
-const DATA_DIR = path.join(process.cwd(), "data");
+const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(process.cwd(), "data");
 const BACKUP_DIR = path.join(DATA_DIR, "backups");
 const DB_PATH = path.join(DATA_DIR, "scanner-db.json");
 const DB_TMP_PATH = path.join(DATA_DIR, "scanner-db.json.tmp");
@@ -221,6 +297,10 @@ export function loadDb(): DatabaseSchema {
         proposals: parsed.proposals && typeof parsed.proposals === "object" ? parsed.proposals : {},
         offers: parsed.offers && typeof parsed.offers === "object" ? parsed.offers : {},
         bulkScans: Array.isArray(parsed.bulkScans) ? parsed.bulkScans : [],
+        // Starsza baza nie ma pakietów/ustawień: dosiewamy domyślne (istniejące dane nie są zmieniane).
+        packages: Array.isArray(parsed.packages) && parsed.packages.length ? parsed.packages : clonePackages(),
+        sharedResults: parsed.sharedResults && typeof parsed.sharedResults === "object" ? parsed.sharedResults : {},
+        settings: { autoSendReport: !!parsed.settings?.autoSendReport },
         agencyPin:
           typeof parsed.agencyPin === "string" && parsed.agencyPin.trim()
             ? parsed.agencyPin.trim()
@@ -238,6 +318,9 @@ export function loadDb(): DatabaseSchema {
     proposals: {},
     offers: {},
     bulkScans: [],
+    packages: clonePackages(),
+    sharedResults: {},
+    settings: { autoSendReport: false },
     agencyPin: "",
     lastSavedAt: new Date().toISOString(),
   };

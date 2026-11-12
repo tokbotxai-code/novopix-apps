@@ -152,16 +152,16 @@ export default function SeoTab({ app }: { app: AppState }) {
                       <span className="font-mono font-bold text-emerald-700">{liveSeo.indexing.robotsMeta}</span>
                     </div>
                     <div className="flex justify-between py-1.5 border-b border-slate-100">
-                      <span className="text-slate-500">Plik /robots.txt</span>
-                      <span className="font-bold">{liveSeo.indexing.hasRobotsTxt ? "Dostępny (200 OK)" : "Brak pliku!"}</span>
+                      <span className="text-slate-500">{isPolish ? "Plik /robots.txt" : "File /robots.txt"}</span>
+                      <span className="font-bold">{liveSeo.indexing.hasRobotsTxt ? (isPolish ? "Dostępny (200 OK)" : "Available (200 OK)") : (isPolish ? "Brak pliku!" : "Missing file!")}</span>
                     </div>
                     <div className="flex justify-between py-1.5 border-b border-slate-100">
-                      <span className="text-slate-500">Mapa /sitemap.xml</span>
-                      <span className="font-bold">{liveSeo.indexing.hasSitemapXml ? "Aktywna (200 OK)" : "Brak mapy!"}</span>
+                      <span className="text-slate-500">{isPolish ? "Mapa /sitemap.xml" : "Sitemap /sitemap.xml"}</span>
+                      <span className="font-bold">{liveSeo.indexing.hasSitemapXml ? (isPolish ? "Aktywna (200 OK)" : "Active (200 OK)") : (isPolish ? "Brak mapy!" : "Missing sitemap!")}</span>
                     </div>
                     <div className="flex justify-between py-1.5">
                       <span className="text-slate-500">Canonical URL</span>
-                      <span className="font-mono truncate max-w-[160px] font-semibold">{liveSeo.canonical.url || "Brak"}</span>
+                      <span className="font-mono truncate max-w-[160px] font-semibold">{liveSeo.canonical.url || (isPolish ? "Brak" : "None")}</span>
                     </div>
                   </div>
                 </div>
@@ -174,20 +174,20 @@ export default function SeoTab({ app }: { app: AppState }) {
                     <div className="flex justify-between py-1.5 border-b border-slate-100">
                       <span className="text-slate-500">{isPolish ? "Obrazy ogółem / Brak ALT" : "Total Images / Missing ALT"}</span>
                       <span className="font-mono font-bold tabular-nums">
-                        {liveSeo.images.total} / <strong className={liveSeo.images.missingAlt > 0 ? "text-amber-600" : "text-emerald-600"}>{liveSeo.images.missingAlt} brak</strong>
+                        {liveSeo.images.total} / <strong className={liveSeo.images.missingAlt > 0 ? "text-amber-600" : "text-emerald-600"}>{liveSeo.images.missingAlt} {isPolish ? "brak" : "missing"}</strong>
                       </span>
                     </div>
                     <div className="flex justify-between py-1.5 border-b border-slate-100">
                       <span className="text-slate-500">Lazy-loading (loading=&quot;lazy&quot;)</span>
-                      <span className="font-mono font-bold tabular-nums">{liveSeo.images.lazyLoaded} obrazów</span>
+                      <span className="font-mono font-bold tabular-nums">{liveSeo.images.lazyLoaded} {isPolish ? "obrazów" : "images"}</span>
                     </div>
                     <div className="flex justify-between py-1.5 border-b border-slate-100">
                       <span className="text-slate-500">{isPolish ? "Linki Wewnętrzne / Zewnętrzne" : "Internal / External Links"}</span>
-                      <span className="font-mono font-bold tabular-nums">{liveSeo.links.internal} wew. / {liveSeo.links.external} zew.</span>
+                      <span className="font-mono font-bold tabular-nums">{liveSeo.links.internal} {isPolish ? "wew." : "int."} / {liveSeo.links.external} {isPolish ? "zew." : "ext."}</span>
                     </div>
                     <div className="flex justify-between py-1.5">
-                      <span className="text-slate-500">Dane Schema.org (JSON-LD)</span>
-                      <span className="font-mono font-bold text-emerald-700 tabular-nums">{liveSeo.social.schemaJsonLdCount} wykryte</span>
+                      <span className="text-slate-500">{isPolish ? "Dane Schema.org (JSON-LD)" : "Schema.org data (JSON-LD)"}</span>
+                      <span className="font-mono font-bold text-emerald-700 tabular-nums">{liveSeo.social.schemaJsonLdCount} {isPolish ? "wykryte" : "detected"}</span>
                     </div>
                   </div>
                 </div>
@@ -203,20 +203,20 @@ export default function SeoTab({ app }: { app: AppState }) {
                   </div>
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between py-1.5 border-b border-slate-100">
-                      <span className="text-slate-500">Certyfikat HTTPS / SSL</span>
-                      <span className="font-bold text-emerald-700">{liveSeo.securityHeaders.https ? "Chroniona" : "Brak!"}</span>
+                      <span className="text-slate-500">{isPolish ? "Certyfikat HTTPS / SSL" : "HTTPS / SSL certificate"}</span>
+                      <span className="font-bold text-emerald-700">{liveSeo.securityHeaders.https ? (isPolish ? "Chroniona" : "Protected") : (isPolish ? "Brak!" : "Missing!")}</span>
                     </div>
                     <div className="flex justify-between py-1.5 border-b border-slate-100">
                       <span className="text-slate-500">Strict-Transport-Security (HSTS)</span>
-                      <span className="font-bold">{liveSeo.securityHeaders.hsts ? "Aktywny" : "Brak"}</span>
+                      <span className="font-bold">{liveSeo.securityHeaders.hsts ? (isPolish ? "Aktywny" : "Active") : (isPolish ? "Brak" : "Missing")}</span>
                     </div>
                     <div className="flex justify-between py-1.5 border-b border-slate-100">
                       <span className="text-slate-500">X-Content-Type-Options</span>
-                      <span className="font-bold">{liveSeo.securityHeaders.xContentTypeOptions ? "nosniff" : "Brak"}</span>
+                      <span className="font-bold">{liveSeo.securityHeaders.xContentTypeOptions ? "nosniff" : (isPolish ? "Brak" : "Missing")}</span>
                     </div>
                     <div className="flex justify-between py-1.5">
                       <span className="text-slate-500">Content-Security-Policy (CSP)</span>
-                      <span className="font-bold">{liveSeo.securityHeaders.csp ? "Skonfigurowane" : "Do wdrożenia"}</span>
+                      <span className="font-bold">{liveSeo.securityHeaders.csp ? (isPolish ? "Skonfigurowane" : "Configured") : (isPolish ? "Do wdrożenia" : "To be implemented")}</span>
                     </div>
                   </div>
                 </div>

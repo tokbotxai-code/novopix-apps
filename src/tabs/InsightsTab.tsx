@@ -40,7 +40,7 @@ export default function InsightsTab({ app }: { app: AppState }) {
                     <div className="text-lg font-mono font-extrabold text-slate-900 mt-0.5 tabular-nums">{pageWeight.jsKb} KB</div>
                   </div>
                   <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                    <div className="text-[11px] text-slate-500">Arkusze Stylów (CSS)</div>
+                    <div className="text-[11px] text-slate-500">{isPolish ? "Arkusze stylów (CSS)" : "Stylesheets (CSS)"}</div>
                     <div className="text-lg font-mono font-extrabold text-slate-900 mt-0.5 tabular-nums">{pageWeight.cssKb} KB</div>
                   </div>
                   <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">

@@ -1,22 +1,52 @@
-import { validateSafePublicUrl } from "./security";
+import { validateSafePublicUrl, safeFetchHtml } from "./security";
 import { performDeepLiveSeoInspection } from "./seoCrawler";
 
 // Skan strony: 3 uczciwe stany pomiaru (live_lighthouse / partial_html / failed). Zero wymyślonych wyników.
+const URL_ERRORS_EN: Record<string, string> = {
+  "Adres URL jest wymagany.": "A website address is required.",
+  "Adres URL nie może być pusty.": "The website address cannot be empty.",
+  "Nieprawidłowy format adresu URL.": "Invalid URL format.",
+  "Dozwolone są wyłącznie protokoły HTTP oraz HTTPS.": "Only HTTP and HTTPS are allowed.",
+  "Ze względów bezpieczeństwa (ochrona Anti-SSRF) skanowanie adresów lokalnych i wewnętrznych jest zablokowane.": "For security reasons (anti-SSRF protection) scanning local and internal addresses is blocked.",
+  "Blokada bezpieczeństwa Anti-SSRF: prywatne adresy IP nie mogą być skanowane.": "Anti-SSRF security block: private IP addresses cannot be scanned.",
+  "Blokada bezpieczeństwa Anti-SSRF: prywatne adresy IPv6 są niedozwolone.": "Anti-SSRF security block: private IPv6 addresses are not allowed.",
+  "Podaj pełną nazwę domeny publicznej (np. twojafirma.pl).": "Enter a full public domain name (e.g. yourcompany.com).",
+};
+
+// Atrybut <html lang> strony (do wyboru języka oferty); w trybie Lighthouse osobne, krótkie pobranie HTML.
+async function detectHtmlLang(targetUrl: string): Promise<string | null> {
+  try {
+    const f = await safeFetchHtml(targetUrl, 5000, 400_000);
+    const m = f.htmlText.match(/<html[^>]*\slang=["']([^"']*)["']/i);
+    return m && m[1].trim() ? m[1].trim() : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function performScan(url: any, strategy: string = "mobile"): Promise<{ status: number; body: any }> {
   let code = 200;
+  // Teksty generowane przez serwer są po polsku; T(pl, en) zapamiętuje tłumaczenie EN w mapie i2 dołączanej do odpowiedzi,
+  // dzięki czemu interfejs może przełączać język także po wykonaniu skanu (bez ponownego pomiaru).
+  const i18n: Record<string, string> = {};
+  const T = (pl: string, en: string) => {
+    i18n[pl] = en;
+    return pl;
+  };
   const res: any = {
     status(n: number) {
       code = n;
       return res;
     },
     json(body: any) {
-      return { status: code, body };
+      return { status: code, body: body && typeof body === "object" && Object.keys(i18n).length ? { ...body, i18n } : body };
     },
   };
   const urlValidation = validateSafePublicUrl(url);
   if (!urlValidation.valid || !urlValidation.normalizedUrl) {
+    Object.assign(i18n, URL_ERRORS_EN);
     return res.status(400).json({
-      error: urlValidation.error || "Nieprawidłowy adres URL.",
+      error: urlValidation.error || T("Nieprawidłowy adres URL.", "Invalid URL."),
       measurementStatus: "failed",
     });
   }
@@ -94,10 +124,10 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
           estimatedHours: (a.score ?? 1) < 0.5 ? 3.0 : 1.5,
           businessImpact:
             (a.score ?? 1) < 0.5
-              ? "Krytyczne wąskie gardło wydajności wykryte w teście Google Lighthouse"
-              : "Element wymagający optymalizacji w celu poprawy wskaźników Core Web Vitals",
+              ? T("Krytyczne wąskie gardło wydajności wykryte w teście Google Lighthouse", "Critical performance bottleneck found by Google Lighthouse")
+              : T("Element wymagający optymalizacji w celu poprawy wskaźników Core Web Vitals", "Item that needs optimisation to improve Core Web Vitals"),
           developerFix:
-            "Optymalizacja zasobu zgodnie z wytycznymi raportu Google Lighthouse (kompresja, priorytetyzacja lub redukcja blokowania wątku głównego).",
+            T("Optymalizacja zasobu zgodnie z wytycznymi raportu Google Lighthouse (kompresja, priorytetyzacja lub redukcja blokowania wątku głównego).", "Optimise the resource following the Google Lighthouse guidance (compression, prioritisation or reducing main-thread blocking)."),
         }));
 
       // Extract real INP from CrUX field data if available, otherwise report Max Potential FID from Lighthouse lab
@@ -110,11 +140,13 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
         ? `${cruxInpMs} ms (CrUX)`
         : labMaxFidMs
         ? `${labMaxFidMs} ms (Lab FID)`
-        : "Brak danych CrUX";
+        : T("Brak danych CrUX", "No CrUX data");
 
+      const htmlLang = await detectHtmlLang(lighthouse.finalUrl || targetUrl);
       return res.json({
         scannedUrl: url,
         finalUrl: lighthouse.finalUrl || targetUrl,
+        htmlLang,
         measurementStatus: "live_lighthouse",
         measurementNote: "100% rzeczywisty pomiar z oficjalnego silnika Google PageSpeed Insights / Lighthouse API.",
         overallScore: overall,
@@ -157,8 +189,8 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
             name: "Largest Contentful Paint",
             acronym: "LCP",
             target: "≤ 2.5 s",
-            description: "Rzeczywisty czas renderowania największego elementu w oknie widoku (Lighthouse).",
-            displayValue: audits["largest-contentful-paint"]?.displayValue || "Brak pomiaru",
+            description: T("Rzeczywisty czas renderowania największego elementu w oknie widoku (Lighthouse).", "Measured render time of the largest element in the viewport (Lighthouse)."),
+            displayValue: audits["largest-contentful-paint"]?.displayValue || T("Brak pomiaru", "Not measured"),
             score: audits["largest-contentful-paint"]?.score ?? null,
             status:
               audits["largest-contentful-paint"]?.score === null || audits["largest-contentful-paint"]?.score === undefined
@@ -176,8 +208,8 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
             acronym: "INP",
             target: "≤ 200 ms",
             description: cruxInpMs
-              ? "Rzeczywista responsywność na interakcje użytkowników (dane polowe CrUX)."
-              : "Laboratoryjny ekwiwalent responsywności wątku głównego (Max Potential FID).",
+              ? T("Rzeczywista responsywność na interakcje użytkowników (dane polowe CrUX).", "Measured responsiveness to user interactions (CrUX field data).")
+              : T("Laboratoryjny ekwiwalent responsywności wątku głównego (Max Potential FID).", "Lab equivalent of main-thread responsiveness (Max Potential FID)."),
             displayValue: inpDisplay,
             score: audits["max-potential-fid"]?.score ?? null,
             status:
@@ -195,7 +227,7 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
             name: "Cumulative Layout Shift",
             acronym: "CLS",
             target: "≤ 0.1",
-            description: "Rzeczywista stabilność wizualna układu strony podczas ładowania (Lighthouse).",
+            description: T("Rzeczywista stabilność wizualna układu strony podczas ładowania (Lighthouse).", "Measured visual stability of the page layout while loading (Lighthouse)."),
             displayValue: audits["cumulative-layout-shift"]?.displayValue || "0",
             score: audits["cumulative-layout-shift"]?.score ?? null,
             status:
@@ -211,8 +243,8 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
             name: "First Contentful Paint",
             acronym: "FCP",
             target: "≤ 1.8 s",
-            description: "Rzeczywisty czas pojawienia się pierwszego tekstu lub obrazu (Lighthouse).",
-            displayValue: audits["first-contentful-paint"]?.displayValue || "Brak pomiaru",
+            description: T("Rzeczywisty czas pojawienia się pierwszego tekstu lub obrazu (Lighthouse).", "Measured time until the first text or image appears (Lighthouse)."),
+            displayValue: audits["first-contentful-paint"]?.displayValue || T("Brak pomiaru", "Not measured"),
             score: audits["first-contentful-paint"]?.score ?? null,
             status:
               (audits["first-contentful-paint"]?.score ?? 1) >= 0.9
@@ -227,7 +259,7 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
             name: "Total Blocking Time",
             acronym: "TBT",
             target: "≤ 200 ms",
-            description: "Rzeczywista suma czasu zablokowania głównego wątku przez skrypty JS (Lighthouse).",
+            description: T("Rzeczywista suma czasu zablokowania głównego wątku przez skrypty JS (Lighthouse).", "Measured total time the main thread was blocked by JS (Lighthouse)."),
             displayValue: audits["total-blocking-time"]?.displayValue || "0 ms",
             score: audits["total-blocking-time"]?.score ?? null,
             status:
@@ -266,7 +298,7 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
   if (!liveInspection.isLiveFetch) {
     // STATE 3: Complete Failure — Target domain did not respond over HTTP
     return res.status(422).json({
-      error: `Brak możliwości wykonania pomiaru: badana domena (${targetUrl}) nie odpowiada lub odrzuciła połączenie (${liveInspection.error || "błąd sieci"}). Nie generujemy symulowanych wyników.`,
+      error: T(`Brak możliwości wykonania pomiaru: badana domena (${targetUrl}) nie odpowiada lub odrzuciła połączenie (${liveInspection.error || "błąd sieci"}). Nie generujemy symulowanych wyników.`, `The measurement could not be made: the domain (${targetUrl}) does not respond or refused the connection (${liveInspection.error || "network error"}). We do not generate simulated results.`),
       measurementStatus: "failed",
       psiErrorReason,
     });
@@ -287,17 +319,17 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
     warningsCount++;
     realIssues.push({
       id: "measured-meta-title",
-      title: `Korekta znacznika <title> (zmierzona długość: ${liveInspection.title.length} znaków)`,
+      title: T(`Korekta znacznika <title> (zmierzona długość: ${liveInspection.title.length} znaków)`, `Fix the <title> tag (measured length: ${liveInspection.title.length} characters)`),
       description: liveInspection.title.text
-        ? `Obecny tytuł "${liveInspection.title.text}" ma ${liveInspection.title.length} znaków (zalecane 30–65 znaków).`
-        : "Brak znacznika <title> w pobranym kodzie HTML strony.",
-      displayValue: `${liveInspection.title.length} zn.`,
+        ? T(`Obecny tytuł "${liveInspection.title.text}" ma ${liveInspection.title.length} znaków (zalecane 30–65 znaków).`, `The current title "${liveInspection.title.text}" is ${liveInspection.title.length} characters long (30–65 recommended).`)
+        : T("Brak znacznika <title> w pobranym kodzie HTML strony.", "No <title> tag in the fetched HTML."),
+      displayValue: T(`${liveInspection.title.length} zn.`, `${liveInspection.title.length} chars`),
       priority: liveInspection.title.text ? "medium" : "high",
       category: "seo",
       savingsMs: 0,
       estimatedHours: 1.0,
-      businessImpact: "Wpływa bezpośrednio na ocenę trafności strony i klikalność (CTR) w wynikach Google.",
-      developerFix: "Ustaw unikalny znacznik <title> o długości 50–60 znaków zawierający główną frazę kluczową.",
+      businessImpact: T("Wpływa bezpośrednio na ocenę trafności strony i klikalność (CTR) w wynikach Google.", "Directly affects how relevant the page looks and its click-through rate in Google results."),
+      developerFix: T("Ustaw unikalny znacznik <title> o długości 50–60 znaków zawierający główną frazę kluczową.", "Set a unique <title> of 50–60 characters containing the main keyword."),
     });
   }
 
@@ -308,17 +340,17 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
     warningsCount++;
     realIssues.push({
       id: "measured-meta-description",
-      title: `Optymalizacja Meta Description (zmierzona długość: ${liveInspection.description.length} znaków)`,
+      title: T(`Optymalizacja Meta Description (zmierzona długość: ${liveInspection.description.length} znaków)`, `Improve the meta description (measured length: ${liveInspection.description.length} characters)`),
       description: liveInspection.description.text
-        ? `Opis meta ma ${liveInspection.description.length} znaków (optymalny zakres to 110–165 znaków).`
-        : "Brak znacznika <meta name='description'> w kodzie HTML strony.",
-      displayValue: `${liveInspection.description.length} zn.`,
+        ? T(`Opis meta ma ${liveInspection.description.length} znaków (optymalny zakres to 110–165 znaków).`, `The meta description is ${liveInspection.description.length} characters long (110–165 is optimal).`)
+        : T("Brak znacznika <meta name='description'> w kodzie HTML strony.", "No <meta name='description'> tag in the page HTML."),
+      displayValue: T(`${liveInspection.description.length} zn.`, `${liveInspection.description.length} chars`),
       priority: liveInspection.description.text ? "medium" : "high",
       category: "seo",
       savingsMs: 0,
       estimatedHours: 1.5,
-      businessImpact: "Brak zoptymalizowanego opisu meta sprawia, że Google wyświetla przypadkowy fragment tekstu.",
-      developerFix: "Dodaj unikalny znacznik <meta name='description'> o długości 140–160 znaków z wezwaniem do działania.",
+      businessImpact: T("Brak zoptymalizowanego opisu meta sprawia, że Google wyświetla przypadkowy fragment tekstu.", "Without a tuned meta description Google shows an arbitrary text snippet."),
+      developerFix: T("Dodaj unikalny znacznik <meta name='description'> o długości 140–160 znaków z wezwaniem do działania.", "Add a unique <meta name='description'> of 140–160 characters with a call to action."),
     });
   }
 
@@ -329,18 +361,18 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
     criticalCount++;
     realIssues.push({
       id: "measured-h1-structure",
-      title: `Nieprawidłowa liczba nagłówków <h1> w kodzie DOM (wykryto: ${liveInspection.headings.h1}x)`,
+      title: T(`Nieprawidłowa liczba nagłówków <h1> w kodzie DOM (wykryto: ${liveInspection.headings.h1}x)`, `Wrong number of <h1> headings in the DOM (found: ${liveInspection.headings.h1}x)`),
       description:
         liveInspection.headings.h1 === 0
-          ? "Na badanej stronie brakuje głównego nagłówka <h1>."
-          : `Wykryto ${liveInspection.headings.h1} nagłówków <h1> na jednej stronie, co rozmywa główny temat dokumentu.`,
+          ? T("Na badanej stronie brakuje głównego nagłówka <h1>.", "The page has no main <h1> heading.")
+          : T(`Wykryto ${liveInspection.headings.h1} nagłówków <h1> na jednej stronie, co rozmywa główny temat dokumentu.`, `${liveInspection.headings.h1} <h1> headings were found on one page, which blurs the main topic of the document.`),
       displayValue: `${liveInspection.headings.h1}x H1`,
       priority: "high",
       category: "seo",
       savingsMs: 0,
       estimatedHours: 1.5,
-      businessImpact: "Utrudnia robotom wyszukiwarek jednoznaczną identyfikację głównego tematu podstrony.",
-      developerFix: "Pozostaw dokładnie jeden nagłówek <h1> na podstronie, a pozostałe zamień na <h2>/<h3>.",
+      businessImpact: T("Utrudnia robotom wyszukiwarek jednoznaczną identyfikację głównego tematu podstrony.", "Makes it harder for search engine crawlers to identify the main topic of the page."),
+      developerFix: T("Pozostaw dokładnie jeden nagłówek <h1> na podstronie, a pozostałe zamień na <h2>/<h3>.", "Keep exactly one <h1> per page and change the others to <h2>/<h3>."),
     });
   }
 
@@ -358,15 +390,15 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
     warningsCount++;
     realIssues.push({
       id: "measured-schema-jsonld",
-      title: "Brak danych strukturalnych Schema.org (application/ld+json)",
-      description: "W kodzie HTML nie wykryto żadnego bloku JSON-LD opisującego firmę, usługę lub produkt.",
+      title: T("Brak danych strukturalnych Schema.org (application/ld+json)", "No Schema.org structured data (application/ld+json)"),
+      description: T("W kodzie HTML nie wykryto żadnego bloku JSON-LD opisującego firmę, usługę lub produkt.", "No JSON-LD block describing the business, service or product was found in the HTML."),
       displayValue: "0x JSON-LD",
       priority: "medium",
       category: "seo",
       savingsMs: 0,
       estimatedHours: 2.0,
-      businessImpact: "Brak szans na rozszerzone wyniki (Rich Snippets) w wyszukiwarce Google.",
-      developerFix: "Wdróż skrypt <script type='application/ld+json'> ze schematem Organization / LocalBusiness.",
+      businessImpact: T("Brak szans na rozszerzone wyniki (Rich Snippets) w wyszukiwarce Google.", "No chance of rich results (rich snippets) in Google search."),
+      developerFix: T("Wdróż skrypt <script type='application/ld+json'> ze schematem Organization / LocalBusiness.", "Add a <script type='application/ld+json'> block with an Organization / LocalBusiness schema."),
     });
   }
 
@@ -378,15 +410,15 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
     warningsCount++;
     realIssues.push({
       id: "measured-missing-alt",
-      title: `Obrazy bez atrybutu [alt] (zmierzono: ${liveInspection.images.missingAlt} z ${liveInspection.images.total} grafik)`,
-      description: `W pobranym drzewie DOM wykryto ${liveInspection.images.missingAlt} elementów <img> pozbawionych opisu alternatywnego.`,
-      displayValue: `${liveInspection.images.missingAlt} bez alt`,
+      title: T(`Obrazy bez atrybutu [alt] (zmierzono: ${liveInspection.images.missingAlt} z ${liveInspection.images.total} grafik)`, `Images without an [alt] attribute (measured: ${liveInspection.images.missingAlt} of ${liveInspection.images.total} images)`),
+      description: T(`W pobranym drzewie DOM wykryto ${liveInspection.images.missingAlt} elementów <img> pozbawionych opisu alternatywnego.`, `${liveInspection.images.missingAlt} <img> elements without alternative text were found in the fetched DOM.`),
+      displayValue: T(`${liveInspection.images.missingAlt} bez alt`, `${liveInspection.images.missingAlt} without alt`),
       priority: liveInspection.images.missingAlt > 3 ? "high" : "medium",
       category: "accessibility",
       savingsMs: 0,
       estimatedHours: 1.5,
-      businessImpact: "Naruszenie kryterium WCAG 2.1 AA (1.1.1) oraz słabsze indeksowanie w Google Grafika.",
-      developerFix: "Uzupełnij opisowe atrybuty alt dla wszystkich grafik merytorycznych.",
+      businessImpact: T("Naruszenie kryterium WCAG 2.1 AA (1.1.1) oraz słabsze indeksowanie w Google Grafika.", "Fails WCAG 2.1 AA criterion 1.1.1 and weakens indexing in Google Images."),
+      developerFix: T("Uzupełnij opisowe atrybuty alt dla wszystkich grafik merytorycznych.", "Add descriptive alt attributes to all meaningful images."),
     });
   }
 
@@ -408,15 +440,15 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
     warningsCount++;
     realIssues.push({
       id: "measured-blocking-scripts",
-      title: `Synchroniczne skrypty blokujące w <head> (zmierzono: ${liveInspection.scriptStats.renderBlockingScripts})`,
-      description: `W sekcji <head> znaleziono ${liveInspection.scriptStats.renderBlockingScripts} zewnętrznych skryptów JS bez atrybutu defer lub async.`,
-      displayValue: `${liveInspection.scriptStats.renderBlockingScripts} skryptów`,
+      title: T(`Synchroniczne skrypty blokujące w <head> (zmierzono: ${liveInspection.scriptStats.renderBlockingScripts})`, `Render-blocking scripts in <head> (measured: ${liveInspection.scriptStats.renderBlockingScripts})`),
+      description: T(`W sekcji <head> znaleziono ${liveInspection.scriptStats.renderBlockingScripts} zewnętrznych skryptów JS bez atrybutu defer lub async.`, `${liveInspection.scriptStats.renderBlockingScripts} external JS scripts without defer or async were found in <head>.`),
+      displayValue: T(`${liveInspection.scriptStats.renderBlockingScripts} skryptów`, `${liveInspection.scriptStats.renderBlockingScripts} scripts`),
       priority: "high",
       category: "performance",
       savingsMs: liveInspection.scriptStats.renderBlockingScripts * 120,
       estimatedHours: 2.5,
-      businessImpact: "Zatrzymuje parsowanie drzewa DOM i opóźnia pierwsze wyświetlenie treści na ekranie.",
-      developerFix: "Dodaj atrybuty defer lub async do znaczników <script> w sekcji <head>.",
+      businessImpact: T("Zatrzymuje parsowanie drzewa DOM i opóźnia pierwsze wyświetlenie treści na ekranie.", "Stops DOM parsing and delays the first paint of content."),
+      developerFix: T("Dodaj atrybuty defer lub async do znaczników <script> w sekcji <head>.", "Add defer or async to <script> tags in <head>."),
     });
   }
 
@@ -433,8 +465,9 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
   return res.json({
     scannedUrl: url,
     finalUrl: liveInspection.url,
+    htmlLang: liveInspection.htmlLang || null,
     measurementStatus: "partial_html",
-    measurementNote: `Częściowy pomiar rzeczywisty (Live HTML + HTTP): zmierzono prawdziwy kod DOM, TTFB (${liveInspection.responseTimeMs} ms), obrazy (${liveInspection.images.total}) i nagłówki. Pełny silnik laboratoryjny Google Lighthouse był niedostępny (${psiErrorReason || "limit zapytań API"}).`,
+    measurementNote: T(`Częściowy pomiar rzeczywisty (Live HTML + HTTP): zmierzono prawdziwy kod DOM, TTFB (${liveInspection.responseTimeMs} ms), obrazy (${liveInspection.images.total}) i nagłówki. Pełny silnik laboratoryjny Google Lighthouse był niedostępny (${psiErrorReason || "limit zapytań API"}).`, `Partial real measurement (live HTML + HTTP): the real DOM, TTFB (${liveInspection.responseTimeMs} ms), images (${liveInspection.images.total}) and headings were measured. The full Google Lighthouse lab engine was unavailable (${psiErrorReason || "API quota limit"}).`),
     overallScore: overallPartial,
     overallLabel: "Not measured (partial check)",
     categories: {
@@ -476,10 +509,10 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
     coreWebVitals: {
       lcp: {
         id: "lcp",
-        name: "Largest Contentful Paint (Wymaga Lighthouse)",
+        name: T("Largest Contentful Paint (Wymaga Lighthouse)", "Largest Contentful Paint (requires Lighthouse)"),
         acronym: "LCP",
         target: "≤ 2.5 s",
-        description: "W trybie częściowego pomiaru HTML zmierzono czas odpowiedzi serwera TTFB. Pełny pomiar LCP wymaga klucza Google PSI API.",
+        description: T("W trybie częściowego pomiaru HTML zmierzono czas odpowiedzi serwera TTFB. Pełny pomiar LCP wymaga klucza Google PSI API.", "In partial HTML mode the server response time (TTFB) was measured. A full LCP measurement requires the Google PSI API."),
         displayValue: `TTFB: ${liveInspection.responseTimeMs} ms`,
         score: null,
         status: liveInspection.responseTimeMs <= 600 ? "good" : "needs-improvement",
@@ -487,11 +520,11 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
       },
       inp: {
         id: "inp",
-        name: "Skrypty Blokujące w <head>",
+        name: T("Skrypty Blokujące w <head>", "Render-blocking scripts in <head>"),
         acronym: "INP / JS",
-        target: "0 blokujących",
-        description: "Liczba synchronicznych skryptów JS blokujących wątek główny w pobranym kodzie HTML.",
-        displayValue: `${liveInspection.scriptStats?.renderBlockingScripts || 0} skryptów`,
+        target: T("0 blokujących", "0 blocking"),
+        description: T("Liczba synchronicznych skryptów JS blokujących wątek główny w pobranym kodzie HTML.", "Number of synchronous JS scripts blocking the main thread in the fetched HTML."),
+        displayValue: T(`${liveInspection.scriptStats?.renderBlockingScripts || 0} skryptów`, `${liveInspection.scriptStats?.renderBlockingScripts || 0} scripts`),
         score: null,
         status: (liveInspection.scriptStats?.renderBlockingScripts || 0) === 0 ? "good" : "needs-improvement",
         numericVal: liveInspection.scriptStats?.renderBlockingScripts || 0,
@@ -501,18 +534,18 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
         name: "Cumulative Layout Shift",
         acronym: "CLS",
         target: "≤ 0.1",
-        description: "Pomiar przesunięć układu wymaga renderowania w silniku przeglądarki Lighthouse.",
-        displayValue: "Wymaga PSI API",
+        description: T("Pomiar przesunięć układu wymaga renderowania w silniku przeglądarki Lighthouse.", "Measuring layout shifts requires rendering in the Lighthouse browser engine."),
+        displayValue: T("Wymaga PSI API", "Requires PSI API"),
         score: null,
         status: "unavailable",
         numericVal: null,
       },
       fcp: {
         id: "fcp",
-        name: "Czas Odpowiedzi Serwera (TTFB)",
+        name: T("Czas Odpowiedzi Serwera (TTFB)", "Server response time (TTFB)"),
         acronym: "TTFB",
         target: "≤ 400 ms",
-        description: "Rzeczywisty zmierzony czas odpowiedzi HTTP badanej domeny.",
+        description: T("Rzeczywisty zmierzony czas odpowiedzi HTTP badanej domeny.", "Measured HTTP response time of the scanned domain."),
         displayValue: `${liveInspection.responseTimeMs} ms`,
         score: null,
         status: liveInspection.responseTimeMs <= 400 ? "good" : liveInspection.responseTimeMs <= 900 ? "needs-improvement" : "poor",
@@ -520,10 +553,10 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
       },
       tbt: {
         id: "tbt",
-        name: "Rozmiar Dokumentu HTML",
+        name: T("Rozmiar Dokumentu HTML", "HTML document size"),
         acronym: "HTML",
         target: "≤ 100 KB",
-        description: "Rzeczywisty rozmiar pobranego dokumentu HTML.",
+        description: T("Rzeczywisty rozmiar pobranego dokumentu HTML.", "Measured size of the fetched HTML document."),
         displayValue: `${liveInspection.htmlSizeKb} KB`,
         score: null,
         status: liveInspection.htmlSizeKb <= 100 ? "good" : "needs-improvement",

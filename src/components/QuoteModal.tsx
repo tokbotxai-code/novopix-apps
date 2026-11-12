@@ -31,6 +31,13 @@ export function QuoteModal({
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const targetUrl = report.finalUrl || report.scannedUrl || "novopix.uk";
@@ -63,6 +70,8 @@ export function QuoteModal({
           overallScore: report.overallScore,
           scores: report.categories,
           estimatedBudget,
+          lang: isPolish ? "pl" : "en",
+          scanId: report.scanId,
           hp: honeypot,
         }),
       });
@@ -166,7 +175,7 @@ export function QuoteModal({
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="kontakt@twojafirma.pl"
+                    placeholder={isPolish ? "kontakt@twojafirma.pl" : "name@company.com"}
                     required
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs"
                   />

@@ -41,6 +41,7 @@ export interface ScanSnapshot {
   issues: Array<{ title: string; description: string; priority: string; category?: string }>;
   responseTimeMs?: number | null;
   https?: boolean;
+  htmlLang?: string | null;
 }
 
 export interface OfferDraft {
@@ -54,6 +55,8 @@ export interface OfferDraft {
   offerSections: Array<{ heading: string; body: string }>;
   priceNet: number;
   currency: "PLN" | "EUR" | "GBP";
+  packageId?: string;
+  packageName?: string;
   generatedBy: "ai" | "template";
   createdAt: string;
   updatedAt: string;
@@ -85,6 +88,45 @@ export interface BulkScanJob {
   finishedAt?: string;
   strategy: "mobile" | "desktop";
   rows: BulkScanRow[];
+}
+
+export interface ServicePackage {
+  id: string;
+  group: "web" | "speed" | "a11y" | "app" | "care" | "other";
+  sort: number;
+  namePl: string;
+  nameEn: string;
+  scopePl: string;
+  scopeEn: string;
+  durationPl: string;
+  durationEn: string;
+  pricePln: number;
+  priceGbp: number;
+  priceFrom: boolean;
+  recurring: boolean;
+  active: boolean;
+}
+
+export const packageLabel = (p: ServicePackage, lang: "pl" | "en") => {
+  const amount = lang === "pl" ? p.pricePln : p.priceGbp;
+  const num = String(amount).replace(/\B(?=(\d{3})+(?!\d))/g, lang === "pl" ? "\u00a0" : ",");
+  return `${p.priceFrom ? (lang === "pl" ? "od " : "from ") : ""}${lang === "pl" ? `${num} zł` : `£${num}`}${p.recurring ? (lang === "pl" ? " / mies." : " / month") : ""}`;
+};
+
+export interface CompareRow {
+  key: string;
+  labelPl: string;
+  labelEn: string;
+  before: number | null;
+  after: number | null;
+  delta: number | null;
+}
+export interface Comparison {
+  rows: CompareRow[];
+  responseTimeMs: { before: number | null; after: number | null; delta: number | null };
+  cwv: Array<{ acronym: string; name: string; before: string | null; after: string | null }>;
+  comparable: boolean;
+  notes: Array<"measurement_type_differs" | "strategy_differs">;
 }
 
 // Wspólny kontekst przekazywany do zakładek agencyjnych (lazy-loaded).

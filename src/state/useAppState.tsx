@@ -1,7 +1,8 @@
-import { Activity, Bell, Bot, Briefcase, Calculator, Check, CheckCircle2, Copy, Eye, Layers, LayoutDashboard, ListOrdered, Lock, Scale, Search, Share2, TrendingUp, Zap } from "lucide-react";
+import { Activity, Bell, Bot, Briefcase, Package, Calculator, Check, CheckCircle2, Copy, Eye, Layers, LayoutDashboard, ListOrdered, Lock, Scale, Search, Share2, TrendingUp, Zap } from "lucide-react";
 import { AgencyClient, AiAdvisorData, AuditReport, DEFAULT_SCOPE_TASKS, EMPTY_AUDIT, EMPTY_LIVE_SEO, LiveSeoInspection, MonitoredDomain, ScopeTaskItem, buildDynamicAuditArtifacts } from "../scannerTypes";
 import { AgencyCtx } from "../agencyTypes";
 import { copyText } from "../utils/clipboard";
+import { localizeDeep } from "../utils/localize";
 import React, { useEffect, useMemo, useState } from "react";
 
 export function useAppState() {
@@ -16,7 +17,7 @@ export function useAppState() {
   const [viewMode, setViewMode] = useState<"agency" | "client">("agency");
 
   // Core Audit & Live SEO State
-  const [currentReport, setCurrentReport] = useState<AuditReport>(EMPTY_AUDIT);
+  const [rawReport, setCurrentReport] = useState<AuditReport>(EMPTY_AUDIT);
   const [liveSeo, setLiveSeo] = useState<LiveSeoInspection>(EMPTY_LIVE_SEO);
   const [isSeoLoading, setIsSeoLoading] = useState<boolean>(false);
   const [scanHistory, setScanHistory] = useState<AuditReport[]>([]);
@@ -42,7 +43,7 @@ export function useAppState() {
 
   // Competitor Comparison State
   const [competitorUrl, setCompetitorUrl] = useState<string>("webflow.com");
-  const [competitorReport, setCompetitorReport] = useState<AuditReport | null>(null);
+  const [rawCompetitorReport, setCompetitorReport] = useState<AuditReport | null>(null);
   const [isComparing, setIsComparing] = useState<boolean>(false);
 
   // Agency CRM State
@@ -100,7 +101,13 @@ export function useAppState() {
     }
   });
   const [isDefaultPinWarning, setIsDefaultPinWarning] = useState<boolean>(false);
-  const [scanError, setScanError] = useState<string | null>(null);
+  const [scanErrorObj, setScanErrorObj] = useState<{ msg: string; i18n?: Record<string, string> } | null>(null);
+  const setScanError = (msg: string | null, i18n?: Record<string, string>) => setScanErrorObj(msg ? { msg, i18n } : null);
+  const scanError = scanErrorObj ? localizeDeep(scanErrorObj.msg, scanErrorObj.i18n, !isPolish) : null;
+
+  // Teksty z serwera (po polsku) są tłumaczone na EN mapą i18n dołączoną do wyniku skanu.
+  const currentReport = useMemo(() => localizeDeep(rawReport, rawReport.i18n, !isPolish), [rawReport, isPolish]);
+  const competitorReport = useMemo(() => (rawCompetitorReport ? localizeDeep(rawCompetitorReport, rawCompetitorReport.i18n, !isPolish) : null), [rawCompetitorReport, isPolish]);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -255,7 +262,7 @@ export function useAppState() {
 
   // Prevent client view from staying on internal agency tabs
   useEffect(() => {
-    if (viewMode === "client" && (activeTab === "crm" || activeTab === "monitoring" || activeTab === "bulk")) {
+    if (viewMode === "client" && (activeTab === "crm" || activeTab === "monitoring" || activeTab === "bulk" || activeTab === "packages")) {
       setActiveTab("overview");
     }
   }, [viewMode, activeTab]);
@@ -501,8 +508,8 @@ export function useAppState() {
           (isPolish
             ? `Nie udało się wykonać pomiaru dla "${query}". Sprawdź poprawność domeny.`
             : `Could not measure "${query}". Please verify the domain.`);
-        setScanError(errMsg);
-        showToast(errMsg);
+        setScanError(errMsg, data.i18n);
+        showToast(isPolish ? errMsg : (data.i18n?.[errMsg] ?? errMsg));
         return;
       }
 
@@ -576,6 +583,32 @@ export function useAppState() {
       setIsScanning(false);
     }
   };
+
+  // Po zmianie języka przebudowujemy teksty generowane lokalnie z wyniku skanu (checklista, macierz SEO, zakres prac),
+  // zachowując zaznaczenia użytkownika (status checklisty, godziny i wybór zadań).
+  const prevLangRef = React.useRef(isPolish);
+  useEffect(() => {
+    if (prevLangRef.current === isPolish) return;
+    prevLangRef.current = isPolish;
+    if (rawReport.id === "empty" || rawReport.isSample) return;
+    const art = buildDynamicAuditArtifacts(rawReport, liveSeo, isPolish);
+    setCurrentReport((prev) => {
+      const prevStatus = new Map(prev.recommendedActions.map((x) => [x.id, x.status]));
+      const hist = prev.demo?.scoreHistory || [];
+      return {
+        ...prev,
+        recommendedActions: art.dynamicActions.map((x) => ({ ...x, status: prevStatus.get(x.id) ?? x.status })),
+        demo: {
+          ...prev.demo!,
+          crawledPages: art.dynamicCrawledPages,
+          onPageSeoAnalysis: art.dynamicOnPageMatrix,
+          scoreHistory: hist.map((pt, i) => (i === hist.length - 1 ? { ...pt, date: isPolish ? "Teraz" : "Now" } : pt)),
+        },
+      };
+    });
+    const fresh = new Map(art.dynamicScopeTasks.map((t) => [t.id, t]));
+    setScopeTasks((prev) => prev.map((t) => (fresh.has(t.id) ? { ...t, title: fresh.get(t.id)!.title, businessBenefit: fresh.get(t.id)!.businessBenefit, technicalScope: fresh.get(t.id)!.technicalScope } : t)));
+  }, [isPolish]);
 
   // Run Competitor 1:1 Scan
   const handleCompareCompetitor = async (e: React.FormEvent) => {
@@ -1086,6 +1119,7 @@ export function useAppState() {
     { id: "monitoring", label: isPolish ? "Monitoring 24/7 (Retainer)" : "24/7 Monitoring", short: "Monitoring 24/7", icon: Bell, highlight: true, agencyOnly: true },
     { id: "crm", label: isPolish ? "Panel Agencji (CRM)" : "Agency CRM", short: isPolish ? "Panel Agencji" : "Agency CRM", icon: Briefcase, highlight: true, agencyOnly: true },
     { id: "bulk", label: isPolish ? "Skan wielu stron i leady" : "Bulk scan & leads", short: isPolish ? "Leady" : "Leads", icon: ListOrdered, highlight: true, agencyOnly: true },
+    { id: "packages", label: isPolish ? "Pakiety i skaner publiczny" : "Packages & public scanner", short: isPolish ? "Pakiety" : "Packages", icon: Package, highlight: true, agencyOnly: true },
     { id: "reports", label: isPolish ? "Raporty PDF & Link Klienta" : "Reports & Share Link", short: isPolish ? "Raporty & Link" : "Reports & Share", icon: Share2, highlight: true },
     { id: "webscore", label: isPolish ? "Trend WebScore i Historia" : "WebScore & History", short: "WebScore", icon: TrendingUp },
     { id: "diagnostics", label: isPolish ? "Diagnostyka Indeksowania" : "Crawl Diagnostics", short: isPolish ? "Diagnostyka" : "Diagnostics", icon: Activity },
@@ -1176,7 +1210,7 @@ export function useAppState() {
   const hasScan = currentReport.id !== "empty";
   // Scenariusz przychodowy pokazujemy tylko, gdy ktoś sam wpisał założenia (ruch, konwersja, wartość zamówienia, wzrost).
   const hasRoiAssumptions = monthlyVisitors > 0 && currentConvRate > 0 && avgOrderValue > 0 && projectedLiftPct > 0;
-  const shownTab = !hasScan && !["roi-calculator", "monitoring", "crm", "bulk"].includes(activeTab) ? "empty-state" : activeTab;
+  const shownTab = !hasScan && !["roi-calculator", "monitoring", "crm", "bulk", "packages"].includes(activeTab) ? "empty-state" : activeTab;
 
   const pageWeight = currentReport.pageWeight || { totalKb: 0, requestCount: 0, jsKb: 0, imagesKb: 0, cssKb: 0, fontsKb: 0, serverResponseMs: 0, thirdPartyBlockingMs: 0 };
 

@@ -293,7 +293,7 @@ export default function OverviewTab({ app }: { app: AppState }) {
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                     <Gauge className="w-4 h-4 text-emerald-600" />
-                    <span>Core Web Vitals (Oficjalne Wskaźniki Szybkości Google)</span>
+                    <span>{isPolish ? "Core Web Vitals (oficjalne wskaźniki szybkości Google)" : "Core Web Vitals (Google's official speed metrics)"}</span>
                   </h3>
                   <span className="text-xs text-slate-500">Google PageSpeed & Chrome UX Report</span>
                 </div>
