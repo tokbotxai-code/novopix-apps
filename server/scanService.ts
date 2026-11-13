@@ -74,7 +74,13 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
         if (!complete) psiData = null;
         return { response, retry: !complete };
       }
-      return { response, retry: response.status >= 500 };
+      // Chwilowe błędy silnika Lighthouse (np. NO_FCP) wracają od Google jako 4xx: też ponawiamy raz. Limit zapytań (429) nie.
+      let transient = response.status >= 500;
+      if (!transient && response.status === 400) {
+        const msg = String((await response.clone().json().catch(() => ({})))?.error?.message || "");
+        transient = /Lighthouse returned error|NO_FCP|NO_LCP|FAILED_DOCUMENT_REQUEST|timed? ?out/i.test(msg);
+      }
+      return { response, retry: transient };
     };
     let psiResponse: Response;
     let psiIncomplete = false;

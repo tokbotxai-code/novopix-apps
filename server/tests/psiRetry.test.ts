@@ -3,12 +3,13 @@ import assert from "node:assert/strict";
 import http from "node:http";
 
 // Atrapa PageSpeed API: scenariusz ustala, które wywołania zawodzą.
-function mock(plan: Array<"500" | "ok" | "empty" | "429">) {
+function mock(plan: Array<"500" | "ok" | "empty" | "429" | "nofcp">) {
   let calls = 0;
   const server = http.createServer((_req, res) => {
     const step = plan[Math.min(calls, plan.length - 1)];
     calls++;
     if (step === "500") { res.writeHead(500, { "content-type": "application/json" }); return res.end(JSON.stringify({ error: { message: "Lighthouse returned error: NO_FCP" } })); }
+    if (step === "nofcp") { res.writeHead(400, { "content-type": "application/json" }); return res.end(JSON.stringify({ error: { message: "Lighthouse returned error: NO_FCP. The page did not paint any content." } })); }
     if (step === "429") { res.writeHead(429, { "content-type": "application/json" }); return res.end(JSON.stringify({ error: { message: "Quota exceeded" } })); }
     res.writeHead(200, { "content-type": "application/json" });
     if (step === "empty") return res.end("{}");
@@ -20,7 +21,7 @@ function mock(plan: Array<"500" | "ok" | "empty" | "429">) {
   );
 }
 
-async function scan(plan: Array<"500" | "ok" | "empty" | "429">) {
+async function scan(plan: Array<"500" | "ok" | "empty" | "429" | "nofcp">) {
   const m = await mock(plan);
   process.env.PSI_API_BASE = m.base;
   process.env.PSI_RETRY_PAUSE_MS = "50";
@@ -57,4 +58,9 @@ test("limit zapytań (4xx) nie jest ponawiany", async () => {
   const r = await scan(["429", "ok"]);
   assert.notEqual(r.status, "live_lighthouse");
   assert.equal(r.calls, 1);
+});
+test("chwilowy błąd Lighthouse NO_FCP (HTTP 400) jest ponawiany raz", async () => {
+  const r = await scan(["nofcp", "ok"]);
+  assert.equal(r.status, "live_lighthouse");
+  assert.equal(r.calls, 2);
 });
