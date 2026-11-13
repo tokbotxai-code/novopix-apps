@@ -3,6 +3,7 @@ import { AgencyClient, AiAdvisorData, AuditReport, DEFAULT_SCOPE_TASKS, EMPTY_AU
 import { AgencyCtx } from "../agencyTypes";
 import { copyText } from "../utils/clipboard";
 import { localizeDeep } from "../utils/localize";
+import { localizeIssues } from "../utils/lighthouseIssues";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // Parametry startowe z adresu, np. z formularza na novopix.uk: ?url=firma.pl&lang=pl|en&autoscan=1.
@@ -166,7 +167,10 @@ export function useAppState() {
   const scanError = scanErrorObj ? localizeDeep(scanErrorObj.msg, scanErrorObj.i18n, !isPolish) : null;
 
   // Teksty z serwera (po polsku) są tłumaczone na EN mapą i18n dołączoną do wyniku skanu.
-  const currentReport = useMemo(() => localizeDeep(rawReport, rawReport.i18n, !isPolish), [rawReport, isPolish]);
+  const currentReport = useMemo(() => {
+    const r = localizeDeep(rawReport, rawReport.i18n, !isPolish);
+    return { ...r, issues: localizeIssues(r.issues as any[], isPolish) as typeof r.issues };
+  }, [rawReport, isPolish]);
   const competitorReport = useMemo(() => (rawCompetitorReport ? localizeDeep(rawCompetitorReport, rawCompetitorReport.i18n, !isPolish) : null), [rawCompetitorReport, isPolish]);
 
   const showToast = (msg: string) => {
