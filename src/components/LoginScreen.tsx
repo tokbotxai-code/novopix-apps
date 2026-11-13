@@ -19,7 +19,7 @@ export function LoginScreen({
   onSubmit: (pin: string) => Promise<boolean>;
 }) {
   useEffect(() => {
-    document.title = isPolish ? "NovoPix: logowanie do panelu" : "NovoPix: client panel login";
+    document.title = isPolish ? "NovoPix: logowanie do panelu" : "NovoPix: agency panel login";
   }, [isPolish]);
   const scannerHref = `https://scanner.novopix.uk/?lang=${isPolish ? "pl" : "en"}`;
   return (
@@ -38,7 +38,7 @@ export function LoginScreen({
           </div>
         </div>
         <h1 className="text-lg font-heading font-extrabold text-slate-900 dark:text-white">
-          {isPolish ? "Panel dla klientów NovoPix" : "NovoPix client panel"}
+          {isPolish ? "Panel agencji NovoPix" : "NovoPix agency panel"}
         </h1>
         <form
           onSubmit={async (e) => {

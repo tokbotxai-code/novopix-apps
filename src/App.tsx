@@ -878,7 +878,7 @@ export default function App() {
             )}
             {isPublicMode && (
               <a href="https://panel.novopix.uk/" className="hover:text-slate-900">
-                {isPolish ? "Logowanie dla klientów" : "Client login"}
+                {isPolish ? "Panel agencji (logowanie)" : "Agency panel (login)"}
               </a>
             )}
             <a href="mailto:contact@novopix.uk" className="hover:text-slate-900 font-mono">

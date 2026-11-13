@@ -476,7 +476,7 @@ export function useAppState() {
   useEffect(() => {
     document.documentElement.lang = isPolish ? "pl" : "en";
     document.title = showLoginScreen
-      ? isPolish ? "NovoPix: logowanie do panelu" : "NovoPix: client panel login"
+      ? isPolish ? "NovoPix: logowanie do panelu" : "NovoPix: agency panel login"
       : isPolish ? "NovoPix: bezpłatny skaner strony" : "NovoPix free website scanner";
   }, [isPolish, showLoginScreen]);
 
