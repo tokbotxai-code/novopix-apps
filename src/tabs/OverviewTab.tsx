@@ -4,6 +4,7 @@ import React from "react";
 import type { AppState } from "../state/useAppState";
 import { VerdictCards } from "../components/VerdictCards";
 import { DomainHealthCard } from "../components/DomainHealthCard";
+import { StatementCard } from "../components/StatementCard";
 
 
 export default function OverviewTab({ app }: { app: AppState }) {
@@ -29,6 +30,8 @@ export default function OverviewTab({ app }: { app: AppState }) {
     setQuoteSeed,
     domainHealth,
     domainHealthLoading,
+    statement,
+    statementLoading,
   } = app;
   return (
             <div className="space-y-6">
@@ -38,6 +41,17 @@ export default function OverviewTab({ app }: { app: AppState }) {
                   isPolish={isPolish}
                   audience={audience}
                   setAudience={setAudience}
+                  onAsk={(seed) => {
+                    setQuoteSeed(seed);
+                    setIsQuoteOpen(true);
+                  }}
+                />
+              )}
+              {isPublicMode && audience === "institution" && (
+                <StatementCard
+                  data={statement}
+                  loading={statementLoading}
+                  isPolish={isPolish}
                   onAsk={(seed) => {
                     setQuoteSeed(seed);
                     setIsQuoteOpen(true);

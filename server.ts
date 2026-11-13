@@ -31,6 +31,7 @@ import {
 import { performDeepLiveSeoInspection } from "./server/seoCrawler";
 import { performScan } from "./server/scanService";
 import { checkDomainHealth } from "./server/domainHealth";
+import { checkAccessibilityStatement } from "./server/accessibilityStatement";
 import { snapshotFromScan } from "./server/scanSnapshot";
 import { rememberScan, recallScan } from "./server/scanCache";
 import { normalizeFormLang } from "./server/language";
@@ -931,6 +932,18 @@ app.post("/api/domain-health", async (req, res) => {
     return res.status(out.status).json(out.body);
   } catch {
     return res.status(500).json({ error: "Domain check failed." });
+  }
+});
+
+app.post("/api/accessibility-statement", async (req, res) => {
+  const clientIp = req.ip || "local";
+  const limit = checkRateLimit(`as_${clientIp}`, 12, 5 * 60 * 1000);
+  if (!limit.allowed) return res.status(429).json({ error: `Rate limit. Retry in ${limit.retryAfterSec} s.` });
+  try {
+    const out = await checkAccessibilityStatement((req.body || {}).url);
+    return res.status(out.status).json(out.body);
+  } catch {
+    return res.status(500).json({ error: "Statement check failed." });
   }
 });
 

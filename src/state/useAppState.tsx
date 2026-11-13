@@ -6,6 +6,7 @@ import { localizeDeep } from "../utils/localize";
 import { localizeIssues } from "../utils/lighthouseIssues";
 import { computeVerdict } from "../utils/verdict";
 import type { DomainHealth } from "../utils/domainHealthTypes";
+import type { StatementCheck } from "../utils/statementTypes";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // Parametry startowe z adresu, np. z formularza na novopix.uk: ?url=firma.pl&lang=pl|en&autoscan=1.
@@ -196,6 +197,22 @@ export function useAppState() {
       .finally(() => { if (!cancelled) setDomainHealthLoading(false); });
     return () => { cancelled = true; };
   }, [rawReport.scanId, rawReport.finalUrl, rawReport.scannedUrl, rawReport.isSample, rawReport.measurementStatus, isPublicMode]);
+  const [statement, setStatement] = useState<StatementCheck | null>(null);
+  const [statementLoading, setStatementLoading] = useState<boolean>(false);
+  useEffect(() => {
+    if (!isPublicMode || audience !== "institution") { setStatement(null); return; }
+    const target = rawReport.finalUrl || rawReport.scannedUrl;
+    if (!target || rawReport.isSample || rawReport.measurementStatus === "failed") { setStatement(null); return; }
+    let cancelled = false;
+    setStatement(null);
+    setStatementLoading(true);
+    fetch("/api/accessibility-statement", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: target }) })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled) setStatement(d && d.host ? d : null); })
+      .catch(() => { if (!cancelled) setStatement(null); })
+      .finally(() => { if (!cancelled) setStatementLoading(false); });
+    return () => { cancelled = true; };
+  }, [rawReport.scanId, rawReport.finalUrl, rawReport.scannedUrl, rawReport.isSample, rawReport.measurementStatus, isPublicMode, audience]);
   const competitorReport = useMemo(() => (rawCompetitorReport ? localizeDeep(rawCompetitorReport, rawCompetitorReport.i18n, !isPolish) : null), [rawCompetitorReport, isPolish]);
 
   const showToast = (msg: string) => {
@@ -1512,6 +1529,8 @@ export function useAppState() {
     setIsQuoteOpen,
     domainHealth,
     domainHealthLoading,
+    statement,
+    statementLoading,
     audience,
     setAudience,
     quoteSeed,
