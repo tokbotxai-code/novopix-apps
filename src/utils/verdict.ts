@@ -38,6 +38,7 @@ export function computeVerdict(report: ReportLike, audience: Audience, isPolish:
   const P = PRICES[isPolish ? "PLN" : "GBP"];
   const L = (pl: string, en: string) => (isPolish ? pl : en);
   const perfLow = typeof c.performance === "number" && c.performance < 70;
+  const perfMid = typeof c.performance === "number" && c.performance >= 70 && c.performance < 90;
   const seoLow = typeof c.seo === "number" && c.seo < 70;
   const mobLow = typeof report.seoBreakdown?.mobileFriendly === "number" && report.seoBreakdown.mobileFriendly < 70;
   const a11yLow = typeof c.accessibility === "number" && c.accessibility < 90;
@@ -49,6 +50,7 @@ export function computeVerdict(report: ReportLike, audience: Audience, isPolish:
   const problems: string[] = [];
   if (audience === "company" && extras?.noContact) problems.push(L("nie znaleźliśmy na stronie głównej sposobu kontaktu", "we did not find a way to get in touch on the home page"));
   if (perfLow) problems.push(L("na telefonie ładuje się wolno", "it loads slowly on mobile"));
+  else if (perfMid) problems.push(L("na telefonie mogłaby ładować się szybciej", "it could load faster on mobile"));
   if (seoLow || mobLow) problems.push(L("ma braki, przez które trudniej ją znaleźć w Google i używać na telefonie", "it has gaps that make it harder to find in Google and to use on a phone"));
   if (a11yLow) problems.push(L("kontrole automatyczne wykryły problemy z dostępnością", "automated checks found accessibility problems"));
   const summary = allGood
@@ -72,6 +74,7 @@ export function computeVerdict(report: ReportLike, audience: Audience, isPolish:
   } else if (a11yLow) {
     items.push({ key: "review", problem: L("Problemy z dostępnością", "Accessibility problems"), service: L("Przegląd dostępności", "Accessibility review"), price: money(P.review, isPolish, false), why: L(`kontrole automatyczne dały ${num(c.accessibility)}, poniżej 90`, `automated checks gave ${num(c.accessibility)}, below 90`) });
   }
+  if (perfMid && !perfLow) items.push({ key: "sprint", problem: L("Szybkość na telefonie można poprawić", "Mobile speed can be improved"), service: "Speed Sprint", price: money(P.sprint, isPolish, false), why: L(`wynik wydajności to ${num(c.performance)}, a dobrym wynikiem jest 90 i więcej`, `the performance score is ${num(c.performance)}, and a good score is 90 or more`) });
   if (!items.length && allGood) items.push({ key: "care", problem: L("Utrzymanie dobrego wyniku", "Keeping the good result"), service: L("Opieka miesięczna", "Monthly care"), price: money(P.care, isPolish, true) + L(" / mies.", " / month"), why: L("wynik jest dobry, a strony z czasem się psują, więc warto go pilnować", "the result is good, and sites degrade over time, so it is worth keeping an eye on it") });
   return { level, label, summary, items: items.slice(0, 3) };
 }
