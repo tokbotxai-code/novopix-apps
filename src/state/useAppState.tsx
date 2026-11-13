@@ -42,6 +42,8 @@ function detectPolish(fromParam: "pl" | "en" | null): boolean {
   return /^pl/i.test(String(langs[0] || ""));
 }
 
+import { shouldShowLogin } from "../utils/loginGate";
+
 export function useAppState() {
   const startParams = useRef(readStartParams(typeof window !== "undefined" ? window.location.search : "")).current;
   const initialPublic = useRef(readInitialPublicMode()).current;
@@ -157,7 +159,7 @@ export function useAppState() {
     }
   });
   // Jedno miejsce decyduje o ekranie logowania panelu (App i tytuł karty).
-  const showLoginScreen = !isPublicMode && !agencyToken && viewMode === "agency" && !startParams.clientView;
+  const showLoginScreen = shouldShowLogin({ isPublicMode, agencyToken, viewMode, clientView: startParams.clientView });
   const [isDefaultPinWarning, setIsDefaultPinWarning] = useState<boolean>(false);
   const [scanErrorObj, setScanErrorObj] = useState<{ msg: string; i18n?: Record<string, string> } | null>(null);
   const setScanError = (msg: string | null, i18n?: Record<string, string>) => setScanErrorObj(msg ? { msg, i18n } : null);

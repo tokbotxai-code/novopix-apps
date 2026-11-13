@@ -107,7 +107,7 @@ export default function OverviewTab({ app }: { app: AppState }) {
                       {isPolish ? "Kontrole dostępności (zautomatyzowane)" : "Automated accessibility checks"}
                     </h3>
                     <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-mono text-xs font-black">
-                      {currentReport.categories.accessibility}/100
+                      {currentReport.categories.accessibility ?? "N/A"}/100
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-3 py-2">

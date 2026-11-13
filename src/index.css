@@ -2,7 +2,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Figtree:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
-@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant dark (@media (prefers-color-scheme: dark));
 
 :root {
   color-scheme: light;
@@ -66,4 +66,32 @@ h4 {
     padding: 0 !important;
     max-width: 100% !important;
   }
+}
+
+/* Ciemny motyw skanera i panelu: podmiana jasnych klas Tailwind, gdy system ma tryb ciemny (nie dotyczy druku). */
+@media screen and (prefers-color-scheme: dark) {
+  :root { color-scheme: dark; }
+  body, .bg-\[\#F4F6F9\] { background-color: #0b1620 !important; color: #e2e8f0; }
+  .bg-white, .bg-slate-50 { background-color: #12222f !important; }
+  .bg-slate-100, .bg-slate-200 { background-color: #1b3040 !important; }
+  .hover\:bg-slate-200:hover, .hover\:bg-slate-100:hover { background-color: #24404f !important; }
+  .text-slate-900, .text-slate-800, .text-slate-700 { color: #f1f5f9 !important; }
+  .text-slate-600, .text-slate-500 { color: #b6c4d2 !important; }
+  .text-slate-400 { color: #9fb0c0 !important; }
+  .border-slate-100, .border-slate-200, .border-slate-200\/80, .border-slate-300 { border-color: #2a4152 !important; }
+  .bg-emerald-50, .bg-blue-50, .bg-amber-50, .bg-rose-50, .bg-sky-50, .bg-indigo-50 { background-color: #14303a !important; }
+  .text-emerald-700, .text-emerald-800 { color: #6ee7b7 !important; }
+  .text-blue-700 { color: #93c5fd !important; }
+  .text-amber-600, .text-amber-700, .text-amber-800, .text-amber-900 { color: #fcd34d !important; }
+  .text-rose-600, .text-rose-700 { color: #fda4af !important; }
+  input, select, textarea { background-color: #0f1c27; color: #f1f5f9; }
+  circle[stroke="#f1f5f9"], circle[stroke="#e2e8f0"] { stroke: #2a4152; }
+  [class*="bg-amber-"], [class*="bg-emerald-50"], [class*="bg-rose-"], [class*="bg-blue-50"], [class*="bg-green-50"], [class*="bg-sky-"] { background-color: #14303a !important; }
+  [class*="bg-slate-50"], [class*="bg-slate-100"], [class*="bg-slate-200"], [class*="bg-gray-"], [class*="bg-white/"] { background-color: #1b3040 !important; }
+  [class*="text-amber-"], [class*="text-yellow-"] { color: #fcd34d !important; }
+  [class*="text-emerald-"][class*="text-emerald-7"], [class*="text-emerald-8"], [class*="text-emerald-9"], [class*="text-green-"] { color: #6ee7b7 !important; }
+  [class*="text-rose-"], [class*="text-red-"] { color: #fda4af !important; }
+  [class*="text-slate-3"] { color: #b6c4d2 !important; }
+  .text-\[\#103247\], .text-\[\#0b2230\], .text-\[\#0e2733\] { color: #8fe9ff !important; }
+  .novopix-gold-btn { color: #0e2733 !important; }
 }
