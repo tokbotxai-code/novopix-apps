@@ -1166,7 +1166,7 @@ export function useAppState() {
       <div>
         <div style="font-size:11px; color:#34d399; font-weight:bold; letter-spacing:1px;">${L("EKSPERTYZA TECHNICZNA & AUDYT STRONY","TECHNICAL & WEBSITE AUDIT")}</div>
         <h1>${currentReport.scannedUrl}</h1>
-        <div style="font-size:13px; color:#cbd5e1;">${L("Przygotowano dla","Prepared for")}: <strong>${(clientName === "Zarząd Firmy" && !isPolish ? "Company management" : clientName) || domain}</strong> · ${L("Audytor","Auditor")}: <strong>${auditorName}</strong></div>
+        <div style="font-size:13px; color:#cbd5e1;">${isFull ? `${L("Przygotowano dla","Prepared for")}: <strong>${(clientName === "Zarząd Firmy" && !isPolish ? "Company management" : clientName) || domain}</strong> · ` : ""}${L("Audytor","Auditor")}: <strong>${auditorName}</strong></div>
       </div>
       <div style="text-align:right;">
         <div style="font-size:36px; font-weight:900; color:#34d399;">${currentReport.overallScore ?? "N/A"}/100</div>
