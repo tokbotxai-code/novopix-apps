@@ -4,7 +4,7 @@ import { LoginScreen } from "./components/LoginScreen";
 import { InfoModal } from "./components/InfoModal";
 import { NovoPixAnimatedMark } from "./components/NovoPixAnimatedMark";
 import React, { Suspense, lazy, useEffect, useRef } from "react";
-import { readStartParams, useAppState } from "./state/useAppState";
+import { useAppState } from "./state/useAppState";
 
 // Wszystkie zakładki, lejek i okna modalne ładują się dopiero wtedy, gdy są potrzebne (mniejszy plik startowy).
 const loadOverviewTab = () => import("./tabs/OverviewTab");
@@ -108,7 +108,7 @@ export default function App() {
     loadOverviewTab().catch(() => {});
     if (isPublicMode) loadPublicFunnel().catch(() => {});
   }, [isScanning, isPublicMode]);
-  if (!isPublicMode && !agencyToken && viewMode === "agency" && !readStartParams(window.location.search).clientView) {
+  if (app.showLoginScreen) {
     return (
       <LoginScreen
         isPolish={isPolish}

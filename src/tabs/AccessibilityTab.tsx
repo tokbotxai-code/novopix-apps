@@ -13,7 +13,7 @@ export default function AccessibilityTab({ app }: { app: AppState }) {
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
                 <div>
                   <h2 className="text-lg font-extrabold text-slate-900 font-heading">
-                    {isPolish ? "Audyt Dostępności Cyfrowej WCAG 2.1 Level AA (Wymogi UE / UK EAA)" : "WCAG 2.1 Level AA & European Accessibility Act Audit"}
+                    {isPolish ? "Zautomatyzowane kontrole dostępności (kryteria WCAG 2.1 AA)" : "Automated accessibility checks (WCAG 2.1 AA criteria)"}
                   </h2>
                   <p className="text-xs text-slate-500">
                     {isPolish
@@ -50,7 +50,7 @@ export default function AccessibilityTab({ app }: { app: AppState }) {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase">
-                      <th className="py-2.5 px-3">{isPolish ? "Kryterium WCAG 2.1 AA" : "WCAG 2.1 AA Criterion"}</th>
+                      <th className="py-2.5 px-3">{isPolish ? "Kryterium WCAG 2.1 AA (sprawdzane automatem)" : "WCAG 2.1 AA criterion (automated check)"}</th>
                       <th className="py-2.5 px-3">{isPolish ? "Wynik Inspekcji DOM" : "Live DOM Result"}</th>
                       <th className="py-2.5 px-3 text-right">{isPolish ? "Status Zgodności" : "Compliance Status"}</th>
                     </tr>

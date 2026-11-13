@@ -72,7 +72,7 @@ export default function InsightsTab({ app }: { app: AppState }) {
                       { id: "high", label: isPolish ? "Krytyczne" : "High Priority" },
                       { id: "performance", label: isPolish ? "Wydajność" : "Speed" },
                       { id: "seo", label: "SEO" },
-                      { id: "accessibility", label: "WCAG" },
+                      { id: "accessibility", label: isPolish ? "Dostępność" : "Accessibility" },
                     ].map((f) => (
                       <button
                         key={f.id}

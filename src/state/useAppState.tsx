@@ -141,6 +141,8 @@ export function useAppState() {
       return null;
     }
   });
+  // Jedno miejsce decyduje o ekranie logowania panelu (App i tytuł karty).
+  const showLoginScreen = !isPublicMode && !agencyToken && viewMode === "agency" && !startParams.clientView;
   const [isDefaultPinWarning, setIsDefaultPinWarning] = useState<boolean>(false);
   const [scanErrorObj, setScanErrorObj] = useState<{ msg: string; i18n?: Record<string, string> } | null>(null);
   const setScanError = (msg: string | null, i18n?: Record<string, string>) => setScanErrorObj(msg ? { msg, i18n } : null);
@@ -456,11 +458,10 @@ export function useAppState() {
   // Sync HTML lang attribute
   useEffect(() => {
     document.documentElement.lang = isPolish ? "pl" : "en";
-    const loginScreen = !isPublicMode && !agencyToken && viewMode === "agency" && !startParams.clientView;
-    document.title = loginScreen
+    document.title = showLoginScreen
       ? isPolish ? "NovoPix: logowanie do panelu" : "NovoPix: client panel login"
       : isPolish ? "NovoPix: bezpłatny skaner strony" : "NovoPix free website scanner";
-  }, [isPolish, isPublicMode, agencyToken, viewMode]);
+  }, [isPolish, showLoginScreen]);
 
   // Calculate Scope & ROI Math
   const scopeSummary = useMemo(() => {
@@ -1121,7 +1122,7 @@ export function useAppState() {
     <div class="grid">
       <div class="stat"><div style="font-size:11px; color:#64748b;">Wydajność</div><div class="stat-val">${currentReport.categories.performance}/100</div></div>
       <div class="stat"><div style="font-size:11px; color:#64748b;">Techniczne SEO</div><div class="stat-val">${currentReport.categories.seo}/100</div></div>
-      <div class="stat"><div style="font-size:11px; color:#64748b;">Dostępność WCAG</div><div class="stat-val">${currentReport.categories.accessibility}/100</div></div>
+      <div class="stat"><div style="font-size:11px; color:#64748b;">Kontrole dostępności (zautomatyzowane)</div><div class="stat-val">${currentReport.categories.accessibility}/100</div></div>
       <div class="stat"><div style="font-size:11px; color:#64748b;">Dobre Praktyki</div><div class="stat-val">${currentReport.categories.bestPractices}/100</div></div>
     </div>
 
@@ -1189,7 +1190,7 @@ export function useAppState() {
     { id: "reports", label: isPolish ? "Raporty PDF & Link Klienta" : "Reports & Share Link", short: isPolish ? "Raporty & Link" : "Reports & Share", icon: Share2, highlight: true },
     { id: "webscore", label: isPolish ? "Trend oceny strony i historia" : "WebScore & History", short: isPolish ? "Ocena strony" : "WebScore", icon: TrendingUp },
     { id: "diagnostics", label: isPolish ? "Diagnostyka Indeksowania" : "Crawl Diagnostics", short: isPolish ? "Diagnostyka" : "Diagnostics", icon: Activity },
-    { id: "accessibility", label: isPolish ? "Dostępność WCAG 2.1 AA" : "WCAG 2.1 AA", short: "WCAG 2.1", icon: Eye },
+    { id: "accessibility", label: isPolish ? "Kontrole dostępności" : "Accessibility checks", short: isPolish ? "Dostępność" : "Access.", icon: Eye },
     { id: "checklist", label: isPolish ? "Lista Kontrolna Wdrożenia" : "Action Checklist", short: isPolish ? "Checklista" : "Checklist", icon: CheckCircle2 },
   ];
 
@@ -1418,6 +1419,7 @@ export function useAppState() {
     isPublicMode,
     setIsPublicMode,
     isPinModalOpen,
+    showLoginScreen,
     setIsPinModalOpen,
     pinAttempt,
     setPinAttempt,

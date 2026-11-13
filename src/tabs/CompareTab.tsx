@@ -93,7 +93,7 @@ export default function CompareTab({ app }: { app: AppState }) {
                         <div className="space-y-2 text-xs pt-2 border-t border-slate-200 tabular-nums">
                           <div className="flex justify-between"><span>Performance:</span><strong className="font-mono">{currentReport.categories.performance}/100</strong></div>
                           <div className="flex justify-between"><span>Technical SEO:</span><strong className="font-mono">{currentReport.categories.seo}/100</strong></div>
-                          <div className="flex justify-between"><span>WCAG Accessibility:</span><strong className="font-mono">{currentReport.categories.accessibility}/100</strong></div>
+                          <div className="flex justify-between"><span>{isPolish ? "Kontrole dostępności:" : "Accessibility checks:"}</span><strong className="font-mono">{currentReport.categories.accessibility}/100</strong></div>
                           <div className="flex justify-between"><span>LCP (Szybkość Główna):</span><strong className="font-mono">{currentReport.coreWebVitals.lcp.displayValue}</strong></div>
                           <div className="flex justify-between"><span>CLS (Stabilność):</span><strong className="font-mono">{currentReport.coreWebVitals.cls.displayValue}</strong></div>
                         </div>
@@ -118,7 +118,7 @@ export default function CompareTab({ app }: { app: AppState }) {
                         <div className="space-y-2 text-xs pt-2 border-t border-slate-200 tabular-nums">
                           <div className="flex justify-between"><span>Performance:</span><strong className="font-mono">{compPerf}/100</strong></div>
                           <div className="flex justify-between"><span>Technical SEO:</span><strong className="font-mono">{compSeo}/100</strong></div>
-                          <div className="flex justify-between"><span>WCAG Accessibility:</span><strong className="font-mono">{compAcc}/100</strong></div>
+                          <div className="flex justify-between"><span>{isPolish ? "Kontrole dostępności:" : "Accessibility checks:"}</span><strong className="font-mono">{compAcc}/100</strong></div>
                           <div className="flex justify-between"><span>LCP (Szybkość Główna):</span><strong className="font-mono">{compLcp}</strong></div>
                           <div className="flex justify-between"><span>CLS (Stabilność):</span><strong className="font-mono">{compCls}</strong></div>
                         </div>

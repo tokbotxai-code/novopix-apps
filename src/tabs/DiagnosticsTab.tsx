@@ -80,8 +80,8 @@ export default function DiagnosticsTab({ app }: { app: AppState }) {
                       </h3>
                       <p className="text-xs text-slate-500">
                         {isPolish
-                          ? "Kliknij dowolną podstronę, aby wykonać dla niej pełny audyt szybkości, SEO i WCAG 2.1 AA."
-                          : "Click any discovered subpage to run a full speed, SEO, and WCAG 2.1 AA audit on it."}
+                          ? "Kliknij dowolną podstronę, aby wykonać dla niej audyt szybkości, SEO i dostępności."
+                          : "Click any discovered subpage to run a speed, SEO and accessibility audit on it."}
                       </p>
                     </div>
                     <span className="text-xs font-mono text-emerald-700 font-bold">
