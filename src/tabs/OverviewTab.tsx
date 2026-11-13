@@ -44,7 +44,7 @@ export default function OverviewTab({ app }: { app: AppState }) {
                   isPolish={isPolish}
                 />
                 <ScoreBarCard
-                  title={isPolish ? "Dostępność WCAG 2.1 AA" : "WCAG 2.1 AA Compliance"}
+                  title={isPolish ? "Kontrole dostępności (zautomatyzowane)" : "Automated accessibility checks"}
                   score={currentReport.categories.accessibility}
                   breakdown={[
                     { label: isPolish ? "Kontrast Tekstu" : "Contrast Ratio", val: currentReport.accessibilityBreakdown.contrast },
@@ -62,15 +62,14 @@ export default function OverviewTab({ app }: { app: AppState }) {
                 <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                      {isPolish ? "Status SEO & Autorytet Domeny" : "SEO Status & Domain Authority"}
+                      {isPolish ? "Status SEO" : "SEO Status"}
                     </h3>
                     <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-mono text-xs font-black">
                       {currentReport.categories.seo}/100
                     </span>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 py-4">
+                  <div className="grid grid-cols-2 gap-4 py-4">
                     {[
-                      { label: isPolish ? "Autorytet Domeny" : "Domain Authority", val: 68 },
                       { label: isPolish ? "Indeksowanie" : "Crawlability", val: currentReport.seoBreakdown.crawlability },
                       { label: isPolish ? "On-Page SEO" : "On-Page SEO", val: currentReport.seoBreakdown.onPageSeo },
                     ].map((item, i) => (
@@ -85,12 +84,12 @@ export default function OverviewTab({ app }: { app: AppState }) {
                               stroke="#059669"
                               strokeWidth="5"
                               strokeDasharray={2 * Math.PI * 24}
-                              strokeDashoffset={2 * Math.PI * 24 * (1 - (item.val || 75) / 100)}
+                              strokeDashoffset={2 * Math.PI * 24 * (1 - (item.val ?? 0) / 100)}
                               strokeLinecap="round"
                               fill="none"
                             />
                           </svg>
-                          <span className="absolute text-xs font-mono font-extrabold text-slate-900">{item.val}%</span>
+                          <span className="absolute text-xs font-mono font-extrabold text-slate-900">{item.val ?? "N/A"}%</span>
                         </div>
                         <span className="text-[11px] font-bold text-slate-700 mt-1">{item.label}</span>
                       </div>
@@ -105,18 +104,17 @@ export default function OverviewTab({ app }: { app: AppState }) {
                 <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                      {isPolish ? "Zgodność z WCAG 2.1 AA (Accessibility)" : "Accessibility Compliance WCAG 2.1 AA"}
+                      {isPolish ? "Kontrole dostępności (zautomatyzowane)" : "Automated accessibility checks"}
                     </h3>
                     <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-mono text-xs font-black">
                       {currentReport.categories.accessibility}/100
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-2">
+                  <div className="grid grid-cols-3 gap-3 py-2">
                     {[
-                      { label: isPolish ? "Postrzegalna" : "Perceivable", val: 95 },
-                      { label: isPolish ? "Funkcjonalna" : "Operable", val: 89 },
-                      { label: isPolish ? "Zrozumiała" : "Understandable", val: 97 },
-                      { label: isPolish ? "Solidna" : "Robust", val: 94 },
+                      { label: isPolish ? "Kontrast tekstu" : "Contrast", val: currentReport.accessibilityBreakdown.contrast },
+                      { label: isPolish ? "Nawigacja i focus" : "Navigation", val: currentReport.accessibilityBreakdown.navigation },
+                      { label: isPolish ? "Alt i ARIA" : "Alt & ARIA", val: currentReport.accessibilityBreakdown.aria },
                     ].map((item, i) => (
                       <div key={i} className="flex flex-col items-center text-center p-2.5 rounded-2xl bg-slate-50 border border-slate-100">
                         <div className="relative w-14 h-14 flex items-center justify-center my-1">
@@ -129,19 +127,19 @@ export default function OverviewTab({ app }: { app: AppState }) {
                               stroke="#0284c7"
                               strokeWidth="4.5"
                               strokeDasharray={2 * Math.PI * 22}
-                              strokeDashoffset={2 * Math.PI * 22 * (1 - item.val / 100)}
+                              strokeDashoffset={2 * Math.PI * 22 * (1 - (item.val ?? 0) / 100)}
                               strokeLinecap="round"
                               fill="none"
                             />
                           </svg>
-                          <span className="absolute text-[11px] font-mono font-extrabold text-slate-900">{item.val}%</span>
+                          <span className="absolute text-[11px] font-mono font-extrabold text-slate-900">{item.val ?? "N/A"}%</span>
                         </div>
                         <span className="text-[10px] font-bold text-slate-700 mt-1">{item.label}</span>
                       </div>
                     ))}
                   </div>
                   <div className="text-[11px] text-slate-400 mt-2">
-                    {isPolish ? "Test kontrastu, nawigacji klawiaturą oraz etykiet ARIA" : "Tested against W3C WCAG 2.1 AA standards"}
+                    {isPolish ? "To nie jest ocena zgodności z WCAG ani certyfikat. Automaty nie wykrywają wszystkiego." : "This is not a WCAG conformance rating or certificate. Automated checks do not detect everything."}
                   </div>
                 </div>
               </div>
@@ -215,8 +213,7 @@ export default function OverviewTab({ app }: { app: AppState }) {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 pt-2">
-                    {viewMode === "client" ? (
-                      <button
+                    {viewMode === "client" ? (isPublicMode ? null : (<button
                         onClick={() => (isPublicMode ? setIsQuoteOpen(true) : setIsAcceptProposalOpen(true))}
                         className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-extrabold transition-colors flex items-center gap-2 cursor-pointer"
                       >
@@ -230,7 +227,7 @@ export default function OverviewTab({ app }: { app: AppState }) {
                             ? "Akceptuję ofertę i zamawiam wdrożenie"
                             : "Accept proposal & order the fix"}
                         </span>
-                      </button>
+                      </button>)
                     ) : (
                       <>
                         <button

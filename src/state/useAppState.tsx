@@ -456,8 +456,11 @@ export function useAppState() {
   // Sync HTML lang attribute
   useEffect(() => {
     document.documentElement.lang = isPolish ? "pl" : "en";
-    document.title = isPolish ? "NovoPix: skaner kondycji strony" : "NovoPix Website Growth Scanner";
-  }, [isPolish]);
+    const loginScreen = !isPublicMode && !agencyToken && viewMode === "agency" && !startParams.clientView;
+    document.title = loginScreen
+      ? isPolish ? "NovoPix: logowanie do panelu" : "NovoPix: client panel login"
+      : isPolish ? "NovoPix: bezpłatny skaner strony" : "NovoPix free website scanner";
+  }, [isPolish, isPublicMode, agencyToken, viewMode]);
 
   // Calculate Scope & ROI Math
   const scopeSummary = useMemo(() => {

@@ -1,9 +1,10 @@
 import { AuditIntegrityBanner } from "./components/AuditIntegrityBanner";
 import { Calculator, CheckCircle2, CircleHelp, Copy, Download, Eye, Globe, Lock, Monitor, Printer, RefreshCw, Search, Share2, Shield, ShieldCheck, Smartphone, X } from "lucide-react";
+import { LoginScreen } from "./components/LoginScreen";
 import { InfoModal } from "./components/InfoModal";
 import { NovoPixAnimatedMark } from "./components/NovoPixAnimatedMark";
 import React, { Suspense, lazy, useEffect, useRef } from "react";
-import { useAppState } from "./state/useAppState";
+import { readStartParams, useAppState } from "./state/useAppState";
 
 // Wszystkie zakładki, lejek i okna modalne ładują się dopiero wtedy, gdy są potrzebne (mniejszy plik startowy).
 const loadOverviewTab = () => import("./tabs/OverviewTab");
@@ -107,6 +108,19 @@ export default function App() {
     loadOverviewTab().catch(() => {});
     if (isPublicMode) loadPublicFunnel().catch(() => {});
   }, [isScanning, isPublicMode]);
+  if (!isPublicMode && !agencyToken && viewMode === "agency" && !readStartParams(window.location.search).clientView) {
+    return (
+      <LoginScreen
+        isPolish={isPolish}
+        setIsPolish={setIsPolish}
+        pinAttempt={pinAttempt}
+        setPinAttempt={setPinAttempt}
+        pinError={pinError}
+        setPinError={app.setPinError}
+        onSubmit={handleUnlockWithPin}
+      />
+    );
+  }
   return (
     <div className="min-h-screen bg-[#F4F6F9] flex flex-col lg:flex-row text-slate-800 font-sans selection:bg-emerald-500/30">
       {/* Login status badge (agency panel only) */}
@@ -153,7 +167,7 @@ export default function App() {
                 <span className="novopix-wordmark-pix">Pix</span>
               </div>
               <div className="text-[11px] text-[#bcd6e6] font-medium mt-1">
-                {viewMode === "client" && !isPublicMode ? (isPolish ? "Pokój Ofertowy Klienta" : "Client Deal Room") : isPolish ? "Skaner kondycji strony" : "Website Growth Scanner"}
+                {viewMode === "client" && !isPublicMode ? (isPolish ? "Pokój Ofertowy Klienta" : "Client Deal Room") : isPolish ? "Bezpłatny skaner strony NovoPix" : "NovoPix free website scanner"}
               </div>
             </div>
           </div>
@@ -265,7 +279,7 @@ export default function App() {
             ) : (
               <div className="text-[11px] text-[#bcd6e6]">{isPolish ? "Wycena pojawi się po skanie strony." : "The quote appears after a website scan."}</div>
             )}
-            <button
+            {!isPublicMode && <button
               onClick={() => (viewMode === "client" && !isPublicMode ? setIsAcceptProposalOpen(true) : isPublicMode ? setIsQuoteOpen(true) : app.roiAllowed ? setActiveTab("roi-calculator") : setIsPinModalOpen(true))}
               className="mt-1.5 text-[11px] font-bold text-[#8fe9ff] hover:text-white flex items-center gap-1 cursor-pointer"
             >
@@ -286,7 +300,7 @@ export default function App() {
                   ? "Otwórz kalkulator ROI →"
                   : "Open ROI Calculator →"}
               </span>
-            </button>
+            </button>}
           </div>
           <div className="text-[10px] text-[#bcd6e6]/70 text-center">NovoPix · novopix.uk · contact@novopix.uk</div>
         </div>
@@ -305,7 +319,7 @@ export default function App() {
               <NovoPixAnimatedMark sizeClass="w-5 h-5" />
             </div>
             <span className="text-sm font-heading font-extrabold tracking-tight text-slate-900 truncate">
-              NovoPix <span className="text-[#103247]"><span className="sm:hidden">{isPolish ? "Skaner strony" : "Scanner"}</span><span className="hidden sm:inline">{isPolish ? "Skaner kondycji strony" : "Growth Scanner"}</span></span>
+              NovoPix <span className="text-[#103247]"><span className="sm:hidden">{isPolish ? "Skaner strony" : "Scanner"}</span><span className="hidden sm:inline">{isPolish ? "Skaner strony NovoPix" : "Website Scanner"}</span></span>
             </span>
           </div>
 
@@ -384,12 +398,6 @@ export default function App() {
                 ? "Bezpłatny pomiar strony: wyniki pochodzą z Google PageSpeed Insights i kontroli kodu HTML. To nie jest certyfikat ani gwarancja wyniku."
                 : "Free website check: results come from Google PageSpeed Insights and an HTML inspection. It is not a certificate or a guarantee of results."}
             </span>
-            <button
-              onClick={() => setIsQuoteOpen(true)}
-              className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg text-xs font-extrabold cursor-pointer whitespace-nowrap"
-            >
-              {isPolish ? "Poproś o wycenę →" : "Request a quote →"}
-            </button>
           </div>
         )}
         {viewMode === "client" && !isPublicMode && (
@@ -854,7 +862,7 @@ export default function App() {
           <div className="flex items-center gap-2">
             <span className="font-heading font-extrabold text-[#0b2230] tracking-wider">NOVOPIX STUDIO</span>
             <span>·</span>
-            <span>{isPolish ? "Platforma Audytowa i Sprzedażowa SaaS" : "Enterprise Web Growth & Audit SaaS"}</span>
+            <span>{isPolish ? "Bezpłatny skaner strony NovoPix" : "NovoPix free website scanner"}</span>
           </div>
           <div className="flex flex-wrap items-center gap-4 text-xs">
             <button onClick={() => setIsHowItWorksOpen(true)} className="hover:text-slate-900 transition-colors cursor-pointer">

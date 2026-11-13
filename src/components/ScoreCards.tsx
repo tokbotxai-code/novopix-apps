@@ -84,7 +84,7 @@ export function ScoreBarCard({
 }
 
 export function ProgressSummaryCard({ report, isPolish }: { report: AuditReport; isPolish: boolean }) {
-  const { completePercent, warnings, passedChecks, totalChecks } = report.auditProgress;
+  const { completePercent, warnings, passedChecks, criticalIssues, totalChecks } = report.auditProgress;
   return (
     <div className="bg-white rounded-2xl p-6 border border-slate-200 flex flex-col justify-between">
       <div>
@@ -103,12 +103,16 @@ export function ProgressSummaryCard({ report, isPolish }: { report: AuditReport;
             <span className="font-mono font-bold text-amber-600 tabular-nums">{warnings}</span>
           </div>
           <div className="flex justify-between">
+            <span className="text-slate-500">{isPolish ? "Błędy krytyczne" : "Critical issues"}</span>
+            <span className="font-mono font-bold text-rose-600 tabular-nums">{criticalIssues}</span>
+          </div>
+          <div className="flex justify-between">
             <span className="text-slate-500">{isPolish ? "Wszystkie reguły" : "Total rules"}</span>
             <span className="font-mono font-bold text-slate-800 tabular-nums">{totalChecks}</span>
           </div>
         </div>
       </div>
-      <div className="text-[11px] text-slate-400 mt-3">{isPolish ? "Pełny skan bez błędów" : "Complete diagnostic run"}</div>
+      <div className="text-[11px] text-slate-400 mt-3">{isPolish ? "Zaliczone + do optymalizacji + krytyczne = wszystkie reguły" : "Passed + warnings + critical = total rules"}</div>
     </div>
   );
 }
