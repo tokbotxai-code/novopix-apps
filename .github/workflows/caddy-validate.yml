@@ -1,0 +1,19 @@
+name: Caddyfile
+on:
+  push:
+    paths: ["deploy/vps/Caddyfile", ".github/workflows/caddy-validate.yml"]
+  pull_request:
+    paths: ["deploy/vps/Caddyfile"]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: caddy validate
+        run: |
+          docker run --rm -v "$PWD/deploy/vps/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2-alpine \
+            caddy validate --adapter caddyfile --config /etc/caddy/Caddyfile
+      - name: caddy fmt (wcięcia i składnia)
+        run: |
+          docker run --rm -v "$PWD/deploy/vps/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2-alpine \
+            caddy fmt --diff /etc/caddy/Caddyfile || true

@@ -305,7 +305,7 @@ export default function App() {
               <NovoPixAnimatedMark sizeClass="w-5 h-5" />
             </div>
             <span className="text-sm font-heading font-extrabold tracking-tight text-slate-900 truncate">
-              NovoPix <span className="text-[#103247]">{isPolish ? "Skaner kondycji strony" : "Growth Scanner"}</span>
+              NovoPix <span className="text-[#103247]"><span className="sm:hidden">{isPolish ? "Skaner strony" : "Scanner"}</span><span className="hidden sm:inline">{isPolish ? "Skaner kondycji strony" : "Growth Scanner"}</span></span>
             </span>
           </div>
 
