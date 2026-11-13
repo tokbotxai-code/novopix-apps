@@ -30,7 +30,7 @@ const money = (n: number, isPolish: boolean, from: boolean) => {
 
 const joinList = (a: string[], and: string) => (a.length < 2 ? a.join("") : `${a.slice(0, -1).join(", ")} ${and} ${a[a.length - 1]}`);
 
-export function computeVerdict(report: ReportLike, audience: Audience, isPolish: boolean): Verdict | null {
+export function computeVerdict(report: ReportLike, audience: Audience, isPolish: boolean, extras?: { noContact?: boolean }): Verdict | null {
   if (!report || report.isSample || report.measurementStatus === "failed" || report.overallScore === null) return null;
   const c = report.categories;
   const vals = [c.performance, c.seo, c.accessibility].filter((v): v is number => typeof v === "number");
@@ -47,6 +47,7 @@ export function computeVerdict(report: ReportLike, audience: Audience, isPolish:
   const label = level === "great" ? L("Bardzo dobrze", "Very good") : level === "work" ? L("Do poprawy", "Needs work") : L("Wymaga uwagi", "Needs attention");
 
   const problems: string[] = [];
+  if (audience === "company" && extras?.noContact) problems.push(L("nie znaleźliśmy na stronie głównej sposobu kontaktu", "we did not find a way to get in touch on the home page"));
   if (perfLow) problems.push(L("na telefonie ładuje się wolno", "it loads slowly on mobile"));
   if (seoLow || mobLow) problems.push(L("ma braki, przez które trudniej ją znaleźć w Google i używać na telefonie", "it has gaps that make it harder to find in Google and to use on a phone"));
   if (a11yLow) problems.push(L("kontrole automatyczne wykryły problemy z dostępnością", "automated checks found accessibility problems"));
@@ -57,6 +58,9 @@ export function computeVerdict(report: ReportLike, audience: Audience, isPolish:
     : L("Strona działa. Poniżej to, co warto sprawdzić dalej.", "The site works. Below is what is worth checking next.");
 
   const items: VerdictItem[] = [];
+  if (audience === "company" && extras?.noContact) {
+    items.push({ key: "contact", problem: L("Klient może nie wiedzieć, jak się z Wami skontaktować", "A customer may not know how to contact you"), service: L("Strona Start", "Start website"), price: money(P.start, isPolish, true), why: L("nie znaleźliśmy na stronie głównej numeru telefonu, formularza ani linku do kontaktu", "we did not find a phone number, a form or a contact link on the home page") });
+  }
   const num = (v: number | null) => (typeof v === "number" ? v : null);
   if (perfLow) items.push({ key: "sprint", problem: L("Wolne ładowanie na telefonie", "Slow loading on mobile"), service: "Speed Sprint", price: money(P.sprint, isPolish, false), why: L(`wynik wydajności to ${num(c.performance)}, poniżej 70`, `the performance score is ${num(c.performance)}, below 70`) });
   if (audience === "company" && (seoLow || mobLow)) {

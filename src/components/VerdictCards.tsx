@@ -1,6 +1,7 @@
 import React from "react";
 import type { AuditReport } from "../scannerTypes";
 import { Audience, computeVerdict } from "../utils/verdict";
+import type { ContactCheck } from "../utils/contactTypes";
 
 export function VerdictCards({
   report,
@@ -8,14 +9,17 @@ export function VerdictCards({
   audience,
   setAudience,
   onAsk,
+  contact,
 }: {
   report: AuditReport;
   isPolish: boolean;
   audience: Audience;
   setAudience: (a: Audience) => void;
   onAsk: (seed: string) => void;
+  contact?: ContactCheck | null;
 }) {
-  const v = computeVerdict(report, audience, isPolish);
+  const noContact = !!contact && contact.ok && !contact.telLink && !contact.mailLink && !contact.form && !contact.contactLink;
+  const v = computeVerdict(report, audience, isPolish, { noContact });
   if (!v) return null;
   const L = (pl: string, en: string) => (isPolish ? pl : en);
   const tone = v.level === "great" ? "text-emerald-700 border-emerald-500" : v.level === "work" ? "text-amber-700 border-amber-500" : "text-red-700 border-red-500";

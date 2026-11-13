@@ -5,6 +5,7 @@ import type { AppState } from "../state/useAppState";
 import { VerdictCards } from "../components/VerdictCards";
 import { DomainHealthCard } from "../components/DomainHealthCard";
 import { StatementCard } from "../components/StatementCard";
+import { ContactCard } from "../components/ContactCard";
 
 
 export default function OverviewTab({ app }: { app: AppState }) {
@@ -32,6 +33,8 @@ export default function OverviewTab({ app }: { app: AppState }) {
     domainHealthLoading,
     statement,
     statementLoading,
+    contactCheck,
+    contactLoading,
   } = app;
   return (
             <div className="space-y-6">
@@ -41,6 +44,18 @@ export default function OverviewTab({ app }: { app: AppState }) {
                   isPolish={isPolish}
                   audience={audience}
                   setAudience={setAudience}
+                  contact={contactCheck}
+                  onAsk={(seed) => {
+                    setQuoteSeed(seed);
+                    setIsQuoteOpen(true);
+                  }}
+                />
+              )}
+              {isPublicMode && audience === "company" && (
+                <ContactCard
+                  data={contactCheck}
+                  loading={contactLoading}
+                  isPolish={isPolish}
                   onAsk={(seed) => {
                     setQuoteSeed(seed);
                     setIsQuoteOpen(true);

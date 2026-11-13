@@ -7,6 +7,7 @@ import { localizeIssues } from "../utils/lighthouseIssues";
 import { computeVerdict } from "../utils/verdict";
 import type { DomainHealth } from "../utils/domainHealthTypes";
 import type { StatementCheck } from "../utils/statementTypes";
+import type { ContactCheck } from "../utils/contactTypes";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // Parametry startowe z adresu, np. z formularza na novopix.uk: ?url=firma.pl&lang=pl|en&autoscan=1.
@@ -211,6 +212,22 @@ export function useAppState() {
       .then((d) => { if (!cancelled) setStatement(d && d.host ? d : null); })
       .catch(() => { if (!cancelled) setStatement(null); })
       .finally(() => { if (!cancelled) setStatementLoading(false); });
+    return () => { cancelled = true; };
+  }, [rawReport.scanId, rawReport.finalUrl, rawReport.scannedUrl, rawReport.isSample, rawReport.measurementStatus, isPublicMode, audience]);
+  const [contactCheck, setContactCheck] = useState<ContactCheck | null>(null);
+  const [contactLoading, setContactLoading] = useState<boolean>(false);
+  useEffect(() => {
+    if (!isPublicMode || audience !== "company") { setContactCheck(null); return; }
+    const target = rawReport.finalUrl || rawReport.scannedUrl;
+    if (!target || rawReport.isSample || rawReport.measurementStatus === "failed") { setContactCheck(null); return; }
+    let cancelled = false;
+    setContactCheck(null);
+    setContactLoading(true);
+    fetch("/api/contact-check", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: target }) })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled) setContactCheck(d && d.host ? d : null); })
+      .catch(() => { if (!cancelled) setContactCheck(null); })
+      .finally(() => { if (!cancelled) setContactLoading(false); });
     return () => { cancelled = true; };
   }, [rawReport.scanId, rawReport.finalUrl, rawReport.scannedUrl, rawReport.isSample, rawReport.measurementStatus, isPublicMode, audience]);
   const competitorReport = useMemo(() => (rawCompetitorReport ? localizeDeep(rawCompetitorReport, rawCompetitorReport.i18n, !isPolish) : null), [rawCompetitorReport, isPolish]);
@@ -1531,6 +1548,8 @@ export function useAppState() {
     domainHealthLoading,
     statement,
     statementLoading,
+    contactCheck,
+    contactLoading,
     audience,
     setAudience,
     quoteSeed,
