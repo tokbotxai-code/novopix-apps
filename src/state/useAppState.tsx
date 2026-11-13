@@ -5,6 +5,7 @@ import { copyText } from "../utils/clipboard";
 import { localizeDeep } from "../utils/localize";
 import { localizeIssues } from "../utils/lighthouseIssues";
 import { computeVerdict } from "../utils/verdict";
+import { contactRows, domainRows, statementRows, type CheckRow } from "../utils/checkRows";
 import type { DomainHealth } from "../utils/domainHealthTypes";
 import type { StatementCheck } from "../utils/statementTypes";
 import type { ContactCheck } from "../utils/contactTypes";
@@ -182,7 +183,6 @@ export function useAppState() {
   const [domainHealth, setDomainHealth] = useState<DomainHealth | null>(null);
   const [domainHealthLoading, setDomainHealthLoading] = useState<boolean>(false);
   useEffect(() => {
-    if (!isPublicMode) return;
     const target = rawReport.finalUrl || rawReport.scannedUrl;
     if (!target || rawReport.isSample || rawReport.measurementStatus === "failed") {
       setDomainHealth(null);
@@ -197,11 +197,11 @@ export function useAppState() {
       .catch(() => { if (!cancelled) setDomainHealth(null); })
       .finally(() => { if (!cancelled) setDomainHealthLoading(false); });
     return () => { cancelled = true; };
-  }, [rawReport.scanId, rawReport.finalUrl, rawReport.scannedUrl, rawReport.isSample, rawReport.measurementStatus, isPublicMode]);
+  }, [rawReport.scanId, rawReport.finalUrl, rawReport.scannedUrl, rawReport.isSample, rawReport.measurementStatus]);
   const [statement, setStatement] = useState<StatementCheck | null>(null);
   const [statementLoading, setStatementLoading] = useState<boolean>(false);
   useEffect(() => {
-    if (!isPublicMode || audience !== "institution") { setStatement(null); return; }
+    if (isPublicMode && audience !== "institution") { setStatement(null); return; }
     const target = rawReport.finalUrl || rawReport.scannedUrl;
     if (!target || rawReport.isSample || rawReport.measurementStatus === "failed") { setStatement(null); return; }
     let cancelled = false;
@@ -217,7 +217,7 @@ export function useAppState() {
   const [contactCheck, setContactCheck] = useState<ContactCheck | null>(null);
   const [contactLoading, setContactLoading] = useState<boolean>(false);
   useEffect(() => {
-    if (!isPublicMode || audience !== "company") { setContactCheck(null); return; }
+    if (isPublicMode && audience !== "company") { setContactCheck(null); return; }
     const target = rawReport.finalUrl || rawReport.scannedUrl;
     if (!target || rawReport.isSample || rawReport.measurementStatus === "failed") { setContactCheck(null); return; }
     let cancelled = false;
@@ -1201,6 +1201,25 @@ export function useAppState() {
       <p style="font-size:12px; color:#64748b; margin:8px 0 0;">${L("Rekomendacja wynika z jawnych reguł i nie jest obietnicą wyniku.", "The recommendation comes from open rules and is not a promise of results.")} ${L("Zapytaj: contact@novopix.uk", "Ask us: contact@novopix.uk")}</p>
     </div>` : ""}`
       : "";
+    const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+    const rowsHtml = (rows: CheckRow[]) =>
+      rows.map((r) => `<div class="metric"><span><strong>${r.state === "ok" ? "✓" : r.state === "warn" ? "!" : "?"}</strong> ${esc(r.label)}</span><span style="text-align:right; max-width:60%;">${esc(r.text)}</span></div>`).join("");
+    const section = (title: string, note: string, body: string) => `<div class="card"><h2>${title}</h2><p style="font-size:12px; color:#64748b; margin:0 0 8px;">${note}</p>${body}</div>`;
+    const extraChecksHtml = [
+      domainHealth ? section(L("Domena i poczta", "Domain & email"), L("Sprawdzamy tylko publicznie widoczne ustawienia. Brak rekordu nie zawsze oznacza błąd.", "We only check publicly visible settings. A missing record is not always an error."), rowsHtml(domainRows(domainHealth, isPolish))) : "",
+      contactCheck?.ok ? section(L("Czy klient może się skontaktować?", "Can a customer get in touch?"), L("Sprawdzamy kod strony głównej. Automat mógł czegoś nie zobaczyć, więc piszemy „nie znaleźliśmy”, a nie „nie masz”.", "We check the home page code. The check may miss things, so we say “we did not find”, not “you do not have”."), rowsHtml(contactRows(contactCheck, isPolish))) : "",
+      statement
+        ? section(
+            L("Deklaracja dostępności", "Accessibility statement"),
+            L("Sprawdzamy tylko obecność i elementy. To nie jest opinia prawna ani ocena zgodności.", "We only check presence and elements. This is not legal advice or a compliance assessment."),
+            statement.found === null
+              ? `<p>${L("Nie udało się sprawdzić.", "Could not be checked.")}</p>`
+              : statement.found
+              ? `<p style="font-size:13px;">${L("Znaleziona strona", "Statement page found")}: ${esc(statement.url || "")}</p>${rowsHtml(statementRows(statement, isPolish))}`
+              : `<p>${L("Nie znaleźliśmy linku do deklaracji dostępności na stronie głównej ani pod typowymi adresami. Może być pod innym adresem.", "We did not find a link to an accessibility statement on the home page or at the usual addresses. It may be elsewhere.")}</p>`
+          )
+        : "",
+    ].join("\n");
     const teaserHtml = !isFull
       ? `
     <div class="card" style="border:2px dashed #94a3b8; background:#f8fafc;">
@@ -1269,6 +1288,7 @@ export function useAppState() {
     </div>
 
     ${verdictHtml}
+    ${extraChecksHtml}
     ${detailHtml}
 
     <div class="card">

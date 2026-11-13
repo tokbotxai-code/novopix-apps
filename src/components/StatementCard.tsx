@@ -1,20 +1,12 @@
 import React from "react";
 import type { StatementCheck } from "../utils/statementTypes";
-import type { Presence } from "../utils/domainHealthTypes";
+import { statementRows } from "../utils/checkRows";
 
 export function StatementCard({ data, loading, isPolish, onAsk }: { data: StatementCheck | null; loading: boolean; isPolish: boolean; onAsk: (seed: string) => void }) {
   const L = (pl: string, en: string) => (isPolish ? pl : en);
   if (!data && !loading) return null;
-  const mark = (p: Presence) => (p === "found" ? "✓" : p === "not_found" ? "!" : "?");
-  const col = (p: Presence) => (p === "found" ? "text-emerald-700 bg-emerald-50" : p === "not_found" ? "text-amber-800 bg-amber-50" : "text-slate-600 bg-slate-100");
-  const names: [keyof StatementCheck["elements"], string, string][] = [
-    ["date", "Data sporządzenia lub aktualizacji", "Date of preparation or update"],
-    ["compliance", "Informacja o stanie zgodności", "Compliance status"],
-    ["nonAccessible", "Wskazanie treści niedostępnych lub wyłączeń", "Inaccessible content or exemptions listed"],
-    ["contact", "Dane kontaktowe", "Contact details"],
-    ["complaint", "Informacja o skargach lub procedurze odwoławczej", "Complaints or enforcement procedure"],
-    ["wcag", "Odniesienie do WCAG", "Reference to WCAG"],
-  ];
+  const mark = (st: string) => (st === "ok" ? "✓" : st === "warn" ? "!" : "?");
+  const col = (st: string) => (st === "ok" ? "text-emerald-700 bg-emerald-50" : st === "warn" ? "text-amber-800 bg-amber-50" : "text-slate-600 bg-slate-100");
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-5 no-print" data-testid="statement-card">
       <h3 className="text-base font-extrabold text-slate-900">{L("Deklaracja dostępności", "Accessibility statement")}</h3>
@@ -39,12 +31,10 @@ export function StatementCard({ data, loading, isPolish, onAsk }: { data: Statem
             <a className="font-bold underline" href={data.url || "#"} target="_blank" rel="noopener noreferrer">{data.url}</a>
           </p>
           <ul className="space-y-2">
-            {names.map(([k, pl, en]) => (
-              <li key={k} className="flex gap-3 items-start text-sm">
-                <span aria-hidden="true" className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-extrabold ${col(data.elements[k])}`}>{mark(data.elements[k])}</span>
-                <span className="text-slate-700">
-                  <b className="text-slate-900">{L(pl, en)}:</b> {data.elements[k] === "found" ? L("znaleźliśmy", "found") : data.elements[k] === "not_found" ? L("nie znaleźliśmy", "not found") : L("nie udało się sprawdzić", "could not be checked")}
-                </span>
+            {statementRows(data, isPolish).map((r) => (
+              <li key={r.label} className="flex gap-3 items-start text-sm">
+                <span aria-hidden="true" className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-extrabold ${col(r.state)}`}>{mark(r.state)}</span>
+                <span className="text-slate-700"><b className="text-slate-900">{r.label}:</b> {r.text}</span>
               </li>
             ))}
           </ul>
