@@ -871,6 +871,16 @@ export default function App() {
             <button onClick={() => setIsPrivacyOpen(true)} className="hover:text-slate-900 transition-colors cursor-pointer">
               {isPolish ? "Bezpieczeństwo i API" : "Privacy & API"}
             </button>
+            {isPublicMode && (
+              <a href={isPolish ? "https://novopix.uk/pl/cennik/" : "https://novopix.uk/pricing/"} className="hover:text-slate-900">
+                {isPolish ? "Audyty i poprawki: cennik" : "Audits & fixes: pricing"}
+              </a>
+            )}
+            {isPublicMode && (
+              <a href="https://panel.novopix.uk/" className="hover:text-slate-900">
+                {isPolish ? "Logowanie dla klientów" : "Client login"}
+              </a>
+            )}
             <a href="mailto:contact@novopix.uk" className="hover:text-slate-900 font-mono">
               contact@novopix.uk
             </a>
