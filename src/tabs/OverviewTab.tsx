@@ -6,6 +6,7 @@ import { VerdictCards } from "../components/VerdictCards";
 import { DomainHealthCard } from "../components/DomainHealthCard";
 import { StatementCard } from "../components/StatementCard";
 import { ContactCard } from "../components/ContactCard";
+import { VisualCard } from "../components/VisualCard";
 
 
 export default function OverviewTab({ app }: { app: AppState }) {
@@ -73,6 +74,7 @@ export default function OverviewTab({ app }: { app: AppState }) {
                   }}
                 />
               )}
+              {isPublicMode && <VisualCard visual={currentReport.visual} isPolish={isPolish} />}
               {isPublicMode && (
                 <DomainHealthCard
                   data={domainHealth}

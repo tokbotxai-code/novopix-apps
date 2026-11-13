@@ -300,6 +300,7 @@ export interface AuditReport {
   issues: IssueItem[];
   recommendedActions: ActionItem[];
   screenshot?: string;
+  visual?: import("./utils/visualTypes").VisualData | null;
   demo?: {
     crawledPages: {
       totalPages: number;

@@ -1,4 +1,5 @@
 import { validateSafePublicUrl, safeFetchHtml } from "./security";
+import { extractVisual } from "./visualMarks";
 import { performDeepLiveSeoInspection } from "./seoCrawler";
 
 // Skan strony: 3 uczciwe stany pomiaru (live_lighthouse / partial_html / failed). Zero wymyślonych wyników.
@@ -110,6 +111,7 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
       const overall = Math.round((perf + seo + access + bp) / 4);
 
       const screenshot = audits["final-screenshot"]?.details?.data || null;
+      const visual = extractVisual(lighthouse);
 
       // Extract real resource weight & network request counts from Lighthouse
       const totalByteWeight = audits["total-byte-weight"]?.numericValue || 0;
@@ -313,6 +315,7 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
         },
         issues: rawOpps,
         screenshot,
+        visual,
         isSample: false,
         livePsiVerified: true,
       });
