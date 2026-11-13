@@ -1103,6 +1103,43 @@ export function useAppState() {
       </div>`
       : "";
 
+    // Pełny raport (agencja po zalogowaniu) vs skrócony (publiczny skaner).
+    const isFull = !isPublicMode && viewMode === "agency" && !!agencyToken;
+    const prioRank: Record<string, number> = { high: 0, medium: 1, low: 2 };
+    const issuesForReport = isFull
+      ? currentReport.issues
+      : [...currentReport.issues].sort((a, b) => (prioRank[a.priority] ?? 3) - (prioRank[b.priority] ?? 3)).slice(0, 3);
+    const na = (v: number | null | undefined) => (v === null || v === undefined ? "N/A" : `${v}/100`);
+    const detailHtml = isFull
+      ? `
+    <div class="card">
+      <h2>${L("Wyniki szczegółowe", "Detailed scores")}</h2>
+      <div class="metric"><span>${L("Wynik mobilny / desktopowy", "Mobile / desktop score")}</span><strong>${na(currentReport.deviceScores.mobile)} · ${na(currentReport.deviceScores.desktop)}</strong></div>
+      <div class="metric"><span>${L("SEO: indeksowalność / treść strony / wersja mobilna", "SEO: crawlability / on-page / mobile-friendly")}</span><strong>${na(currentReport.seoBreakdown.crawlability)} · ${na(currentReport.seoBreakdown.onPageSeo)} · ${na(currentReport.seoBreakdown.mobileFriendly)}</strong></div>
+      <div class="metric"><span>${L("Kontrole dostępności (automat): kontrast / nawigacja / nazwy / ARIA", "Automated accessibility checks: contrast / navigation / names / ARIA")}</span><strong>${na(currentReport.accessibilityBreakdown.contrast)} · ${na(currentReport.accessibilityBreakdown.navigation)} · ${na(currentReport.accessibilityBreakdown.names)} · ${na(currentReport.accessibilityBreakdown.aria)}</strong></div>
+      <div class="metric"><span>${L("Czas odpowiedzi serwera / rozmiar HTML", "Server response time / HTML size")}</span><strong>${liveSeo.responseTimeMs} ms · ${liveSeo.htmlSizeKb} KB</strong></div>
+      <div class="metric"><span>${L("Przekierowania / skrypty blokujące / arkusze CSS", "Redirects / render-blocking scripts / stylesheets")}</span><strong>${liveSeo.redirectCount ?? 0} · ${liveSeo.scriptStats?.renderBlockingScripts ?? "N/A"} · ${liveSeo.scriptStats?.stylesheets ?? "N/A"}</strong></div>
+      <div class="metric"><span>${L("Opis meta (liczba znaków)", "Meta description (characters)")}</span><strong>${liveSeo.description?.length ?? 0}</strong></div>
+      <div class="metric"><span>${L("Technologia strony", "Detected stack")}</span><strong>${(liveSeo.techStack && liveSeo.techStack.length ? liveSeo.techStack.join(", ") : liveSeo.cmsTech) || "N/A"}</strong></div>
+      <p style="font-size:12px; color:#64748b; margin:12px 0 0;">${L("Kontrole dostępności są zautomatyzowane i nie wykrywają wszystkiego. To nie jest ocena zgodności z WCAG ani certyfikat.", "Accessibility checks are automated and do not catch everything. This is not a WCAG conformance assessment or certificate.")}</p>
+    </div>`
+      : "";
+    const teaserHtml = !isFull
+      ? `
+    <div class="card" style="border:2px dashed #94a3b8; background:#f8fafc;">
+      <h2 style="margin-top:0;">${L("To jest raport skrócony", "This is the summary report")}</h2>
+      <p style="font-size:14px; color:#334155; margin:0 0 8px;">${L("Pokazuje wynik, Core Web Vitals i 3 najważniejsze problemy. Pełny raport zawiera dodatkowo:", "It shows the score, Core Web Vitals and the 3 most important issues. The full report also includes:")}</p>
+      <ul style="font-size:14px; color:#334155; margin:0 0 8px; padding-left:20px;">
+        <li>${L("wszystkie wykryte problemy z priorytetami", "every issue found, with priorities")}</li>
+        <li>${L("wyniki osobno dla telefonu i komputera", "separate mobile and desktop scores")}</li>
+        <li>${L("szczegóły SEO i kontroli dostępności", "SEO and accessibility check details")}</li>
+        <li>${L("pomiary techniczne: czas odpowiedzi serwera, rozmiar HTML, skrypty", "technical measurements: server response time, HTML size, scripts")}</li>
+        <li>${L("plan prac i wycenę", "a work plan and quote")}</li>
+      </ul>
+      <p style="font-size:14px; margin:0;">${L("Zapytaj o pełny raport", "Ask for the full report")}: <strong>contact@novopix.uk</strong> · https://novopix.uk</p>
+    </div>`
+      : "";
+
     const htmlContent = `<!DOCTYPE html>
 <html lang="${isPolish ? "pl" : "en"}">
 <head>
@@ -1154,9 +1191,11 @@ export function useAppState() {
       <div class="metric"><span>${L("Obrazy bez atrybutu ALT / Bezpieczeństwo HTTPS","Images without ALT / HTTPS")}</span><strong>${L("Brakujące ALT","Missing ALT")}: ${liveSeo.images.missingAlt} · HTTPS: ${liveSeo.https ? L("Tak","Yes") : L("Nie","No")}</strong></div>
     </div>
 
+    ${detailHtml}
+
     <div class="card">
-      <h2>${L("Zdiagnozowane problemy","Issues found")}</h2>
-      ${currentReport.issues
+      <h2>${isFull ? L("Zdiagnozowane problemy","Issues found") : L("Najważniejsze problemy (3)","Top issues (3)")}</h2>
+      ${issuesForReport
         .map(
           (i) => `
         <div class="issue">
@@ -1171,6 +1210,7 @@ export function useAppState() {
         .join("")}
     </div>
 
+    ${teaserHtml}
     ${quoteHtml}
 
     <div class="footer">${L("Raport wygenerowany w systemie","Report generated by")} ${auditorName} · ${agencyWebsite} · ${L("Kontakt","Contact")}: contact@novopix.uk</div>
