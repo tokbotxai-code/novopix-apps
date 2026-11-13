@@ -8,7 +8,8 @@ const MAX_PER_KIND = 8;
 
 export function extractVisual(lighthouse: any): VisualData | null {
   try {
-    const fps = lighthouse?.audits?.["full-page-screenshot"]?.details;
+    // Nowsze wersje Lighthouse trzymają zrzut w polu fullPageScreenshot, starsze w audycie full-page-screenshot.
+    const fps = lighthouse?.fullPageScreenshot || lighthouse?.audits?.["full-page-screenshot"]?.details;
     const shot = fps?.screenshot;
     if (!shot?.data || typeof shot.data !== "string" || !shot.width || !shot.height || shot.data.length > MAX_IMAGE_CHARS) return null;
     const nodes: Record<string, any> = fps.nodes || {};
