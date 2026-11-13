@@ -17,3 +17,8 @@ Właściciel (Polak, pracuje na telefonie) chce krótkich raportów po polsku: t
 - **Nie pytaj właściciela o zgodę ani zatwierdzenie.** Sesje działają w trybie auto: wybierz sam najlepszą opcję, wykonaj, na końcu krótki raport (co zrobiono i co sprawdzono).
 - Dotyczy planowania, zmieniania i usuwania postów w Metricool, pushów na GitHub, wdrożeń, zakładania sesji i zmian zaplanowanych zadań. Pytaj tylko, gdy czegoś nie da się zrobić bez konta, hasła, PIN-u, płatności albo kliknięcia właściciela w panelu (wtedy: jedno zdanie, jeden krok, telefon lub komputer).
 - Zasady jakości, bezpieczeństwa i marek (PepSafe, Night, NovoPix osobno) obowiązują dalej. Bez sekretów w repo i czacie.
+
+## Test ścieżek użytkownika, nie tylko checklisty (decyzja właściciela 13.11)
+- Samo sprawdzenie zmienionych elementów nie wystarcza: 13.11 nikt nie zauważył, że eksport raportu HTML ignoruje wybrany język, że publiczny skaner nie ma linku do panelu ani oferty audytu, i że język strony zależał od przypadku. Zadanie przeglądu i każda zmiana kończy się **przejściem pełnej ścieżki jak nowy klient, osobno w EN i PL (przeglądarka en-US i pl-PL)**: wejście → wybór języka → wykonanie głównej akcji (skan, formularz, pobranie raportu, wysłanie PDF) → sprawdzenie WYNIKU (treść pobranego pliku, mail, język, liczby) → następny krok i kontakt.
+- Dla każdej funkcji pytaj: **skąd użytkownik wie, że ona istnieje i jak do niej trafić?** (link, przycisk, opis). Funkcja bez drogi dojścia albo bez wzmianki na stronie to usterka.
+- Pobrane pliki i wysłane maile otwieraj i czytaj (język, zmyślone liczby, słowa „compliance/gwarancja"), nie zakładaj, że działają.
