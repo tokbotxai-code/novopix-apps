@@ -20,6 +20,7 @@ const WebScoreTab = lazy(() => import("./tabs/WebScoreTab"));
 const DiagnosticsTab = lazy(() => import("./tabs/DiagnosticsTab"));
 const AccessibilityTab = lazy(() => import("./tabs/AccessibilityTab"));
 const ChecklistTab = lazy(() => import("./tabs/ChecklistTab"));
+import { Welcome } from "./components/Welcome";
 const QuoteModal = lazy(() => import("./components/QuoteModal").then((m) => ({ default: m.QuoteModal })));
 const AcceptProposalModal = lazy(() => import("./components/AcceptProposalModal").then((m) => ({ default: m.AcceptProposalModal })));
 const BulkTab = lazy(() => import("./tabs/BulkTab"));
@@ -428,7 +429,11 @@ export default function App() {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
               <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight font-heading">
-                {isPolish
+                {isPublicMode
+                  ? isPolish
+                    ? "Sprawdź swoją stronę"
+                    : "Check your website"
+                  : isPolish
                   ? "Audyt szybkości, SEO i dostępności"
                   : "Speed, SEO & Accessibility Audit"}
               </h1>
@@ -640,6 +645,7 @@ export default function App() {
 
         {/* Main Workspace Content Viewport */}
         <main className="flex-1 p-4 sm:p-8 max-w-[1550px] w-full mx-auto space-y-6">
+          {isPublicMode && !hasScan && !scanError && <Welcome isPolish={isPolish} audience={app.audience} setAudience={app.setAudience} />}
           {!(isPublicMode && !hasScan && !scanError) && (
           <AuditIntegrityBanner
             report={currentReport}
