@@ -62,7 +62,7 @@ export function hostOf(snap: ScanSnapshot): string {
 
 const scoreClass = (v: number | null) => (v === null ? "na" : v >= 90 ? "good" : v >= 50 ? "mid" : "bad");
 
-export function renderResultPage(opts: { id: string; snapshot: ScanSnapshot; expiresAt: string; lang: PageLang; origin: string; withOgImage: boolean }): string {
+export function renderResultPage(opts: { id: string; snapshot: ScanSnapshot; expiresAt: string; lang: PageLang; origin: string; withOgImage: boolean; example?: boolean }): string {
   const { id, lang, origin } = opts;
   const t = T[lang];
   const snap = localizeSnapshot(opts.snapshot, lang);
@@ -117,6 +117,7 @@ small,.note{color:var(--muted);font-size:13px}
 <main>
 <header><div class="brand"><i aria-hidden="true"></i>NovoPix</div><a class="lang" href="/r/${esc(id)}?lang=${other}" hreflang="${other}">${esc(t.other)}</a></header>
 <h1>${esc(host)}</h1>
+${opts.example ? `<p class="sub"><strong>${lang === "pl" ? "Przykładowy raport dla novopix.uk" : "Example report for novopix.uk"}</strong></p>` : ""}
 <p class="sub">${esc(t.lead)} · ${esc(t.date)}: ${esc(fmtDate(snap.scannedAt))} · ${esc(snap.measurementStatus === "live_lighthouse" ? t.full : t.partial)}</p>
 <a class="cta" href="/">${esc(t.cta)} →</a>
 <section class="card" aria-label="${esc(t.overall)}">

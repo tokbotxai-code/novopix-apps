@@ -153,7 +153,7 @@ export default function App() {
                 <span className="novopix-wordmark-pix">Pix</span>
               </div>
               <div className="text-[11px] text-[#bcd6e6] font-medium mt-1">
-                {viewMode === "client" && !isPublicMode ? (isPolish ? "Pokój Ofertowy Klienta" : "Client Deal Room") : "Website Growth Scanner"}
+                {viewMode === "client" && !isPublicMode ? (isPolish ? "Pokój Ofertowy Klienta" : "Client Deal Room") : isPolish ? "Skaner kondycji strony" : "Website Growth Scanner"}
               </div>
             </div>
           </div>
@@ -199,7 +199,7 @@ export default function App() {
                 ? "Moduły Audytu i Sprzedaży"
                 : "Audit & Sales Workspace"}
             </div>
-            <nav className="space-y-0.5">
+            <nav className={`space-y-0.5 ${isPublicMode && !hasScan ? "hidden" : ""}`}>
               {workspaceTabs.map((item) => {
                 const IconComponent = item.icon;
                 const isActive = activeTab === item.id;
@@ -297,20 +297,20 @@ export default function App() {
         {/* Top Bar Contract: 3 Zones */}
         <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-8 flex items-center justify-between gap-4 sticky top-0 z-20 no-print">
           {/* Zone 1: Single-line Brand Wordmark with Authentic NovoPix 5x5 Animated Grid Mark */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
             <div
               className="w-8 h-8 rounded-lg bg-[#0b2230] flex items-center justify-center shrink-0"
               title={isPolish ? "Najedź lub kliknij — animowane logo N-O-V-O-P-I-X" : "Hover or click — animated N-O-V-O-P-I-X logo"}
             >
               <NovoPixAnimatedMark sizeClass="w-5 h-5" />
             </div>
-            <span className="text-sm font-heading font-extrabold tracking-tight text-slate-900 whitespace-nowrap">
-              NovoPix <span className="text-[#103247]">Growth Scanner</span>
+            <span className="text-sm font-heading font-extrabold tracking-tight text-slate-900 truncate">
+              NovoPix <span className="text-[#103247]">{isPolish ? "Skaner kondycji strony" : "Growth Scanner"}</span>
             </span>
           </div>
 
           {/* Zone 2: Concise Single-Line Workspace Links */}
-          <nav className="hidden md:flex items-center gap-5 text-xs font-semibold text-slate-600 overflow-x-auto">
+          <nav className={`${isPublicMode && !hasScan ? "hidden" : "hidden md:flex"} items-center gap-5 text-xs font-semibold text-slate-600 overflow-x-auto`}>
             {(viewMode === "client"
               ? [
                   { id: "overview", label: isPolish ? "Przegląd Audytu" : "Audit Overview" },
@@ -319,7 +319,7 @@ export default function App() {
                 ]
               : [
                   { id: "overview", label: isPolish ? "Przegląd audytu" : "Audit overview" },
-                  { id: "ai-advisor", label: "AI Advisor" },
+                  { id: "ai-advisor", label: isPolish ? "Doradca AI" : "AI Advisor" },
                   ...(app.roiAllowed ? [{ id: "roi-calculator", label: isPolish ? "Kalkulator Wyceny & ROI" : "ROI & Pricing" }] : []),
                   { id: "seo", label: isPolish ? "Audyt SEO HTML" : "Deep SEO" },
                   { id: "crm", label: isPolish ? "Panel Agencji CRM" : "Agency CRM" },
@@ -421,8 +421,8 @@ export default function App() {
             <div>
               <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight font-heading">
                 {isPolish
-                  ? "Kompleksowy Audyt Szybkości, Technicznego SEO i Konwersji"
-                  : "Comprehensive Speed, Technical SEO & Conversion Audit"}
+                  ? "Audyt szybkości, SEO i dostępności"
+                  : "Speed, SEO & Accessibility Audit"}
               </h1>
               {hasScan && (
                 <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-slate-500">
@@ -503,6 +503,7 @@ export default function App() {
                 </button>
               )}
 
+              {hasScan && (<>
               <button
                 onClick={handleDownloadHtmlReport}
                 className="px-3 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
@@ -518,6 +519,7 @@ export default function App() {
                 <Printer className="w-3.5 h-3.5 text-slate-600" />
                 <span>{isPolish ? "Drukuj / PDF" : "Print / PDF"}</span>
               </button>
+              </>)}
             </div>
           </div>
 
@@ -572,22 +574,29 @@ export default function App() {
               <button
                 type="submit"
                 disabled={isScanning}
-                className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer whitespace-nowrap"
+                className={`${isPublicMode ? "px-8 py-3.5 text-base sm:text-lg" : "px-5 py-2.5 text-xs sm:text-sm"} bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer whitespace-nowrap`}
               >
                 {isScanning ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>{isPolish ? "Głębokie Skanowanie..." : "Deep Scanning..."}</span>
+                    <span>{isPolish ? "Skanuję…" : "Scanning…"}</span>
                   </>
                 ) : (
                   <>
                     <Search className="w-4 h-4" />
-                    <span>{isPolish ? "Skanuj Stronę (PSI + SEO)" : "Run Deep Scan"}</span>
+                    <span>{isPublicMode ? (isPolish ? "Skanuj stronę" : "Scan website") : isPolish ? "Skanuj Stronę (PSI + SEO)" : "Run Deep Scan"}</span>
                   </>
                 )}
               </button>
             </form>
+            {isPublicMode && (
+              <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600" data-testid="trust-line">
+                <span>{isPolish ? "Za darmo, bez rejestracji, wynik po około 30 sekundach." : "Free, no sign-up, result in about 30 seconds."}</span>
+                <a href={`/example?lang=${isPolish ? "pl" : "en"}`} className="font-bold text-emerald-800 underline" data-testid="example-link">{isPolish ? "Zobacz przykład" : "See an example"}</a>
+              </div>
+            )}
 
+            {!(isPublicMode && !hasScan) && (<>
             {/* Scrollable Workspace Tab Bar */}
             <div className="flex items-center gap-1.5 overflow-x-auto pt-3 mt-3 border-t border-slate-100 scrollbar-none">
               {workspaceTabs.map((tab) => {
@@ -617,11 +626,13 @@ export default function App() {
                 );
               })}
             </div>
+            </>)}
           </div>
         </section>
 
         {/* Main Workspace Content Viewport */}
         <main className="flex-1 p-4 sm:p-8 max-w-[1550px] w-full mx-auto space-y-6">
+          {!(isPublicMode && !hasScan && !scanError) && (
           <AuditIntegrityBanner
             report={currentReport}
             liveSeo={liveSeo}
@@ -634,8 +645,9 @@ export default function App() {
             onDownloadBackup={handleDownloadCrmBackup}
             onOpenPinSettings={() => setActiveTab("reports")}
           />
+          )}
 
-          {shownTab === "empty-state" && (
+          {shownTab === "empty-state" && !isPublicMode && (
             <div className="bg-white rounded-2xl p-8 border border-slate-200 text-center space-y-4" data-testid="empty-scan-state">
               <Search className="w-10 h-10 text-emerald-600 mx-auto" />
               <h2 className="text-xl font-extrabold text-slate-900 font-heading">{isPolish ? "Zeskanuj stronę" : "Scan a website"}</h2>

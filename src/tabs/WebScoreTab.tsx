@@ -18,7 +18,7 @@ export default function WebScoreTab({ app }: { app: AppState }) {
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <h2 className="text-lg font-extrabold text-slate-900 font-heading">
-                      {isPolish ? "Ewolucja Wyników WebScore i Historia Skanowania" : "WebScore Evolution & Audit History"}
+                      {isPolish ? "Ewolucja oceny strony i historia skanowania" : "WebScore Evolution & Audit History"}
                     </h2>
                     <p className="text-xs text-slate-500">
                       {isPolish ? "Wykres zmian kondycji witryny w czasie oraz lista ostatnich audytów zapisanych w pamięci." : "Historical score progression and locally persisted audit runs."}

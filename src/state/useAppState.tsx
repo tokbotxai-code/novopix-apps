@@ -456,6 +456,7 @@ export function useAppState() {
   // Sync HTML lang attribute
   useEffect(() => {
     document.documentElement.lang = isPolish ? "pl" : "en";
+    document.title = isPolish ? "NovoPix: skaner kondycji strony" : "NovoPix Website Growth Scanner";
   }, [isPolish]);
 
   // Calculate Scope & ROI Math
@@ -1132,7 +1133,7 @@ export function useAppState() {
     </div>
 
     <div class="card">
-      <h2>Zdiagnozowane Bariery Wzrostu i Konwersji</h2>
+      <h2>Zdiagnozowane bariery wzrostu</h2>
       ${currentReport.issues
         .map(
           (i) => `
@@ -1170,11 +1171,11 @@ export function useAppState() {
   // All 14 Navigation Workspace Items (filtered when in Client Deal Room viewMode === "client")
   const allWorkspaceTabs = [
     { id: "overview", label: isPolish ? "Przegląd audytu" : "Audit overview", short: isPolish ? "Przegląd" : "Overview", icon: LayoutDashboard },
-    { id: "ai-advisor", label: "AI Advisor", short: "AI Advisor", icon: Bot, highlight: true },
+    { id: "ai-advisor", label: isPolish ? "Doradca AI" : "AI Advisor", short: isPolish ? "Doradca AI" : "AI Advisor", icon: Bot, highlight: true },
     { id: "roi-calculator", label: isPolish ? "Kalkulator Wyceny & ROI" : "Pricing & ROI Calc", short: isPolish ? "Wycena & ROI" : "ROI & Quote", icon: Calculator, highlight: true },
-    { id: "seo", label: isPolish ? "Głęboki Audyt SEO (HTML)" : "Deep SEO Inspector", short: "Deep SEO", icon: Search },
+    { id: "seo", label: isPolish ? "Szczegółowy audyt SEO (HTML)" : "Deep SEO Inspector", short: isPolish ? "SEO szczegółowe" : "Deep SEO", icon: Search },
     { id: "performance", label: isPolish ? "Wydajność & Core Vitals" : "Core Web Vitals", short: isPolish ? "Wydajność" : "Performance", icon: Zap },
-    { id: "insights", label: isPolish ? "Wykryte Problemy & Waga" : "Issues & Page Weight", short: isPolish ? "Problemy & Waga" : "Issues & Weight", icon: Layers },
+    { id: "insights", label: isPolish ? "Wykryte problemy i rozmiar strony" : "Issues & Page Weight", short: isPolish ? "Problemy i rozmiar" : "Issues & Weight", icon: Layers },
     { id: "compare", label: isPolish ? "Porównanie z Konkurencją" : "Competitor 1:1", short: isPolish ? "Konkurencja" : "Compare", icon: Scale },
     { id: "monitoring", label: isPolish ? "Monitoring 24/7 (Retainer)" : "24/7 Monitoring", short: "Monitoring 24/7", icon: Bell, highlight: true, agencyOnly: true },
     { id: "status", label: isPolish ? "Status usług" : "Service status", short: isPolish ? "Status usług" : "Status", icon: Activity, agencyOnly: true },
@@ -1183,7 +1184,7 @@ export function useAppState() {
     { id: "bulk", label: isPolish ? "Skan wielu stron i leady" : "Bulk scan & leads", short: isPolish ? "Leady" : "Leads", icon: ListOrdered, highlight: true, agencyOnly: true },
     { id: "packages", label: isPolish ? "Pakiety i skaner publiczny" : "Packages & public scanner", short: isPolish ? "Pakiety" : "Packages", icon: Package, highlight: true, agencyOnly: true },
     { id: "reports", label: isPolish ? "Raporty PDF & Link Klienta" : "Reports & Share Link", short: isPolish ? "Raporty & Link" : "Reports & Share", icon: Share2, highlight: true },
-    { id: "webscore", label: isPolish ? "Trend WebScore i Historia" : "WebScore & History", short: "WebScore", icon: TrendingUp },
+    { id: "webscore", label: isPolish ? "Trend oceny strony i historia" : "WebScore & History", short: isPolish ? "Ocena strony" : "WebScore", icon: TrendingUp },
     { id: "diagnostics", label: isPolish ? "Diagnostyka Indeksowania" : "Crawl Diagnostics", short: isPolish ? "Diagnostyka" : "Diagnostics", icon: Activity },
     { id: "accessibility", label: isPolish ? "Dostępność WCAG 2.1 AA" : "WCAG 2.1 AA", short: "WCAG 2.1", icon: Eye },
     { id: "checklist", label: isPolish ? "Lista Kontrolna Wdrożenia" : "Action Checklist", short: isPolish ? "Checklista" : "Checklist", icon: CheckCircle2 },

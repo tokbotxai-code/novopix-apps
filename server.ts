@@ -89,7 +89,7 @@ const ROBOTS_TXT =
   APP_MODE === "agency"
     ? "User-agent: *\nDisallow: /\n"
     : // Wyszukiwarki: bez /api/ i /r/. Podglądy linków w komunikatorach i mediach społecznościowych nadal mogą pobrać /r/<id> (strona ma noindex).
-      "User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /r/\n\n" +
+      "User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /r/\nDisallow: /example\n\n" +
       "User-agent: Twitterbot\nUser-agent: facebookexternalhit\nUser-agent: LinkedInBot\nUser-agent: Slackbot\nUser-agent: WhatsApp\nUser-agent: TelegramBot\nAllow: /r/\nDisallow: /api/\n";
 app.get("/robots.txt", (_req, res) => {
   res.type("text/plain").set("Cache-Control", "public, max-age=3600").send(ROBOTS_TXT);

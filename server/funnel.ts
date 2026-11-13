@@ -6,6 +6,8 @@ import { requireAgencyAuth, checkRateLimit } from "./security";
 import { smtpConfigured, smtpFrom, sendMail, alertRecipient } from "./mailer";
 import { buildReportPdf } from "./pdfReport";
 import { recallScan } from "./scanCache";
+import { performScan } from "./scanService";
+import { snapshotFromScan } from "./scanSnapshot";
 import { normalizeFormLang, effectiveLanguage, Lang } from "./language";
 import { esc, hostOf, renderResultPage, renderOgImage, ogImageAvailable } from "./resultPage";
 
@@ -338,6 +340,31 @@ type Forward = (pathname: string, method: "GET" | "POST" | "DELETE", body?: unkn
 export function registerPublicFunnel(app: Express, forward: Forward) {
   const bad = (res: Response, lang: Lang) => res.status(502).json({ error: lang === "pl" ? "Nie udało się przekazać zgłoszenia. Spróbuj ponownie za minutę lub napisz na contact@novopix.uk." : "Could not submit the request. Try again in a minute or write to contact@novopix.uk." });
 
+  // „Zobacz przykład”: prawdziwy, zapisany wynik pomiaru novopix.uk (snapshot /r/<id> bez danych osobowych), odnawiany co ok. 20 h.
+  let example: { id: string; at: number } | null = null;
+  let exampleBusy: Promise<void> | null = null;
+  const ensureExample = async () => {
+    if (example && Date.now() - example.at < 20 * 3600 * 1000) return;
+    exampleBusy ||= (async () => {
+      try {
+        const out = await performScan("https://novopix.uk/", "mobile");
+        const snap = snapshotFromScan(out.body, "mobile", "https://novopix.uk/");
+        if (!snap || out.body?.measurementStatus === "failed") return;
+        const r = await forward("/api/internal/results", "POST", { snapshot: snap });
+        if (r.status === 200 && r.data?.id) example = { id: r.data.id, at: Date.now() };
+      } catch {}
+    })().finally(() => { exampleBusy = null; });
+    await exampleBusy;
+  };
+  app.get("/example", async (req, res) => {
+    const lang: Lang = normalizeFormLang(req.query.lang) || "pl";
+    const limit = checkRateLimit(`example_${req.ip || "local"}`, 20, 60 * 60 * 1000);
+    if (limit.allowed) await ensureExample();
+    if (example) return res.redirect(302, `/r/${example.id}?lang=${lang}&example=1`);
+    // Awaryjnie: świeży skan novopix.uk w skanerze.
+    return res.redirect(302, `/?url=novopix.uk&autoscan=1&lang=${lang}`);
+  });
+
   app.get("/api/funnel/config", (_req, res) => res.json({ policyUrl: POLICY_URL, consentText: CONSENT_TEXT }));
 
   app.post("/api/report-request", async (req, res) => {
@@ -407,7 +434,7 @@ export function registerPublicFunnel(app: Express, forward: Forward) {
     const out = await load(req.params.id);
     if (out.status !== 200 || !out.data?.result) return notFoundPage(res, out.status === 410 ? 410 : out.status === 404 ? 404 : 502, lang);
     const r = out.data.result;
-    const html = renderResultPage({ id: r.id, snapshot: r.snapshot, expiresAt: r.expiresAt, lang, origin: origin(req), withOgImage: await ogImageAvailable() });
+    const html = renderResultPage({ id: r.id, snapshot: r.snapshot, expiresAt: r.expiresAt, lang, origin: origin(req), withOgImage: await ogImageAvailable(), example: req.query.example === "1" });
     res.set({ "X-Robots-Tag": "noindex, nofollow, noarchive", "Cache-Control": "private, max-age=60" }).type("html").send(html);
   });
 

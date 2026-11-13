@@ -130,7 +130,26 @@ export default function PublicFunnel({ app }: { app: AppState }) {
   const fullUrl = share ? `${window.location.origin}${share.path}` : "";
   const inputCls = "w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm";
 
+  // „Chcesz, żebyśmy to naprawili?”: pakiety z cennika (ceny stałe, nie z godzin). EN w GBP, PL w PLN.
+  const perf = currentReport.categories.performance;
+  const acc = currentReport.categories.accessibility;
+  const pricingUrl = pl ? "https://novopix.uk/pl/cennik/" : "https://novopix.uk/pricing/";
+  const offer =
+    typeof perf === "number" && perf < 90
+      ? { text: pl ? "Speed Sprint od 1 990 zł" : "Speed Sprint from £490", cta: pl ? "Zobacz pakiet" : "See the package" }
+      : typeof acc === "number" && acc < 95
+      ? { text: pl ? "Przegląd dostępności od 1 590 zł" : "Accessibility review from £390", cta: pl ? "Zobacz pakiet" : "See the package" }
+      : { text: "", cta: pl ? "Zobacz pakiety" : "See packages" };
   return (
+    <>
+    <section className="bg-white rounded-2xl p-6 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6" data-testid="fix-cta">
+      <div>
+        <h3 className="text-base font-extrabold text-slate-900">{pl ? "Chcesz, żebyśmy to naprawili?" : "Want us to fix it?"}</h3>
+        {offer.text && <p className="text-sm text-slate-700 mt-1" data-testid="fix-cta-offer">{pl ? "Pakiety od …" : "Packages from …"} <strong>{offer.text}</strong></p>}
+        <p className="text-[11px] text-slate-600 mt-1">{pl ? "Ceny netto, zakres potwierdzamy na piśmie przed rozpoczęciem pracy." : "Prices exclude VAT; we confirm the scope in writing before any work begins."}</p>
+      </div>
+      <a href={pricingUrl} target="_blank" rel="noopener" className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-sm font-bold text-center whitespace-nowrap">{offer.cta}</a>
+    </section>
     <section className="bg-white rounded-2xl p-6 border border-slate-200 space-y-5" data-testid="public-funnel" aria-label={pl ? "Raport i udostępnianie wyniku" : "Report and sharing"}>
       <div className="grid md:grid-cols-2 gap-6">
         <form onSubmit={submitReport} className="space-y-3" noValidate>
@@ -216,5 +235,6 @@ export default function PublicFunnel({ app }: { app: AppState }) {
         </div>
       )}
     </section>
+    </>
   );
 }
