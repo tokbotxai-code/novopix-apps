@@ -1064,19 +1064,20 @@ export function useAppState() {
 
   // Standalone White-Label HTML Report Export
   const handleDownloadHtmlReport = () => {
+    const L = (pl: string, en: string) => (isPolish ? pl : en);
     const domain = currentReport.scannedUrl.replace(/^https?:\/\//, "").replace(/\/.*$/, "") || "raport";
     // Kosztorys w eksporcie HTML tylko dla zalogowanej agencji (klient i tryb publiczny nie dostają kwot ani godzin).
     const quoteHtml = includeQuoteInReport && !isPublicMode && viewMode === "agency" && !!agencyToken
       ? `
       <div class="card" style="border: 2px solid #10b981; background: #f0fdf4;">
-        <h2 style="margin-top:0; color:#065f46;">Kosztorys Wdrożenia & Prognoza Zwrotu z Inwestycji (ROI)</h2>
+        <h2 style="margin-top:0; color:#065f46;">${L("Kosztorys Wdrożenia & Prognoza Zwrotu z Inwestycji (ROI)","Implementation quote & illustrative return (ROI)")}</h2>
         <p style="font-size:13px; color:#334155;">${customOfferNote}</p>
         <table style="width:100%; border-collapse:collapse; margin:16px 0; background:white; border-radius:8px; overflow:hidden;">
           <thead>
             <tr style="background:#0f172a; color:white; text-align:left; font-size:12px;">
-              <th style="padding:10px;">Zakres prac inżynieryjnych</th>
-              <th style="padding:10px;">Korzyść biznesowa</th>
-              <th style="padding:10px; text-align:right;">Czas (rbh)</th>
+              <th style="padding:10px;">${L("Zakres prac inżynieryjnych","Scope of work")}</th>
+              <th style="padding:10px;">${L("Korzyść biznesowa","Business benefit")}</th>
+              <th style="padding:10px; text-align:right;">${L("Czas (rbh)","Time (hours)")}</th>
             </tr>
           </thead>
           <tbody>
@@ -1094,10 +1095,10 @@ export function useAppState() {
         </table>
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding-top:8px;">
           <div>
-            <div style="font-size:12px; color:#475569;">Łączny nakład pracy: <strong>${scopeSummary.totalHours} roboczogodzin</strong> (${hourlyRate} ${currency}/h)</div>
-            ${hasRoiAssumptions ? `<div style="font-size:12px; color:#047857; font-weight:bold;">Scenariusz ilustracyjny przy założeniach agencji: +${scopeSummary.monthlyGain} ${currency}/mies. To nie jest prognoza ani gwarancja wyniku.</div>` : ""}
+            <div style="font-size:12px; color:#475569;">${L("Łączny nakład pracy","Total effort")}: <strong>${scopeSummary.totalHours} ${L("roboczogodzin","hours")}</strong> (${hourlyRate} ${currency}/h)</div>
+            ${hasRoiAssumptions ? `<div style="font-size:12px; color:#047857; font-weight:bold;">${L("Scenariusz ilustracyjny przy założeniach agencji","Illustrative scenario based on the agency's assumptions")}: +${scopeSummary.monthlyGain} ${currency}/${L("mies.","month")}. ${L("To nie jest prognoza ani gwarancja wyniku.","This is not a forecast or a guarantee of results.")}</div>` : ""}
           </div>
-          <div style="font-size:22px; font-weight:900; color:#0f172a;">Inwestycja: ${scopeSummary.netPrice} ${currency} netto</div>
+          <div style="font-size:22px; font-weight:900; color:#0f172a;">${L("Inwestycja","Investment")}: ${scopeSummary.netPrice} ${currency} ${L("netto","net")}</div>
         </div>
       </div>`
       : "";
@@ -1106,7 +1107,7 @@ export function useAppState() {
 <html lang="${isPolish ? "pl" : "en"}">
 <head>
   <meta charset="UTF-8">
-  <title>Ekspertyza Techniczna i Audyt SEO — ${domain}</title>
+  <title>${L("Ekspertyza Techniczna i Audyt SEO","Technical & SEO audit")} — ${domain}</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 32px; line-height: 1.5; }
     .container { max-width: 920px; margin: 0 auto; }
@@ -1126,45 +1127,45 @@ export function useAppState() {
   <div class="container">
     <div class="header">
       <div>
-        <div style="font-size:11px; color:#34d399; font-weight:bold; letter-spacing:1px;">OFICJALNA EKSPERTYZA TECHNICZNA & AUDYT WZROSTU</div>
+        <div style="font-size:11px; color:#34d399; font-weight:bold; letter-spacing:1px;">${L("EKSPERTYZA TECHNICZNA & AUDYT STRONY","TECHNICAL & WEBSITE AUDIT")}</div>
         <h1>${currentReport.scannedUrl}</h1>
-        <div style="font-size:13px; color:#cbd5e1;">Przygotowano dla: <strong>${clientName || domain}</strong> · Audytor: <strong>${auditorName}</strong></div>
+        <div style="font-size:13px; color:#cbd5e1;">${L("Przygotowano dla","Prepared for")}: <strong>${clientName || domain}</strong> · ${L("Audytor","Auditor")}: <strong>${auditorName}</strong></div>
       </div>
       <div style="text-align:right;">
         <div style="font-size:36px; font-weight:900; color:#34d399;">${currentReport.overallScore ?? "N/A"}/100</div>
-        <div style="font-size:11px; color:#94a3b8;">Indeks kondycji strony</div>
+        <div style="font-size:11px; color:#94a3b8;">${L("Indeks kondycji strony","Website health index")}</div>
       </div>
     </div>
 
     <div class="grid">
-      <div class="stat"><div style="font-size:11px; color:#64748b;">Wydajność</div><div class="stat-val">${currentReport.categories.performance}/100</div></div>
-      <div class="stat"><div style="font-size:11px; color:#64748b;">Techniczne SEO</div><div class="stat-val">${currentReport.categories.seo}/100</div></div>
-      <div class="stat"><div style="font-size:11px; color:#64748b;">Kontrole dostępności (zautomatyzowane)</div><div class="stat-val">${currentReport.categories.accessibility}/100</div></div>
-      <div class="stat"><div style="font-size:11px; color:#64748b;">Dobre Praktyki</div><div class="stat-val">${currentReport.categories.bestPractices}/100</div></div>
+      <div class="stat"><div style="font-size:11px; color:#64748b;">${L("Wydajność","Performance")}</div><div class="stat-val">${currentReport.categories.performance}/100</div></div>
+      <div class="stat"><div style="font-size:11px; color:#64748b;">${L("Techniczne SEO","Technical SEO")}</div><div class="stat-val">${currentReport.categories.seo}/100</div></div>
+      <div class="stat"><div style="font-size:11px; color:#64748b;">${L("Kontrole dostępności (zautomatyzowane)","Automated accessibility checks")}</div><div class="stat-val">${currentReport.categories.accessibility}/100</div></div>
+      <div class="stat"><div style="font-size:11px; color:#64748b;">${L("Dobre praktyki","Best practices")}</div><div class="stat-val">${currentReport.categories.bestPractices}/100</div></div>
     </div>
 
     <div class="card">
-      <h2>Parametry Core Web Vitals & Inspekcja SEO</h2>
-      <div class="metric"><span>Largest Contentful Paint (LCP — docelowo ≤ 2.5 s)</span><strong>${currentReport.coreWebVitals.lcp.displayValue}</strong></div>
-      <div class="metric"><span>Interaction to Next Paint (INP — docelowo ≤ 200 ms)</span><strong>${currentReport.coreWebVitals.inp.displayValue}</strong></div>
-      <div class="metric"><span>Cumulative Layout Shift (CLS — docelowo ≤ 0.1)</span><strong>${currentReport.coreWebVitals.cls.displayValue}</strong></div>
-      <div class="metric"><span>Znacznik Title (${liveSeo.title.length} znaków)</span><strong>${liveSeo.title.text || "Brak"}</strong></div>
-      <div class="metric"><span>Struktura nagłówków H1 / H2 / H3</span><strong>H1: ${liveSeo.headings.h1} · H2: ${liveSeo.headings.h2} · H3: ${liveSeo.headings.h3}</strong></div>
-      <div class="metric"><span>Obrazy bez atrybutu ALT / Bezpieczeństwo HTTPS</span><strong>Brakujące ALT: ${liveSeo.images.missingAlt} · HTTPS: ${liveSeo.https ? "Tak" : "Nie"}</strong></div>
+      <h2>${L("Parametry Core Web Vitals & Inspekcja SEO","Core Web Vitals & SEO inspection")}</h2>
+      <div class="metric"><span>Largest Contentful Paint (LCP — ${L("docelowo","target")} ≤ 2.5 s)</span><strong>${currentReport.coreWebVitals.lcp.displayValue}</strong></div>
+      <div class="metric"><span>Interaction to Next Paint (INP — ${L("docelowo","target")} ≤ 200 ms)</span><strong>${currentReport.coreWebVitals.inp.displayValue}</strong></div>
+      <div class="metric"><span>Cumulative Layout Shift (CLS — ${L("docelowo","target")} ≤ 0.1)</span><strong>${currentReport.coreWebVitals.cls.displayValue}</strong></div>
+      <div class="metric"><span>${L("Znacznik Title","Title tag")} (${liveSeo.title.length} ${L("znaków","characters")})</span><strong>${liveSeo.title.text || L("Brak","None")}</strong></div>
+      <div class="metric"><span>${L("Struktura nagłówków H1 / H2 / H3","Heading structure H1 / H2 / H3")}</span><strong>H1: ${liveSeo.headings.h1} · H2: ${liveSeo.headings.h2} · H3: ${liveSeo.headings.h3}</strong></div>
+      <div class="metric"><span>${L("Obrazy bez atrybutu ALT / Bezpieczeństwo HTTPS","Images without ALT / HTTPS")}</span><strong>${L("Brakujące ALT","Missing ALT")}: ${liveSeo.images.missingAlt} · HTTPS: ${liveSeo.https ? L("Tak","Yes") : L("Nie","No")}</strong></div>
     </div>
 
     <div class="card">
-      <h2>Zdiagnozowane bariery wzrostu</h2>
+      <h2>${L("Zdiagnozowane problemy","Issues found")}</h2>
       ${currentReport.issues
         .map(
           (i) => `
         <div class="issue">
           <div style="display:flex; justify-content:space-between; font-weight:bold; color:#0f172a;">
             <span>${i.title}</span>
-            <span style="color:#d97706;">Priorytet: ${i.priority.toUpperCase()}</span>
+            <span style="color:#d97706;">${L("Priorytet","Priority")}: ${i.priority.toUpperCase()}</span>
           </div>
           <div style="margin-top:4px; color:#475569;">${i.description}</div>
-          <div style="margin-top:6px; font-weight:bold; color:#047857;">Wpływ na biznes: ${i.businessImpact || "Ogranicza widoczność w Google i konwersję mobilną."}</div>
+          <div style="margin-top:6px; font-weight:bold; color:#047857;">${L("Wpływ na biznes","Business impact")}: ${i.businessImpact || L("Ogranicza widoczność w Google i konwersję mobilną.","Limits visibility in Google and mobile conversion.")}</div>
         </div>`
         )
         .join("")}
@@ -1172,7 +1173,7 @@ export function useAppState() {
 
     ${quoteHtml}
 
-    <div class="footer">Raport wygenerowany w systemie ${auditorName} · ${agencyWebsite} · Kontakt: contact@novopix.uk</div>
+    <div class="footer">${L("Raport wygenerowany w systemie","Report generated by")} ${auditorName} · ${agencyWebsite} · ${L("Kontakt","Contact")}: contact@novopix.uk</div>
   </div>
 </body>
 </html>`;
@@ -1181,7 +1182,7 @@ export function useAppState() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `ekspertyza-novopix-${domain}-${new Date().toISOString().slice(0, 10)}.html`;
+    a.download = `${L("ekspertyza","report")}-novopix-${domain}-${new Date().toISOString().slice(0, 10)}.html`;
     document.body.appendChild(a);
     a.click();
     a.remove();
