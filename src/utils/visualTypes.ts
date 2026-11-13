@@ -23,5 +23,8 @@ export const MARK_INFO: Record<string, L> = {
   "target-size": ["Za mały obszar kliknięcia", "Tap target too small", "Trudno trafić palcem w ten element.", "It is hard to hit this element with a finger."],
   "frame-title": ["Ramka bez tytułu", "Frame without a title", "Czytnik ekranu nie opisze zawartości ramki.", "A screen reader cannot describe the frame."],
   "select-name": ["Lista wyboru bez nazwy", "Dropdown without a name", "Nie wiadomo, czego dotyczy lista.", "It is not clear what the list is for."],
+  "aria-dialog-name": ["Okno dialogowe bez nazwy", "Dialog without a name", "Czytnik ekranu nie powie, czego dotyczy okno.", "A screen reader will not say what the window is about."],
+  "aria-hidden-focus": ["Ukryty element, na który można wejść klawiaturą", "Hidden element that can be focused", "Osoba używająca klawiatury może trafić na element, którego nie widać.", "A keyboard user can land on an element that is not visible."],
+  "heading-order": ["Zaburzona kolejność nagłówków", "Heading order skips levels", "Trudniej poruszać się po stronie czytnikiem ekranu.", "It is harder to navigate the page with a screen reader."],
   "input-image-alt": ["Przycisk-obraz bez opisu", "Image button without description", "Czytnik ekranu nie wie, co robi przycisk.", "A screen reader does not know what the button does."],
 };

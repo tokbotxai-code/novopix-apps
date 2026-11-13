@@ -8,7 +8,7 @@ export function VisualCard({ visual, isPolish }: { visual: VisualData | null | u
   const counts: Record<string, number> = {};
   for (const m of visual.marks) counts[m.kind] = (counts[m.kind] || 0) + 1;
   const kinds = Object.keys(counts);
-  const name = (k: string, title: string) => (MARK_INFO[k] ? (isPolish ? MARK_INFO[k][0] : MARK_INFO[k][1]) : isPolish ? "Inny problem dostępności" : title);
+  const name = (k: string, title: string) => (MARK_INFO[k] ? (isPolish ? MARK_INFO[k][0] : MARK_INFO[k][1]) : isPolish ? (k.startsWith("aria") ? "Problem z oznaczeniami ARIA" : "Inny problem dostępności") : title);
   const info = (k: string) => (MARK_INFO[k] ? (isPolish ? MARK_INFO[k][2] : MARK_INFO[k][3]) : L("Szczegóły w zakładce Kontrole dostępności.", "Details in the Accessibility checks tab."));
   const titleOf = (k: string) => visual.marks.find((m) => m.kind === k)?.title || k;
   return (
