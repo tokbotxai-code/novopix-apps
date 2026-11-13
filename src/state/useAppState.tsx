@@ -3,7 +3,7 @@ import { AgencyClient, AiAdvisorData, AuditReport, DEFAULT_SCOPE_TASKS, EMPTY_AU
 import { AgencyCtx } from "../agencyTypes";
 import { copyText } from "../utils/clipboard";
 import { localizeDeep } from "../utils/localize";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // Parametry startowe z adresu, np. z formularza na novopix.uk: ?url=firma.pl&lang=pl|en&autoscan=1.
 // Skan uruchamia ta sama funkcja co przycisk „Skanuj”, więc walidacja adresu i limity po stronie serwera są identyczne.
@@ -31,10 +31,25 @@ function readInitialPublicMode(): boolean {
   }
 }
 
+// Język startowy: ?lang= z linku, potem zapamiętany wybór, potem język przeglądarki (pl -> PL, reszta -> EN).
+function detectPolish(fromParam: "pl" | "en" | null): boolean {
+  if (fromParam) return fromParam === "pl";
+  try {
+    const saved = localStorage.getItem("novopix_lang");
+    if (saved === "pl" || saved === "en") return saved === "pl";
+  } catch {}
+  const langs = (typeof navigator !== "undefined" && (navigator.languages?.length ? navigator.languages : [navigator.language])) || [];
+  return /^pl/i.test(String(langs[0] || ""));
+}
+
 export function useAppState() {
   const startParams = useRef(readStartParams(typeof window !== "undefined" ? window.location.search : "")).current;
   const initialPublic = useRef(readInitialPublicMode()).current;
-  const [isPolish, setIsPolish] = useState<boolean>(startParams.lang ? startParams.lang === "pl" : true);
+  const [isPolish, setIsPolishRaw] = useState<boolean>(() => detectPolish(startParams.lang));
+  const setIsPolish = useCallback((v: boolean) => {
+    setIsPolishRaw(v);
+    try { localStorage.setItem("novopix_lang", v ? "pl" : "en"); } catch {}
+  }, []);
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [urlInput, setUrlInput] = useState<string>(startParams.clientView ? "" : startParams.url);
   const [strategy, setStrategy] = useState<"mobile" | "desktop">("mobile");
