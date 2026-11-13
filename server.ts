@@ -30,6 +30,7 @@ import {
 } from "./server/database";
 import { performDeepLiveSeoInspection } from "./server/seoCrawler";
 import { performScan } from "./server/scanService";
+import { checkDomainHealth } from "./server/domainHealth";
 import { snapshotFromScan } from "./server/scanSnapshot";
 import { rememberScan, recallScan } from "./server/scanCache";
 import { normalizeFormLang } from "./server/language";
@@ -921,6 +922,18 @@ app.delete("/api/monitoring/:id", requireAgencyAuth, (req, res) => {
 // State 1: "live_lighthouse" — Full Google PageSpeed Insights Lighthouse lab + field data
 // State 2: "partial_html"   — Live HTTP/HTML DOM measurement when PSI API quota/WAF blocks Lighthouse
 // State 3: "failed"         — Target domain unreachable (zero fabricated/hash scores!)
+app.post("/api/domain-health", async (req, res) => {
+  const clientIp = req.ip || "local";
+  const limit = checkRateLimit(`dh_${clientIp}`, 20, 5 * 60 * 1000);
+  if (!limit.allowed) return res.status(429).json({ error: `Rate limit. Retry in ${limit.retryAfterSec} s.` });
+  try {
+    const out = await checkDomainHealth((req.body || {}).url);
+    return res.status(out.status).json(out.body);
+  } catch {
+    return res.status(500).json({ error: "Domain check failed." });
+  }
+});
+
 app.post("/api/scan", async (req, res) => {
   const clientIp = req.ip || "local";
   const limit = checkRateLimit(`scan_${clientIp}`, 30, 5 * 60 * 1000);

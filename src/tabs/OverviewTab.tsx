@@ -3,6 +3,7 @@ import { ProgressSummaryCard, ScoreBarCard, ScoreGaugeCard } from "../components
 import React from "react";
 import type { AppState } from "../state/useAppState";
 import { VerdictCards } from "../components/VerdictCards";
+import { DomainHealthCard } from "../components/DomainHealthCard";
 
 
 export default function OverviewTab({ app }: { app: AppState }) {
@@ -26,6 +27,8 @@ export default function OverviewTab({ app }: { app: AppState }) {
     audience,
     setAudience,
     setQuoteSeed,
+    domainHealth,
+    domainHealthLoading,
   } = app;
   return (
             <div className="space-y-6">
@@ -35,6 +38,17 @@ export default function OverviewTab({ app }: { app: AppState }) {
                   isPolish={isPolish}
                   audience={audience}
                   setAudience={setAudience}
+                  onAsk={(seed) => {
+                    setQuoteSeed(seed);
+                    setIsQuoteOpen(true);
+                  }}
+                />
+              )}
+              {isPublicMode && (
+                <DomainHealthCard
+                  data={domainHealth}
+                  loading={domainHealthLoading}
+                  isPolish={isPolish}
                   onAsk={(seed) => {
                     setQuoteSeed(seed);
                     setIsQuoteOpen(true);

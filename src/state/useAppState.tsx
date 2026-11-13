@@ -5,6 +5,7 @@ import { copyText } from "../utils/clipboard";
 import { localizeDeep } from "../utils/localize";
 import { localizeIssues } from "../utils/lighthouseIssues";
 import { computeVerdict } from "../utils/verdict";
+import type { DomainHealth } from "../utils/domainHealthTypes";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // Parametry startowe z adresu, np. z formularza na novopix.uk: ?url=firma.pl&lang=pl|en&autoscan=1.
@@ -176,6 +177,25 @@ export function useAppState() {
     const r = localizeDeep(rawReport, rawReport.i18n, !isPolish);
     return { ...r, issues: localizeIssues(r.issues as any[], isPolish) as typeof r.issues };
   }, [rawReport, isPolish]);
+  const [domainHealth, setDomainHealth] = useState<DomainHealth | null>(null);
+  const [domainHealthLoading, setDomainHealthLoading] = useState<boolean>(false);
+  useEffect(() => {
+    if (!isPublicMode) return;
+    const target = rawReport.finalUrl || rawReport.scannedUrl;
+    if (!target || rawReport.isSample || rawReport.measurementStatus === "failed") {
+      setDomainHealth(null);
+      return;
+    }
+    let cancelled = false;
+    setDomainHealth(null);
+    setDomainHealthLoading(true);
+    fetch("/api/domain-health", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: target }) })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled) setDomainHealth(d && d.host ? d : null); })
+      .catch(() => { if (!cancelled) setDomainHealth(null); })
+      .finally(() => { if (!cancelled) setDomainHealthLoading(false); });
+    return () => { cancelled = true; };
+  }, [rawReport.scanId, rawReport.finalUrl, rawReport.scannedUrl, rawReport.isSample, rawReport.measurementStatus, isPublicMode]);
   const competitorReport = useMemo(() => (rawCompetitorReport ? localizeDeep(rawCompetitorReport, rawCompetitorReport.i18n, !isPolish) : null), [rawCompetitorReport, isPolish]);
 
   const showToast = (msg: string) => {
@@ -1490,6 +1510,8 @@ export function useAppState() {
     setTrendRange,
     isQuoteOpen,
     setIsQuoteOpen,
+    domainHealth,
+    domainHealthLoading,
     audience,
     setAudience,
     quoteSeed,
