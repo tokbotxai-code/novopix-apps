@@ -2,6 +2,7 @@ import { BarChart3, Bot, Briefcase, Calculator, CheckCircle2, Gauge, ShieldCheck
 import { ProgressSummaryCard, ScoreBarCard, ScoreGaugeCard } from "../components/ScoreCards";
 import React from "react";
 import type { AppState } from "../state/useAppState";
+import { VerdictCards } from "../components/VerdictCards";
 
 
 export default function OverviewTab({ app }: { app: AppState }) {
@@ -22,9 +23,24 @@ export default function OverviewTab({ app }: { app: AppState }) {
     setIsQuoteOpen,
     strategy,
     viewMode,
+    audience,
+    setAudience,
+    setQuoteSeed,
   } = app;
   return (
             <div className="space-y-6">
+              {isPublicMode && (
+                <VerdictCards
+                  report={currentReport}
+                  isPolish={isPolish}
+                  audience={audience}
+                  setAudience={setAudience}
+                  onAsk={(seed) => {
+                    setQuoteSeed(seed);
+                    setIsQuoteOpen(true);
+                  }}
+                />
+              )}
               {/* Top 4 KPI Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
                 <ScoreGaugeCard

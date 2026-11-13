@@ -925,12 +925,13 @@ export default function App() {
       <Suspense fallback={null}>
       <QuoteModal
         isOpen={isQuoteOpen}
-        onClose={() => setIsQuoteOpen(false)}
+        onClose={() => { setIsQuoteOpen(false); app.setQuoteSeed(""); }}
         report={currentReport}
         isPolish={isPolish}
         estimatedBudget={scopeSummary.netPrice}
         currency={currency}
         isPublicMode={isPublicMode}
+        initialDetails={app.quoteSeed}
         onLeadSaved={(newClient) => {
           if (newClient) {
             setCrmClients((prev) => [newClient, ...prev]);

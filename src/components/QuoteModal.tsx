@@ -11,6 +11,7 @@ export function QuoteModal({
   currency,
   isPublicMode = false,
   onLeadSaved,
+  initialDetails = "",
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -20,6 +21,7 @@ export function QuoteModal({
   currency: string;
   isPublicMode?: boolean;
   onLeadSaved?: (client: AgencyClient) => void;
+  initialDetails?: string;
 }) {
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -30,6 +32,10 @@ export function QuoteModal({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (isOpen && initialDetails) setDetails((d) => (d.trim() ? d : isPolish ? `Interesuje mnie: ${initialDetails}` : `I am interested in: ${initialDetails}`));
+  }, [isOpen, initialDetails, isPolish]);
 
   React.useEffect(() => {
     if (!isOpen) return;

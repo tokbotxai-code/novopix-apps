@@ -4,11 +4,12 @@ import { AgencyCtx } from "../agencyTypes";
 import { copyText } from "../utils/clipboard";
 import { localizeDeep } from "../utils/localize";
 import { localizeIssues } from "../utils/lighthouseIssues";
+import { computeVerdict } from "../utils/verdict";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // Parametry startowe z adresu, np. z formularza na novopix.uk: ?url=firma.pl&lang=pl|en&autoscan=1.
 // Skan uruchamia ta sama funkcja co przycisk „Skanuj”, więc walidacja adresu i limity po stronie serwera są identyczne.
-export function readStartParams(search: string): { lang: "pl" | "en" | null; url: string; autoscan: boolean; clientView: boolean } {
+export function readStartParams(search: string): { lang: "pl" | "en" | null; url: string; autoscan: boolean; clientView: boolean; audience: "company" | "institution" | null; focus: string } {
   try {
     const p = new URLSearchParams(search);
     const lang = (p.get("lang") || "").toLowerCase();
@@ -17,9 +18,11 @@ export function readStartParams(search: string): { lang: "pl" | "en" | null; url
       url: (p.get("url") || "").trim().slice(0, 300),
       autoscan: p.get("autoscan") === "1",
       clientView: p.get("clientView") === "1",
+      audience: p.get("audience") === "institution" ? "institution" : p.get("audience") === "company" ? "company" : null,
+      focus: (p.get("focus") || "").toLowerCase(),
     };
   } catch {
-    return { lang: null, url: "", autoscan: false, clientView: false };
+    return { lang: null, url: "", autoscan: false, clientView: false, audience: null, focus: "" };
   }
 }
 
@@ -139,6 +142,8 @@ export function useAppState() {
 
   // Modals & Server-Side Agency PIN / Bearer Token Security Lock
   const [isQuoteOpen, setIsQuoteOpen] = useState<boolean>(false);
+  const [audience, setAudience] = useState<"company" | "institution">(startParams.audience || (startParams.focus === "accessibility" ? "institution" : "company"));
+  const [quoteSeed, setQuoteSeed] = useState<string>("");
   const [isAcceptProposalOpen, setIsAcceptProposalOpen] = useState<boolean>(false);
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState<boolean>(false);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState<boolean>(false);
@@ -1128,6 +1133,20 @@ export function useAppState() {
       <p style="font-size:12px; color:#64748b; margin:12px 0 0;">${L("Kontrole dostępności są zautomatyzowane i nie wykrywają wszystkiego. To nie jest ocena zgodności z WCAG ani certyfikat.", "Accessibility checks are automated and do not catch everything. This is not a WCAG conformance assessment or certificate.")}</p>
     </div>`
       : "";
+    const verdict = !isFull ? computeVerdict(currentReport as any, audience, isPolish) : null;
+    const verdictHtml = verdict
+      ? `
+    <div class="card" style="border-left:8px solid ${verdict.level === "great" ? "#10b981" : verdict.level === "work" ? "#f59e0b" : "#ef4444"};">
+      <div style="font-size:11px; color:#64748b; font-weight:bold; letter-spacing:1px;">${L("W SKRÓCIE", "IN SHORT")}</div>
+      <div style="font-size:24px; font-weight:900; margin:4px 0;">${verdict.label}</div>
+      <p style="font-size:14px; color:#334155; margin:0;">${verdict.summary}</p>
+    </div>
+    ${verdict.items.length ? `<div class="card">
+      <h2>${L("Co z tym zrobić", "What to do about it")}</h2>
+      ${verdict.items.map((it) => `<div class="issue"><strong>${it.problem}</strong><br><span style="color:#047857; font-weight:bold;">${it.service}: ${it.price}</span><br><span style="color:#64748b;">${L("Polecamy, bo", "We suggest it because")} ${it.why}.</span></div>`).join("")}
+      <p style="font-size:12px; color:#64748b; margin:8px 0 0;">${L("Rekomendacja wynika z jawnych reguł i nie jest obietnicą wyniku.", "The recommendation comes from open rules and is not a promise of results.")} ${L("Zapytaj: contact@novopix.uk", "Ask us: contact@novopix.uk")}</p>
+    </div>` : ""}`
+      : "";
     const teaserHtml = !isFull
       ? `
     <div class="card" style="border:2px dashed #94a3b8; background:#f8fafc;">
@@ -1195,6 +1214,7 @@ export function useAppState() {
       <div class="metric"><span>${L("Obrazy bez atrybutu ALT / Bezpieczeństwo HTTPS","Images without ALT / HTTPS")}</span><strong>${L("Brakujące ALT","Missing ALT")}: ${liveSeo.images.missingAlt} · HTTPS: ${liveSeo.https ? L("Tak","Yes") : L("Nie","No")}</strong></div>
     </div>
 
+    ${verdictHtml}
     ${detailHtml}
 
     <div class="card">
@@ -1470,6 +1490,11 @@ export function useAppState() {
     setTrendRange,
     isQuoteOpen,
     setIsQuoteOpen,
+    audience,
+    setAudience,
+    quoteSeed,
+    setQuoteSeed,
+    startFocus: startParams.focus,
     isAcceptProposalOpen,
     setIsAcceptProposalOpen,
     isHowItWorksOpen,
