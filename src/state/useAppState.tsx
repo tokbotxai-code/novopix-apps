@@ -64,6 +64,7 @@ export function useAppState() {
   const [urlInput, setUrlInput] = useState<string>(startParams.clientView ? "" : startParams.url);
   const [strategy, setStrategy] = useState<"mobile" | "desktop">("mobile");
   const [isScanning, setIsScanning] = useState<boolean>(false);
+  const [desktopScores, setDesktopScores] = useState<{ overall: number; performance: number; seo: number; accessibility: number; lcp: string } | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   // Agency Mode vs Client Pitch Mode (protects know-how & hides internal CRM)
@@ -643,15 +644,35 @@ export function useAppState() {
     setIsScanning(true);
     setScanError(null);
 
+    setDesktopScores(null);
     try {
+      // Jeden test = dwa pomiary naraz: telefon (główny raport) i komputer (porównanie wyników).
+      const desktopP = fetch("/api/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: query, strategy: "desktop" }),
+      })
+        .then((r) => r.json().catch(() => null))
+        .catch(() => null);
       const [scanRes, freshSeo] = await Promise.all([
         fetch("/api/scan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: query, strategy }),
+          body: JSON.stringify({ url: query, strategy: "mobile" }),
         }),
         handleRunSeoCheck(query),
       ]);
+      desktopP.then((d: any) => {
+        if (d && d.measurementStatus === "live_lighthouse" && typeof d.overallScore === "number") {
+          setDesktopScores({
+            overall: d.overallScore,
+            performance: d.categories?.performance ?? 0,
+            seo: d.categories?.seo ?? 0,
+            accessibility: d.categories?.accessibility ?? 0,
+            lcp: d.coreWebVitals?.lcp?.displayValue || "",
+          });
+        }
+      });
 
       const data = await scanRes.json().catch(() => ({}));
 
@@ -1507,6 +1528,7 @@ export function useAppState() {
     setStrategy,
     isScanning,
     setIsScanning,
+    desktopScores,
     toastMsg,
     setToastMsg,
     viewMode,

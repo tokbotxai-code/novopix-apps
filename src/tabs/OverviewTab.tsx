@@ -26,6 +26,7 @@ export default function OverviewTab({ app }: { app: AppState }) {
     setIsAcceptProposalOpen,
     setIsQuoteOpen,
     strategy,
+    desktopScores,
     viewMode,
     audience,
     setAudience,
@@ -205,6 +206,29 @@ export default function OverviewTab({ app }: { app: AppState }) {
                   </div>
                 </div>
               </div>
+
+              {desktopScores && (
+                <div className="bg-white rounded-2xl p-5 border border-slate-200" data-testid="device-compare">
+                  <h2 className="text-sm font-extrabold text-slate-900 font-heading mb-3">{isPolish ? "Telefon i komputer: jeden test, dwa pomiary" : "Phone and desktop: one test, two measurements"}</h2>
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div />
+                    <div className="font-bold text-slate-500">{isPolish ? "Telefon" : "Phone"}</div>
+                    <div className="font-bold text-slate-500">{isPolish ? "Komputer" : "Desktop"}</div>
+                    {([
+                      [isPolish ? "Wynik ogólny" : "Overall", currentReport.overallScore, desktopScores.overall],
+                      [isPolish ? "Wydajność" : "Performance", currentReport.categories.performance, desktopScores.performance],
+                      [isPolish ? "SEO" : "SEO", currentReport.categories.seo, desktopScores.seo],
+                      [isPolish ? "Dostępność (automaty)" : "Accessibility (automated)", currentReport.categories.accessibility, desktopScores.accessibility],
+                    ] as Array<[string, number, number]>).map(([label, a, b]) => (
+                      <React.Fragment key={label}>
+                        <div className="text-left text-slate-700 font-semibold">{label}</div>
+                        <div className="font-mono font-extrabold tabular-nums text-slate-900">{a}/100</div>
+                        <div className="font-mono font-extrabold tabular-nums text-slate-900">{b}/100</div>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Executive Business Impact & Site Snapshot Split */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">

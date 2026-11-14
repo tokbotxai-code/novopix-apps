@@ -12,7 +12,7 @@ export function ScanProgress({ isPolish, host }: { isPolish: boolean; host: stri
       <div className="flex items-center gap-3">
         <span aria-hidden="true" className="w-6 h-6 rounded-full border-4 border-emerald-200 border-t-emerald-600 animate-spin" />
         <div>
-          <div className="font-extrabold text-slate-900">{L("Mierzymy Twoją stronę", "We are measuring your site")}{host ? `: ${host}` : ""}</div>
+          <div className="font-extrabold text-slate-900">{L("Mierzymy Twoją stronę na telefonie i na komputerze", "We are measuring your site on phone and desktop")}{host ? `: ${host}` : ""}</div>
           <div className="text-sm text-slate-600">{L(`Mija ${sec} s. Pomiar robi Google Lighthouse i zwykle trwa 15–40 sekund. Nie zamykaj tej strony.`, `${sec}s so far. Google Lighthouse does the measuring and it usually takes 15–40 seconds. Please keep this page open.`)}</div>
         </div>
       </div>
