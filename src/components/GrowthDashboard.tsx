@@ -95,7 +95,7 @@ export default function GrowthDashboard({ app }: { app: AppState }) {
   const R = 34, CC = 2 * Math.PI * R;
   let acc = 0;
   const W = 300, H = 110;
-  const xs = (i: number) => 14 + (pts.length > 1 ? (i / (pts.length - 1)) * (W - 28) : 0), ys = (v: number) => H - 14 - (v / 100) * (H - 28);
+  const xs = (i: number) => 26 + (pts.length > 1 ? (i / (pts.length - 1)) * (W - 40) : 0), ys = (v: number) => H - 14 - (v / 100) * (H - 28);
   const cwv = [["LCP", r.coreWebVitals.lcp], ["INP", r.coreWebVitals.inp], ["CLS", r.coreWebVitals.cls]] as const;
   const actions = (r.recommendedActions || []).slice(0, 4);
   const noteWcag = L("To nie ocena zgodności z WCAG ani certyfikat.", "Not a WCAG conformance rating or certificate.");
@@ -156,7 +156,7 @@ export default function GrowthDashboard({ app }: { app: AppState }) {
                 {cwv.map(([k, m]) => (
                   <div key={k} className="flex items-center justify-between text-[12px]"><span className="font-bold text-white w-10">{k}</span>
                     <span className="text-sky-100/70 flex-1 px-2 truncate">{m.status === "good" ? L("dobrze", "good") : m.status === "poor" ? L("słabo", "poor") : m.status === "needs-improvement" ? L("do poprawy", "needs work") : "–"}</span>
-                    <span className="font-bold tabular-nums" style={{ color: m.status === "good" ? "#34d399" : m.status === "poor" ? "#f87171" : "#fbbf24" }}>{m.displayValue}</span></div>
+                    <span className="font-bold tabular-nums" style={{ color: m.status === "good" ? "#34d399" : m.status === "poor" ? "#f87171" : "#fbbf24" }}>{String(m.displayValue).replace(/\s*\((pomiar laboratoryjny|lab measurement)\)/, "")}</span></div>
                 ))}
                 {liveSeo && typeof liveSeo.responseTimeMs === "number" && <div className="flex justify-between text-[12px] pt-1 border-t border-white/10"><span className="text-sky-100/80">{L("Czas odpowiedzi serwera", "Server response time")}</span><strong className="tabular-nums">{liveSeo.responseTimeMs} ms</strong></div>}
               </div>
@@ -187,7 +187,7 @@ export default function GrowthDashboard({ app }: { app: AppState }) {
             <div className="text-[13px] font-bold mb-1">{L("Wynik w czasie", "Score over time")}</div>
             {pts.length >= 2 ? (
               <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={L("Wykres wyniku w czasie", "Score over time chart")}>
-                {[0, 50, 100].map((g) => <g key={g}><line x1="14" x2={W - 14} y1={ys(g)} y2={ys(g)} stroke="#9fb3d9" strokeOpacity=".2" /><text x="2" y={ys(g) + 3} fontSize="8" fill="#9fb3d9">{g}</text></g>)}
+                {[0, 50, 100].map((g) => <g key={g}><line x1="24" x2={W - 14} y1={ys(g)} y2={ys(g)} stroke="#9fb3d9" strokeOpacity=".2" /><text x="1" y={ys(g) + 3} fontSize="8" fill="#9fb3d9">{g}</text></g>)}
                 <polyline points={pts.map((p, i) => `${xs(i)},${ys(p.overall)}`).join(" ")} fill="none" stroke="#34d399" strokeWidth="2.4" style={{ filter: "drop-shadow(0 0 4px #34d399aa)" }} />
                 {pts.map((p, i) => <circle key={i} cx={xs(i)} cy={ys(p.overall)} r="3" fill="#34d399" />)}
               </svg>
