@@ -1,7 +1,6 @@
 import { BarChart3, Bot, Briefcase, Calculator, CheckCircle2, Gauge, ShieldCheck } from "lucide-react";
 import React from "react";
 import type { AppState } from "../state/useAppState";
-import { ScoreHero } from "../components/ScoreHero";
 import GrowthDashboard from "../components/GrowthDashboard";
 import { VerdictCards } from "../components/VerdictCards";
 import { DomainHealthCard } from "../components/DomainHealthCard";
