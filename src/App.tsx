@@ -55,6 +55,7 @@ export default function App() {
     getAuthHeaders,
     handleDownloadCrmBackup,
     handleDownloadHtmlReport,
+    handleDownloadPdfReport,
     handleRequestAgencyMode,
     handleRunScan,
     handleSaveAndCopyClientLink,
@@ -174,36 +175,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* View Mode Switcher in Sidebar (Hidden when locked via external Client Link) */}
-          {!isClientLinkLocked && (
-            <div className="px-4 pt-4">
-              <div className="p-2 rounded-xl bg-[#103247]/80 border border-[#8fd8ff]/20">
-                <div className="text-[10px] font-semibold text-[#bcd6e6] px-1 mb-1.5 flex items-center justify-between">
-                  <span>{isPolish ? "Tryb Prezentacji Danych" : "Presentation Mode"}</span>
-                  <span className="text-[9px] text-[#9af0c8] font-mono">SERVER PIN</span>
-                </div>
-                <div className="grid grid-cols-2 gap-1">
-                  <button
-                    onClick={handleRequestAgencyMode}
-                    className={`px-2 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap ${
-                      viewMode === "agency" ? "bg-[#3ddc97] text-[#0b2230]" : "text-[#bcd6e6] hover:text-white"
-                    }`}
-                  >
-                    {isPolish ? "Tryb Agencji" : "Agency View"}
-                  </button>
-                  <button
-                    onClick={() => setViewMode("client")}
-                    className={`px-2 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap ${
-                      viewMode === "client" ? "bg-[#ffc233] text-[#0e2733]" : "text-[#bcd6e6] hover:text-white"
-                    }`}
-                  >
-                    {isPolish ? "Widok Klienta" : "Client Pitch"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Audit Workspace Menu */}
           <div className="px-4 py-3">
             <div className="text-[11px] font-semibold text-[#bcd6e6]/80 px-3 mb-2">
@@ -216,10 +187,18 @@ export default function App() {
                 : "Audit & Sales Workspace"}
             </div>
             <nav className={`space-y-0.5 ${isPublicMode && !hasScan ? "hidden" : ""}`}>
-              {workspaceTabs.map((item) => {
+              {workspaceTabs.map((item, idx) => {
                 const IconComponent = item.icon;
                 const isActive = activeTab === item.id;
+                const grp = (id: string) =>
+                  ["monitoring", "status", "stats", "statistics"].includes(id) ? "ops"
+                  : ["roi-calculator", "packages", "reports", "crm", "bulk"].includes(id) ? "sales" : "audit";
+                const g = grp(item.id);
+                const showGroup = idx === 0 || grp(workspaceTabs[idx - 1].id) !== g;
+                const groupLabel = g === "ops" ? (isPolish ? "Nadzór" : "Monitoring") : g === "sales" ? (isPolish ? "Oferta i klienci" : "Offers & clients") : (isPolish ? "Audyt strony" : "Site audit");
                 return (
+                  <React.Fragment key={item.id}>
+                  {showGroup && <div className="text-[10px] uppercase tracking-wide font-bold text-[#8fd8ff]/60 px-3 pt-3 pb-1">{groupLabel}</div>}
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
@@ -240,6 +219,7 @@ export default function App() {
                       </span>
                     )}
                   </button>
+                  </React.Fragment>
                 );
               })}
             </nav>
@@ -326,7 +306,7 @@ export default function App() {
           </div>
 
           {/* Zone 2: Concise Single-Line Workspace Links */}
-          <nav className={`${isPublicMode && !hasScan ? "hidden" : "hidden md:flex"} items-center gap-5 text-xs font-semibold text-slate-600 overflow-x-auto`}>
+          <nav className={`${isPublicMode && !hasScan ? "hidden" : "hidden md:flex lg:hidden"} items-center gap-5 text-xs font-semibold text-slate-600 overflow-x-auto`}>
             {(viewMode === "client"
               ? [
                   { id: "overview", label: isPolish ? "Przegląd Audytu" : "Audit Overview" },
@@ -519,20 +499,13 @@ export default function App() {
 
               {hasScan && (<>
               <button
-                onClick={handleDownloadHtmlReport}
+                onClick={handleDownloadPdfReport}
                 className="px-3 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
                 <Download className="w-3.5 h-3.5 text-slate-600" />
-                <span>{isPolish ? "Pobierz Raport HTML" : "Download HTML"}</span>
+                <span>{isPolish ? "Pobierz PDF" : "Download PDF"}</span>
               </button>
 
-              <button
-                onClick={() => window.print()}
-                className="px-3 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-              >
-                <Printer className="w-3.5 h-3.5 text-slate-600" />
-                <span>{isPolish ? "Drukuj / PDF" : "Print / PDF"}</span>
-              </button>
               </>)}
             </div>
           </div>
@@ -562,28 +535,6 @@ export default function App() {
                 />
               </div>
 
-              <div className="flex bg-slate-100 border border-slate-200 rounded-xl p-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setStrategy("mobile")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                    strategy === "mobile" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-800"
-                  }`}
-                >
-                  <Smartphone className="w-3.5 h-3.5" />
-                  <span>Mobile</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStrategy("desktop")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                    strategy === "desktop" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-800"
-                  }`}
-                >
-                  <Monitor className="w-3.5 h-3.5" />
-                  <span>Desktop</span>
-                </button>
-              </div>
 
               <button
                 type="submit"
@@ -612,7 +563,7 @@ export default function App() {
 
             {!(isPublicMode && !hasScan) && (<>
             {/* Scrollable Workspace Tab Bar */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pt-3 mt-3 border-t border-slate-100 scrollbar-none">
+            <div className="flex lg:hidden items-center gap-1.5 overflow-x-auto pt-3 mt-3 border-t border-slate-100 scrollbar-none">
               {workspaceTabs.map((tab) => {
                 const IconComp = tab.icon;
                 const active = activeTab === tab.id;

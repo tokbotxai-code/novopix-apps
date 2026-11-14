@@ -36,7 +36,9 @@ import { checkContact } from "./server/contactCheck";
 import { snapshotFromScan } from "./server/scanSnapshot";
 import { rememberScan, recallScan } from "./server/scanCache";
 import { normalizeFormLang } from "./server/language";
-import { registerPanelFunnel, registerPublicFunnel } from "./server/funnel";
+import { registerPanelFunnel, registerPublicFunnel, stubClient } from "./server/funnel";
+import { buildReportPdf } from "./server/pdfReport";
+import { hostOf } from "./server/resultPage";
 import { sendMail, alertRecipient } from "./server/mailer";
 import { registerAgencyOfferRoutes } from "./server/routes/agencyOffers";
 import { registerAgencyBulkRoutes } from "./server/routes/agencyBulk";
@@ -976,6 +978,23 @@ app.post("/api/scan", async (req, res) => {
   const snap = snapshotFromScan(out.body, strat, String(url || ""));
   if (snap) out.body.scanId = rememberScan(snap);
   return res.status(out.status).json(out.body);
+});
+
+// Pobranie raportu PDF dla wyniku zmierzonego przez serwer (scanId), bez zapisu danych i bez e-maila.
+app.post("/api/report-pdf", async (req, res) => {
+  const lang = req.body?.lang === "en" ? "en" : "pl";
+  const limit = checkRateLimit(`pdf_${req.ip || "local"}`, 20, 60 * 60 * 1000);
+  if (!limit.allowed) return res.status(429).json({ error: lang === "pl" ? "Zbyt wiele żądań. Spróbuj ponownie później." : "Too many requests. Please try again later." });
+  const snap = recallScan(req.body?.scanId);
+  if (!snap) return res.status(410).json({ error: lang === "pl" ? "Wynik skanu wygasł – zeskanuj stronę ponownie." : "The scan result has expired – please scan the website again.", code: "SCAN_EXPIRED" });
+  try {
+    const pdf = await buildReportPdf(stubClient({ email: "" } as any, snap), snap, lang);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="NovoPix-${lang === "pl" ? "raport" : "report"}-${hostOf(snap).replace(/[^\w.-]+/g, "_")}.pdf"`);
+    return res.send(pdf);
+  } catch {
+    return res.status(500).json({ error: lang === "pl" ? "Nie udało się przygotować PDF." : "Could not prepare the PDF." });
+  }
 });
 
 
