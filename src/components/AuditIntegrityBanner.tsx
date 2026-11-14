@@ -66,8 +66,8 @@ export function AuditIntegrityBanner({
           <div className="space-y-1">
             <div className="font-extrabold text-rose-950">
               {isPolish
-                ? "Stan Pomiaru 3/3: Brak pomiaru (Strona nieosiągalna lub zablokowana)"
-                : "Measurement State 3/3: Measurement Failed (Unreachable or Blocked)"}
+                ? "Brak pomiaru (strona nieosiągalna lub zablokowana)"
+                : "Measurement failed (site unreachable or blocked)"}
             </div>
             <p className="text-rose-800 leading-relaxed">{scanError}</p>
           </div>
@@ -97,12 +97,12 @@ export function AuditIntegrityBanner({
               <span>
                 {status === "live_lighthouse"
                   ? isPolish
-                    ? "Stan Pomiaru 1/3: Rzeczywisty Pomiar Google Lighthouse API + Inspekcja DOM"
-                    : "Measurement State 1/3: Verified Google Lighthouse API + Live DOM Inspection"
+                    ? "Pełny pomiar: Google Lighthouse + kontrola strony na żywo"
+                    : "Full measurement: Google Lighthouse + live page inspection"
                   : status === "partial_html"
                   ? isPolish
-                    ? "Stan Pomiaru 2/3: Częściowy Pomiar Rzeczywisty (Live HTML + HTTP — bez symulacji)"
-                    : "Measurement State 2/3: Partial Real Measurement (Live HTML + HTTP — zero simulation)"
+                    ? "Pomiar częściowy: kontrola strony i HTTP na żywo (bez symulacji)"
+                    : "Partial measurement: live page and HTTP checks (no simulation)"
                   : isPolish
                   ? "Brak pomiaru: zeskanuj stronę"
                   : "No measurement yet: scan a website"}

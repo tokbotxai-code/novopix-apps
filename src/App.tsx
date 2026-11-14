@@ -209,7 +209,7 @@ export default function App() {
             <div className="text-[11px] font-semibold text-[#bcd6e6]/80 px-3 mb-2">
               {viewMode === "client"
                 ? isPolish
-                  ? "Sekcje Raportu i Kosztorysu"
+                  ? "Raport i wycena"
                   : "Audit & Proposal Sections"
                 : isPolish
                 ? "Moduły Audytu i Sprzedaży"
