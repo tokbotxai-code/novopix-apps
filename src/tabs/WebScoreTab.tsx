@@ -24,6 +24,7 @@ export default function WebScoreTab({ app }: { app: AppState }) {
                       {isPolish ? "Wykres zmian kondycji witryny w czasie oraz lista ostatnich audytów zapisanych w pamięci." : "Historical score progression and locally persisted audit runs."}
                     </p>
                   </div>
+                  {(currentReport.demo?.scoreHistory || []).length >= 2 && (
                   <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
                     {(["7d", "30d", "90d"] as const).map((r) => (
                       <button
@@ -37,8 +38,14 @@ export default function WebScoreTab({ app }: { app: AppState }) {
                       </button>
                     ))}
                   </div>
+                  )}
                 </div>
 
+                {(currentReport.demo?.scoreHistory || []).length < 2 ? (
+                  <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50 text-sm text-slate-700" data-testid="trend-empty">
+                    {isPolish ? "Historia pojawi się po drugim skanie tej samej strony w tej sesji. Na razie jest jeden pomiar, więc nie rysujemy wykresu." : "History appears after a second scan of the same site in this session. There is only one measurement so far, so no chart is drawn."}
+                  </div>
+                ) : (
                 <div className="p-6 bg-slate-900 rounded-2xl text-white space-y-4">
                   <div className="flex justify-between items-center text-xs text-slate-400">
                     <span className="font-bold text-emerald-400 uppercase">{isPolish ? "Trend kondycji witryny" : "Site health trend"} ({trendRange})</span>
@@ -54,6 +61,7 @@ export default function WebScoreTab({ app }: { app: AppState }) {
                     ))}
                   </div>
                 </div>
+                )}
 
                 <div className="space-y-3">
                   <h3 className="text-sm font-bold text-slate-900">

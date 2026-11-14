@@ -16,7 +16,7 @@ export default function ChecklistTab({ app }: { app: AppState }) {
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
                 <div>
                   <h2 className="text-lg font-extrabold text-slate-900 font-heading">
-                    {isPolish ? "Interaktywna Lista Kontrolna Wdrożenia (Dopasowana do Domeny)" : "Dynamic Optimization Checklist"}
+                    {isPolish ? "Lista rzeczy do poprawy dla tej strony" : "To-do list for this site"}
                   </h2>
                   <p className="text-xs text-slate-500">
                     {isPolish ? "Lista rzeczy do poprawy na podstawie wyniku. Odznaczaj to, co zrobisz." : "A list of things to fix based on the result. Tick off what you have done."}
