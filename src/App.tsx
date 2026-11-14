@@ -30,6 +30,7 @@ const RoiCalculatorTab = lazy(() => import("./tabs/RoiCalculatorTab"));
 const MonitoringTab = lazy(() => import("./tabs/MonitoringTab"));
 const StatusTab = lazy(() => import("./tabs/StatusTab"));
 const StatsTab = lazy(() => import("./tabs/StatsTab"));
+const FullReviewTab = lazy(() => import("./tabs/FullReviewTab"));
 const CrmTab = lazy(() => import("./tabs/CrmTab"));
 const ReportsTab = lazy(() => import("./tabs/ReportsTab"));
 
@@ -753,6 +754,16 @@ export default function App() {
           {shownTab === "status" && viewMode === "agency" && (
             <Suspense fallback={<TabFallback isPolish={isPolish} />}>
               {agencyToken ? <StatusTab ctx={agencyCtx} /> : (
+                <button type="button" onClick={() => setIsPinModalOpen(true)} className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold cursor-pointer">
+                  {isPolish ? "Zaloguj kodem PIN" : "Log in with PIN"}
+                </button>
+              )}
+            </Suspense>
+          )}
+
+          {shownTab === "fullreview" && viewMode === "agency" && (
+            <Suspense fallback={<TabFallback isPolish={isPolish} />}>
+              {agencyToken ? <FullReviewTab ctx={agencyCtx} initialUrl={urlInput} /> : (
                 <button type="button" onClick={() => setIsPinModalOpen(true)} className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold cursor-pointer">
                   {isPolish ? "Zaloguj kodem PIN" : "Log in with PIN"}
                 </button>

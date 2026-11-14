@@ -36,6 +36,7 @@ import { checkContact } from "./server/contactCheck";
 import { snapshotFromScan } from "./server/scanSnapshot";
 import { rememberScan, recallScan } from "./server/scanCache";
 import { normalizeFormLang } from "./server/language";
+import { registerFullReview } from "./server/fullReview";
 import { registerPanelFunnel, registerPublicFunnel, stubClient } from "./server/funnel";
 import { buildReportPdf } from "./server/pdfReport";
 import { hostOf } from "./server/resultPage";
@@ -159,6 +160,7 @@ if (APP_MODE === "agency") {
   registerAgencyOfferRoutes(app);
   registerAgencyBulkRoutes(app);
   registerAgencyStatusRoutes(app);
+  registerFullReview(app);
   registerPanelFunnel(app, requireInternal);
   registerHitEndpoint(app, recordHit);
   registerStatsRoutes(app, requireInternal);
