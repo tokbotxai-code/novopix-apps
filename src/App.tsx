@@ -556,7 +556,7 @@ export default function App() {
             </form>
             {isPublicMode && (
               <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600" data-testid="trust-line">
-                <span>{isPolish ? "Za darmo, bez rejestracji, wynik po około 30 sekundach." : "Free, no sign-up, result in about 30 seconds."}</span>
+                <span>{isPolish ? "Za darmo, bez rejestracji, wynik po około 30 sekundach. Jeden test mierzy stronę na telefonie i na komputerze." : "Free, no sign-up, result in about 30 seconds. One test measures your site on phone and desktop."}</span>
                 <a href={`/example?lang=${isPolish ? "pl" : "en"}`} className="font-bold text-emerald-800 underline" data-testid="example-link">{isPolish ? "Zobacz przykład" : "See an example"}</a>
               </div>
             )}
