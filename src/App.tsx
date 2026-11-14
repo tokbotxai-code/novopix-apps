@@ -577,6 +577,23 @@ export default function App() {
               </div>
             )}
 
+            {(() => {
+              const name = urlInput.trim().toLowerCase();
+              if (!/^[a-z0-9][a-z0-9-]{1,40}$/.test(name)) return null;
+              const tlds = [".pl", ".co.uk", ".com", ".eu", ".uk"];
+              return (
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-600" data-testid="tld-hints">
+                  <span>{isPolish ? "Czy chodziło o:" : "Did you mean:"}</span>
+                  {tlds.map((t) => (
+                    <button key={t} type="button" onClick={() => setUrlInput(name + t)} className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white font-mono font-bold text-slate-800 hover:bg-slate-100 cursor-pointer">
+                      {name + t}
+                    </button>
+                  ))}
+                  <span className="text-slate-500">{isPolish ? "(wybierz sam, nie zgadujemy za Ciebie)" : "(you choose, we do not guess for you)"}</span>
+                </div>
+              );
+            })()}
+
             {!(isPublicMode && !hasScan) && (<>
             {/* Scrollable Workspace Tab Bar */}
             <div className="flex lg:hidden items-center gap-1.5 overflow-x-auto pt-3 mt-3 border-t border-slate-100 scrollbar-none">
