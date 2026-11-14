@@ -1284,7 +1284,7 @@ export function useAppState() {
       <div class="metric"><span>Cumulative Layout Shift (CLS — ${L("docelowo","target")} ≤ 0.1)</span><strong>${currentReport.coreWebVitals.cls.displayValue}</strong></div>
       <div class="metric"><span>${L("Znacznik Title","Title tag")} (${liveSeo.title.length} ${L("znaków","characters")})</span><strong>${liveSeo.title.text || L("Brak","None")}</strong></div>
       <div class="metric"><span>${L("Struktura nagłówków H1 / H2 / H3","Heading structure H1 / H2 / H3")}</span><strong>H1: ${liveSeo.headings.h1} · H2: ${liveSeo.headings.h2} · H3: ${liveSeo.headings.h3}</strong></div>
-      <div class="metric"><span>${L("Obrazy bez atrybutu ALT / Bezpieczeństwo HTTPS","Images without ALT / HTTPS")}</span><strong>${L("Brakujące ALT","Missing ALT")}: ${liveSeo.images.missingAlt} · HTTPS: ${liveSeo.https ? L("Tak","Yes") : L("Nie","No")}</strong></div>
+      <div class="metric"><span>${L("Obrazy bez atrybutu ALT / Bezpieczeństwo HTTPS","Images without ALT / HTTPS")}</span><strong>${L("Obrazy bez ALT w kodzie HTML","Images without ALT in HTML")}: ${liveSeo.images.missingAlt} · HTTPS: ${liveSeo.https ? L("Tak","Yes") : L("Nie","No")}</strong></div>
     </div>
 
     ${verdictHtml}

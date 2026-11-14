@@ -172,7 +172,7 @@ export default function SeoTab({ app }: { app: AppState }) {
                   </h3>
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between py-1.5 border-b border-slate-100">
-                      <span className="text-slate-500">{isPolish ? "Obrazy ogółem / Brak ALT" : "Total Images / Missing ALT"}</span>
+                      <span className="text-slate-500">{isPolish ? "Obrazy ogółem / bez ALT w kodzie HTML" : "Total images / without ALT in HTML"}</span>
                       <span className="font-mono font-bold tabular-nums">
                         {liveSeo.images.total} / <strong className={liveSeo.images.missingAlt > 0 ? "text-amber-600" : "text-emerald-600"}>{liveSeo.images.missingAlt} {isPolish ? "brak" : "missing"}</strong>
                       </span>
