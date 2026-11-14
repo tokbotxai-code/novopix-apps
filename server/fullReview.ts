@@ -165,7 +165,26 @@ async function run(job: Job, rawUrl: string) {
   };
 }
 
+// Samo „onet” w panelu: sprawdzamy popularne końcówki i bierzemy pierwszą, pod którą strona odpowiada (kolejność zależy od języka).
+async function guessDomain(name: string, lang: string): Promise<{ domain: string; tried: string[] } | null> {
+  const clean = String(name || "").toLowerCase().trim();
+  if (!/^[a-z0-9][a-z0-9-]{1,40}$/.test(clean)) return null;
+  const order = lang === "en" ? [".com", ".co.uk", ".uk", ".eu", ".pl"] : [".pl", ".com", ".eu", ".co.uk", ".uk"];
+  const rows = await Promise.all(order.map(async (t) => {
+    const r = await safeFetchHtml(`https://${clean}${t}/`, 5000, 30000).catch(() => null);
+    return { t, ok: !!r && r.status > 0 && r.status < 500 };
+  }));
+  const hit = rows.find((r) => r.ok);
+  return hit ? { domain: clean + hit.t, tried: order.map((t) => clean + t) } : null;
+}
+
 export function registerFullReview(app: Express) {
+  app.post("/api/agency/guess-domain", requireAgencyAuth, async (req, res) => {
+    const limit = checkRateLimit(`guess_${req.ip || "local"}`, 30, 10 * 60 * 1000);
+    if (!limit.allowed) return res.status(429).json({ error: "Zbyt wiele prób." });
+    const g = await guessDomain(req.body?.name, req.body?.lang === "en" ? "en" : "pl");
+    return res.json(g ? { found: true, domain: g.domain } : { found: false });
+  });
   app.post("/api/agency/full-review", requireAgencyAuth, (req, res) => {
     const limit = checkRateLimit(`fullreview_${req.ip || "local"}`, 6, 60 * 60 * 1000);
     if (!limit.allowed) return res.status(429).json({ error: "Zbyt wiele przeglądów. Spróbuj za chwilę." });

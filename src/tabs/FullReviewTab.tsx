@@ -5,7 +5,7 @@ import { api } from "./agencyApi";
 type Row = { url: string; status: number; ms: number; title: string; description: boolean; h1: number; imgNoAlt: number; noindex: boolean };
 
 // Pełny przegląd domeny (tylko agencja): podstrony, linki, subdomeny i poczta. Wynik tylko z publicznie dostępnych danych.
-export default function FullReviewTab({ ctx, initialUrl }: { ctx: AgencyCtx; initialUrl: string }) {
+export default function FullReviewTab({ ctx, initialUrl, autoRunKey }: { ctx: AgencyCtx; initialUrl: string; autoRunKey?: string }) {
   const pl = ctx.isPolish;
   const L = (a: string, b: string) => (pl ? a : b);
   const [url, setUrl] = useState(initialUrl || "");
@@ -27,12 +27,26 @@ export default function FullReviewTab({ ctx, initialUrl }: { ctx: AgencyCtx; ini
     }
     timer.current = window.setTimeout(() => poll(id), 2500);
   };
+  const lastAuto = useRef<string>("");
   const start = async () => {
     setErr(""); setRes(null); setBusy(true); setProgress("start");
     const r = await api<any>(ctx, "/api/agency/full-review", { method: "POST", body: { url } });
     if (!r.ok) { setBusy(false); setErr(r.data?.error || L("Nie udało się uruchomić przeglądu.", "Could not start the review.")); return; }
     poll(r.data.jobId);
   };
+  useEffect(() => {
+    if (!autoRunKey || !initialUrl || lastAuto.current === autoRunKey) return;
+    lastAuto.current = autoRunKey;
+    setUrl(initialUrl);
+    // przegląd domeny rusza sam po skanie (z adresem tego skanu)
+    (async () => {
+      setErr(""); setRes(null); setBusy(true); setProgress("start");
+      const r = await api<any>(ctx, "/api/agency/full-review", { method: "POST", body: { url: initialUrl } });
+      if (!r.ok) { setBusy(false); setErr(r.data?.error || L("Nie udało się uruchomić przeglądu.", "Could not start the review.")); return; }
+      poll(r.data.jobId);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRunKey, initialUrl]);
   const stepLabel: Record<string, string> = {
     start: L("Start", "Starting"),
     external: L("Sprawdzam linki zewnętrzne", "Checking external links"),

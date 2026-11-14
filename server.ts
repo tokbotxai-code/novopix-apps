@@ -251,7 +251,7 @@ function publicAdvisor(a: any): any {
 app.post("/api/ai-advisor", requireStaffOnly, async (req, res) => {
   // Ochrona klucza AI: limit na IP (8 / 10 min) i dzienny limit całkowity (300).
   const advisorIp = req.ip || "local";
-  const perIp = checkRateLimit(`advisor_${advisorIp}`, 8, 10 * 60 * 1000);
+  const perIp = checkRateLimit(`advisor_${advisorIp}`, 40, 10 * 60 * 1000);
   const total = checkRateLimit("advisor_total", 300, 24 * 60 * 60 * 1000);
   if (!perIp.allowed || !total.allowed) {
     const wait = !perIp.allowed ? perIp.retryAfterSec : total.retryAfterSec;

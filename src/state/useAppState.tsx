@@ -629,13 +629,27 @@ export function useAppState() {
   React.useEffect(() => {
     if (advisorLangRef.current === isPolish) return;
     advisorLangRef.current = isPolish;
-    if (aiAdvisor && currentReport?.finalUrl) handleRunAiAdvisor();
+    if (aiAdvisor && currentReport?.finalUrl) {
+      setAiAdvisor(null); // nie zostawiamy starego tekstu w drugim języku
+      handleRunAiAdvisor();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPolish]);
 
   // Run Full Hybrid Scan (3 Authentic Measurement States — Never fabricates scores)
   const handleRunScan = async (targetUrl?: string, preserveCustomScope = false) => {
-    const query = (targetUrl || urlInput).trim();
+    let query = (targetUrl || urlInput).trim();
+    // W panelu: samą nazwę (np. „onet”) uzupełniamy końcówką, pod którą strona naprawdę odpowiada.
+    if (!isPublicMode && agencyToken && /^[a-z0-9][a-z0-9-]{1,40}$/i.test(query)) {
+      try {
+        const g = await fetch("/api/agency/guess-domain", { method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ name: query, lang: isPolish ? "pl" : "en" }) }).then((r) => r.json());
+        if (g?.found && g.domain) {
+          showToast(isPolish ? `Dodano końcówkę: ${g.domain}` : `Added the ending: ${g.domain}`);
+          query = g.domain;
+          setUrlInput(g.domain);
+        }
+      } catch {}
+    }
     if (!query) {
       showToast(isPolish ? "Wpisz adres strony do zeskanowania." : "Enter a website address to scan.");
       return;
@@ -643,6 +657,11 @@ export function useAppState() {
     setIsScanning(true);
     setScanError(null);
 
+    // Szkoła lub urząd: rozpoznajemy po adresie (gov, edu, ac.uk, sch.uk, nhs, nazwy szkół i urzędów).
+    try {
+      const h = new URL(/^https?:\/\//i.test(query) ? query : `https://${query}`).hostname.toLowerCase();
+      if (/(\.|^)(gov|edu|ac|sch|nhs|police)(\.[a-z]{2,3})?$/.test(h) || /(^|\.)(gov\.pl|edu\.pl|gov\.uk|nhs\.uk)$/.test(h) || /(szkol|school|urzad|urząd|gmina|powiat|przedszkol|uniwersytet|university|college|council|miasto)/.test(h)) setAudience("institution");
+    } catch {}
     setDesktopScores(null);
     setDesktopPending(false);
     const scanSeq = ++scanSeqRef.current;
@@ -1417,6 +1436,7 @@ export function useAppState() {
 
   // All 14 Navigation Workspace Items (filtered when in Client Deal Room viewMode === "client")
   const allWorkspaceTabs = [
+    { id: "fullreport", label: isPolish ? "Pełny raport" : "Full report", short: isPolish ? "Pełny raport" : "Full report", icon: LayoutDashboard, agencyOnly: true },
     { id: "overview", label: isPolish ? "Przegląd audytu" : "Audit overview", short: isPolish ? "Przegląd" : "Overview", icon: LayoutDashboard },
     { id: "ai-advisor", label: isPolish ? "Doradca AI" : "AI Advisor", short: isPolish ? "Doradca AI" : "AI Advisor", icon: Bot, highlight: true },
     { id: "roi-calculator", label: isPolish ? "Kalkulator Wyceny & ROI" : "Pricing & ROI Calc", short: isPolish ? "Wycena & ROI" : "ROI & Quote", icon: Calculator, highlight: true },
@@ -1441,11 +1461,11 @@ export function useAppState() {
   const workspaceTabs = useMemo(
     () =>
       isPublicMode
-        ? allWorkspaceTabs.filter((t) => !t.agencyOnly && t.id !== "roi-calculator" && t.id !== "reports" && t.id !== "ai-advisor" && t.id !== "compare" && !(t.id === "webscore" && (currentReport.demo?.scoreHistory || []).length < 2))
+        ? allWorkspaceTabs.filter((t) => ["overview", "insights", "accessibility"].includes(t.id))
         : viewMode === "client"
         ? allWorkspaceTabs.filter((t) => !t.agencyOnly && t.id !== "roi-calculator")
         : agencyToken
-        ? allWorkspaceTabs
+        ? allWorkspaceTabs.filter((t) => !["overview", "ai-advisor", "seo", "performance", "insights", "compare", "webscore", "diagnostics", "accessibility", "checklist", "reports", "packages", "fullreview"].includes(t.id))
         : allWorkspaceTabs.filter((t) => t.id !== "roi-calculator"),
     [viewMode, isPolish, isPublicMode, agencyToken, currentReport.demo?.scoreHistory?.length]
   );
@@ -1543,7 +1563,8 @@ export function useAppState() {
   const hasRoiAssumptions = monthlyVisitors > 0 && currentConvRate > 0 && avgOrderValue > 0 && projectedLiftPct > 0;
   // Kosztorys & ROI: tylko zalogowana agencja (PIN); klient, tryb publiczny i adres/stan z parametrów go nie otworzą.
   const roiAllowed = !isPublicMode && viewMode === "agency" && !!agencyToken;
-  const effectiveTab = activeTab === "roi-calculator" && !roiAllowed ? "overview" : activeTab;
+  const effectiveTab0 = activeTab === "roi-calculator" && !roiAllowed ? "overview" : activeTab;
+  const effectiveTab = roiAllowed && effectiveTab0 === "overview" ? "fullreport" : effectiveTab0;
   const shownTab = !hasScan && !["roi-calculator", "monitoring", "crm", "bulk", "packages", "status", "stats", "fullreview"].includes(effectiveTab) ? "empty-state" : effectiveTab;
 
   const pageWeight = currentReport.pageWeight || { totalKb: 0, requestCount: 0, jsKb: 0, imagesKb: 0, cssKb: 0, fontsKb: 0, serverResponseMs: 0, thirdPartyBlockingMs: 0 };

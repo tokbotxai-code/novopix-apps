@@ -31,6 +31,7 @@ const MonitoringTab = lazy(() => import("./tabs/MonitoringTab"));
 const StatusTab = lazy(() => import("./tabs/StatusTab"));
 const StatsTab = lazy(() => import("./tabs/StatsTab"));
 const FullReviewTab = lazy(() => import("./tabs/FullReviewTab"));
+const FullReportPage = lazy(() => import("./tabs/FullReportPage"));
 const CrmTab = lazy(() => import("./tabs/CrmTab"));
 const ReportsTab = lazy(() => import("./tabs/ReportsTab"));
 
@@ -172,7 +173,7 @@ export default function App() {
                 <span className="novopix-wordmark-pix">Pix</span>
               </div>
               <div className="text-[11px] text-[#bcd6e6] font-medium mt-1">
-                {viewMode === "client" && !isPublicMode ? (isPolish ? "Pokój Ofertowy Klienta" : "Client Deal Room") : isPolish ? "Bezpłatny skaner strony NovoPix" : "NovoPix free website scanner"}
+                {viewMode === "client" && !isPublicMode ? (isPolish ? "Pokój Ofertowy Klienta" : "Client Deal Room") : isPublicMode ? (isPolish ? "Bezpłatny skaner strony NovoPix" : "NovoPix free website scanner") : isPolish ? "Panel NovoPix" : "NovoPix panel"}
               </div>
             </div>
           </div>
@@ -192,11 +193,11 @@ export default function App() {
               {(() => {
                 const gOf = (id: string) => (["monitoring", "status", "stats", "statistics"].includes(id) ? 2 : ["roi-calculator", "packages", "reports", "crm", "bulk"].includes(id) ? 1 : 0);
                 const SECONDARY = ["compare", "webscore", "diagnostics", "accessibility", "checklist", "bulk", "packages", "stats"];
-                const open = isPublicMode || isClientLinkLocked || moreOpen || SECONDARY.includes(activeTab);
+                const open = isPublicMode || isClientLinkLocked || workspaceTabs.length <= 10 || moreOpen || SECONDARY.includes(activeTab);
                 return [...workspaceTabs].sort((x, y) => gOf(x.id) - gOf(y.id)).filter((t) => open || !SECONDARY.includes(t.id));
               })().map((item, idx, arr) => {
                 const IconComponent = item.icon;
-                const isActive = activeTab === item.id;
+                const isActive = activeTab === item.id || (item.id === "fullreport" && activeTab === "overview");
                 const grp = (id: string) =>
                   ["monitoring", "status", "stats", "statistics"].includes(id) ? "ops"
                   : ["roi-calculator", "packages", "reports", "crm", "bulk"].includes(id) ? "sales" : "audit";
@@ -317,7 +318,7 @@ export default function App() {
               <NovoPixAnimatedMark sizeClass="w-5 h-5" />
             </div>
             <span className="text-sm font-heading font-extrabold tracking-tight text-slate-900 truncate">
-              NovoPix <span className="text-[#103247]"><span className="sm:hidden">{isPolish ? "Skaner strony" : "Scanner"}</span><span className="hidden sm:inline">{isPolish ? "Skaner strony NovoPix" : "Website Scanner"}</span></span>
+              NovoPix <span className="text-[#103247]"><span className="sm:hidden">{isPublicMode ? (isPolish ? "Skaner strony" : "Scanner") : isPolish ? "Panel" : "Panel"}</span><span className="hidden sm:inline">{isPublicMode ? (isPolish ? "Skaner strony NovoPix" : "Website Scanner") : isPolish ? "Panel" : "Panel"}</span></span>
             </span>
           </div>
 
@@ -355,6 +356,7 @@ export default function App() {
           <div className="flex items-center gap-2 shrink-0">
             {viewMode === "agency" && (
               <>
+                {!agencyToken && (
                 <button
                   type="button"
                   onClick={() => {
@@ -367,6 +369,7 @@ export default function App() {
                   <Lock className="w-3.5 h-3.5 text-amber-400" />
                   <span>{isPolish ? "🔒 Panel Agencji CRM (PIN)" : "🔒 Agency CRM (PIN)"}</span>
                 </button>
+                )}
               </>
             )}
             <button
@@ -487,32 +490,6 @@ export default function App() {
                 </button>
               </div>
 
-              {!isClientLinkLocked && (
-                <button
-                  onClick={() => {
-                    if (viewMode === "agency") {
-                      setViewMode("client");
-                    } else {
-                      handleRequestAgencyMode();
-                    }
-                  }}
-                  className="px-3 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-                >
-                  <Eye className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>{viewMode === "agency" ? (isPolish ? "Pokój Klienta" : "Client Deal Room") : (isPolish ? "Tryb Agencji" : "Agency Mode")}</span>
-                </button>
-              )}
-
-              {viewMode === "agency" && (
-                <button
-                  onClick={handleSaveAndCopyClientLink}
-                  className="px-3 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-                >
-                  <Share2 className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>{isPolish ? "Kopiuj Link Klienta 1:1" : "Copy 1:1 Client Link"}</span>
-                </button>
-              )}
-
               {hasScan && (<>
               <button
                 onClick={handleDownloadPdfReport}
@@ -584,7 +561,7 @@ export default function App() {
 
             {(() => {
               const name = urlInput.trim().toLowerCase();
-              if (!/^[a-z0-9][a-z0-9-]{1,40}$/.test(name)) return null;
+              if (!isPublicMode || !/^[a-z0-9][a-z0-9-]{1,40}$/.test(name)) return null;
               const tlds = [".pl", ".co.uk", ".com", ".eu", ".uk"];
               return (
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-600" data-testid="tld-hints">
@@ -604,7 +581,7 @@ export default function App() {
             <div className="flex lg:hidden items-center gap-1.5 overflow-x-auto pt-3 mt-3 border-t border-slate-100 scrollbar-none">
               {workspaceTabs.map((tab) => {
                 const IconComp = tab.icon;
-                const active = activeTab === tab.id;
+                const active = activeTab === tab.id || (tab.id === "fullreport" && activeTab === "overview");
                 return (
                   <button
                     key={tab.id}
@@ -690,6 +667,11 @@ export default function App() {
           {/* ================================================================= */}
           {/* TAB 1: OVERVIEW (AURA EXECUTIVE OVERVIEW)                         */}
           {/* ================================================================= */}
+          {shownTab === "fullreport" && viewMode === "agency" && (
+            <Suspense fallback={<TabFallback isPolish={isPolish} />}>
+              <FullReportPage app={app} ctx={agencyCtx} />
+            </Suspense>
+          )}
           {shownTab === "overview" && (
             <Suspense fallback={<TabFallback isPolish={isPolish} />}>
               <OverviewTab app={app} />
@@ -884,7 +866,7 @@ export default function App() {
           <div className="flex items-center gap-2">
             <span className="font-heading font-extrabold text-[#0b2230] tracking-wider">NOVOPIX STUDIO</span>
             <span>·</span>
-            <span>{isPolish ? "Bezpłatny skaner strony NovoPix" : "NovoPix free website scanner"}</span>
+            <span>{isPublicMode ? (isPolish ? "Bezpłatny skaner strony NovoPix" : "NovoPix free website scanner") : isPolish ? "Panel NovoPix" : "NovoPix panel"}</span>
           </div>
           <div className="flex flex-wrap items-center gap-4 text-xs">
             <button onClick={() => setIsHowItWorksOpen(true)} className="hover:text-slate-900 transition-colors cursor-pointer">
