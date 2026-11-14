@@ -1240,7 +1240,7 @@ export function useAppState() {
 <html lang="${isPolish ? "pl" : "en"}">
 <head>
   <meta charset="UTF-8">
-  <title>${L("Ekspertyza Techniczna i Audyt SEO","Technical & SEO audit")} — ${domain}</title>
+  <title>${L("Raport techniczny i audyt SEO","Technical & SEO audit")} — ${domain}</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 32px; line-height: 1.5; }
     .container { max-width: 920px; margin: 0 auto; }
@@ -1260,7 +1260,7 @@ export function useAppState() {
   <div class="container">
     <div class="header">
       <div>
-        <div style="font-size:11px; color:#34d399; font-weight:bold; letter-spacing:1px;">${L("EKSPERTYZA TECHNICZNA & AUDYT STRONY","TECHNICAL & WEBSITE AUDIT")}</div>
+        <div style="font-size:11px; color:#34d399; font-weight:bold; letter-spacing:1px;">${L("RAPORT TECHNICZNY I AUDYT STRONY","TECHNICAL & WEBSITE AUDIT")}</div>
         <h1>${currentReport.scannedUrl}</h1>
         <div style="font-size:13px; color:#cbd5e1;">${isFull ? `${L("Przygotowano dla","Prepared for")}: <strong>${(clientName === "Zarząd Firmy" && !isPolish ? "Company management" : clientName) || domain}</strong> · ` : ""}${L("Audytor","Auditor")}: <strong>${auditorName}</strong></div>
       </div>
