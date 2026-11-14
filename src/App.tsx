@@ -187,14 +187,17 @@ export default function App() {
                 : "Audit & Sales Workspace"}
             </div>
             <nav className={`space-y-0.5 ${isPublicMode && !hasScan ? "hidden" : ""}`}>
-              {workspaceTabs.map((item, idx) => {
+              {(() => {
+                const gOf = (id: string) => (["monitoring", "status", "stats", "statistics"].includes(id) ? 2 : ["roi-calculator", "packages", "reports", "crm", "bulk"].includes(id) ? 1 : 0);
+                return [...workspaceTabs].sort((x, y) => gOf(x.id) - gOf(y.id));
+              })().map((item, idx, arr) => {
                 const IconComponent = item.icon;
                 const isActive = activeTab === item.id;
                 const grp = (id: string) =>
                   ["monitoring", "status", "stats", "statistics"].includes(id) ? "ops"
                   : ["roi-calculator", "packages", "reports", "crm", "bulk"].includes(id) ? "sales" : "audit";
                 const g = grp(item.id);
-                const showGroup = idx === 0 || grp(workspaceTabs[idx - 1].id) !== g;
+                const showGroup = idx === 0 || grp(arr[idx - 1].id) !== g;
                 const groupLabel = g === "ops" ? (isPolish ? "Nadzór" : "Monitoring") : g === "sales" ? (isPolish ? "Oferta i klienci" : "Offers & clients") : (isPolish ? "Audyt strony" : "Site audit");
                 return (
                   <React.Fragment key={item.id}>
