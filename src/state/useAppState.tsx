@@ -647,13 +647,20 @@ export function useAppState() {
     setDesktopScores(null);
     try {
       // Jeden test = dwa pomiary naraz: telefon (główny raport) i komputer (porównanie wyników).
-      const desktopP = fetch("/api/scan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: query, strategy: "desktop" }),
-      })
-        .then((r) => r.json().catch(() => null))
-        .catch(() => null);
+      const scanDesktop = () =>
+        fetch("/api/scan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: query, strategy: "desktop" }),
+        })
+          .then((r) => r.json().catch(() => null))
+          .catch(() => null);
+      // Google czasem odpowiada błędem przy dwóch pomiarach naraz: jedno ponowienie po kilku sekundach.
+      const desktopP = scanDesktop().then(async (d: any) => {
+        if (d && d.measurementStatus === "live_lighthouse") return d;
+        await new Promise((r) => setTimeout(r, 5000));
+        return scanDesktop();
+      });
       const [scanRes, freshSeo] = await Promise.all([
         fetch("/api/scan", {
           method: "POST",
