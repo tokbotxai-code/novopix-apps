@@ -195,7 +195,7 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
 
       // Extract real opportunities from Lighthouse
       const rawOpps = allAuditValues
-        .filter((a: any) => a && (a.details?.type === "opportunity" || (typeof a.score === "number" && a.score < 0.9 && a.title)))
+        .filter((a: any) => a && (typeof a.score === "number" && a.score < 0.9 && a.title))
         .slice(0, 10)
         .map((a: any, idx: number) => ({
           id: a.id || `opp-${idx}`,
@@ -223,7 +223,7 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
       const inpDisplay = cruxInpMs
         ? `${cruxInpMs} ms (CrUX)`
         : labMaxFidMs
-        ? `${labMaxFidMs} ms (Lab FID)`
+        ? `${labMaxFidMs} ms (${T("pomiar laboratoryjny", "lab measurement")})`
         : T("Brak danych CrUX", "No CrUX data");
 
       const htmlLang = await detectHtmlLang(lighthouse.finalUrl || targetUrl);

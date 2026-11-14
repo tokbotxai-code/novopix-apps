@@ -594,6 +594,7 @@ export function useAppState() {
 
   // Run AI Growth Advisor
   const handleRunAiAdvisor = async (reportToAnalyze?: AuditReport, seoToAnalyze?: LiveSeoInspection) => {
+    if (isPublicMode) return; // Doradca AI jest tylko w panelu
     const rep = reportToAnalyze || currentReport;
     const seo = seoToAnalyze || liveSeo;
     setIsAiLoading(true);
@@ -660,7 +661,7 @@ export function useAppState() {
     // Szkoła lub urząd: rozpoznajemy po adresie (gov, edu, ac.uk, sch.uk, nhs, nazwy szkół i urzędów).
     try {
       const h = new URL(/^https?:\/\//i.test(query) ? query : `https://${query}`).hostname.toLowerCase();
-      if (/(\.|^)(gov|edu|ac|sch|nhs|police)(\.[a-z]{2,3})?$/.test(h) || /(^|\.)(gov\.pl|edu\.pl|gov\.uk|nhs\.uk)$/.test(h) || /(szkol|school|urzad|urząd|gmina|powiat|przedszkol|uniwersytet|university|college|council|miasto)/.test(h)) setAudience("institution");
+      if (/(\.|^)(gov|edu|ac|sch|nhs|police)(\.[a-z]{2,3})?$/.test(h) || /(^|\.)(gov\.pl|edu\.pl|gov\.uk|nhs\.uk)$/.test(h) || /(szkol|school|urzad|urząd|gmina|powiat|przedszkol|uniwersytet|university|college|council|miasto)/.test(h) || /^(um|bip|ug|ump|starostwo)\./.test(h) || /^(www\.)?(krakow|warszawa|wroclaw|gdansk|gdynia|poznan|lodz|katowice|lublin|szczecin|bydgoszcz|bialystok|rzeszow|kielce|olsztyn|opole|torun|sopot|zakopane)\.pl$/.test(h)) setAudience("institution");
     } catch {}
     setDesktopScores(null);
     setDesktopPending(false);
