@@ -192,7 +192,7 @@ export default function App() {
               {(() => {
                 const gOf = (id: string) => (["monitoring", "status", "stats", "statistics"].includes(id) ? 2 : ["roi-calculator", "packages", "reports", "crm", "bulk"].includes(id) ? 1 : 0);
                 const SECONDARY = ["compare", "webscore", "diagnostics", "accessibility", "checklist", "bulk", "packages", "stats"];
-                const open = moreOpen || SECONDARY.includes(activeTab);
+                const open = isPublicMode || isClientLinkLocked || moreOpen || SECONDARY.includes(activeTab);
                 return [...workspaceTabs].sort((x, y) => gOf(x.id) - gOf(y.id)).filter((t) => open || !SECONDARY.includes(t.id));
               })().map((item, idx, arr) => {
                 const IconComponent = item.icon;
