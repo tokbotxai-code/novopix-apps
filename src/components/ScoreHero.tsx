@@ -80,7 +80,7 @@ export function ScoreHero({ report, isPolish }: { report: AuditReport; isPolish:
           <span className={`font-bold ${delta > 0 ? "text-emerald-700" : delta < 0 ? "text-rose-700" : "text-slate-500"}`}>
             {delta > 0 ? `+${delta}` : delta}
           </span>
-          <span className="text-slate-500">{L("(poprzedni skan tej strony w tej sesji)", "(previous scan of this site in this session)")}</span>
+          <span className="text-slate-500">{L("(poprzedni skan tej strony w tej sesji; wynik Lighthouse waha się o kilka punktów między pomiarami, więc małe różnice to nie zasługa zmian)", "(previous scan of this site in this session; Lighthouse results vary by a few points between runs, so small differences do not mean something changed)")}</span>
         </div>
       )}
     </div>

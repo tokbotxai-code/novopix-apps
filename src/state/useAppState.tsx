@@ -662,11 +662,21 @@ export function useAppState() {
         return scanDesktop();
       });
       const [scanRes, freshSeo] = await Promise.all([
-        fetch("/api/scan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: query, strategy: "mobile" }),
-        }),
+        (async () => {
+          const call = () =>
+            fetch("/api/scan", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ url: query, strategy: "mobile" }),
+            });
+          let r = await call();
+          // Serwer przebudowuje się lub jest przeciążony: jedno ponowienie po kilku sekundach zamiast pustego błędu.
+          if (r.status === 502 || r.status === 503 || r.status === 504) {
+            await new Promise((x) => setTimeout(x, 6000));
+            r = await call();
+          }
+          return r;
+        })(),
         handleRunSeoCheck(query),
       ]);
       desktopP.then((d: any) => {
@@ -1423,13 +1433,13 @@ export function useAppState() {
   const workspaceTabs = useMemo(
     () =>
       isPublicMode
-        ? allWorkspaceTabs.filter((t) => !t.agencyOnly && t.id !== "roi-calculator" && t.id !== "reports" && t.id !== "ai-advisor")
+        ? allWorkspaceTabs.filter((t) => !t.agencyOnly && t.id !== "roi-calculator" && t.id !== "reports" && t.id !== "ai-advisor" && t.id !== "compare" && !(t.id === "webscore" && (currentReport.demo?.scoreHistory || []).length < 2))
         : viewMode === "client"
         ? allWorkspaceTabs.filter((t) => !t.agencyOnly && t.id !== "roi-calculator")
         : agencyToken
         ? allWorkspaceTabs
         : allWorkspaceTabs.filter((t) => t.id !== "roi-calculator"),
-    [viewMode, isPolish, isPublicMode, agencyToken]
+    [viewMode, isPolish, isPublicMode, agencyToken, currentReport.demo?.scoreHistory?.length]
   );
 
   // Filtered Issues & Checklist

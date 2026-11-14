@@ -19,7 +19,7 @@ export default function InsightsTab({ app }: { app: AppState }) {
               <div className="bg-white rounded-2xl p-6 border border-slate-200 space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h2 className="text-base font-extrabold text-slate-900 font-heading">
-                    {isPolish ? "Rzeczywista Waga Zasobów Strony i Obciążenie Sieciowe (Lighthouse)" : "Live Resource Page Weight & Network Payload"}
+                    {isPolish ? "Waga strony i transfer danych (Lighthouse)" : "Page weight and data transfer (Lighthouse)"}
                   </h2>
                   <span className="text-xs font-mono text-slate-500 tabular-nums">
                     {isPolish ? "Liczba żądań HTTP:" : "HTTP Requests:"} {pageWeight.requestCount} · TTFB: {pageWeight.serverResponseMs} ms
@@ -48,7 +48,7 @@ export default function InsightsTab({ app }: { app: AppState }) {
                     <div className="text-lg font-mono font-extrabold text-slate-900 mt-0.5 tabular-nums">{pageWeight.fontsKb} KB</div>
                   </div>
                   <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                    <div className="text-[11px] text-slate-500">{isPolish ? "Blokady 3rd-Party" : "3rd-Party Block"}</div>
+                    <div className="text-[11px] text-slate-500">{isPolish ? "Skrypty firm trzecich" : "Third-party scripts"}</div>
                     <div className="text-lg font-mono font-extrabold text-rose-700 mt-0.5 tabular-nums">{pageWeight.thirdPartyBlockingMs} ms</div>
                   </div>
                 </div>
@@ -59,10 +59,10 @@ export default function InsightsTab({ app }: { app: AppState }) {
                 <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
                   <div>
                     <h2 className="text-lg font-extrabold text-slate-900 font-heading">
-                      {isPolish ? "Automatyczne Wykrywanie Problemów i Wycena Czasowa" : "Automated Issue Detection & Time Breakdown"}
+                      {isPolish ? "Wykryte problemy" : "Detected issues"}
                     </h2>
                     <p className="text-xs text-slate-500">
-                      {isPolish ? "Każdy problem zawiera priorytet, wpływ na konwersję oraz szacowany czas pracy inżyniera." : "Every issue includes priority, conversion impact, and estimated engineering hours."}
+                      {isPolish ? "Każdy problem ma priorytet i krótkie wyjaśnienie, co oznacza." : "Every issue has a priority and a short explanation of what it means."}
                     </p>
                   </div>
 
@@ -94,19 +94,19 @@ export default function InsightsTab({ app }: { app: AppState }) {
                         <span className="text-sm font-bold text-slate-900">{issue.title}</span>
                         <div className="flex items-center gap-3 text-xs font-mono tabular-nums">
                           <span className={issue.priority === "high" ? "text-rose-700 font-bold uppercase" : "text-amber-700 font-bold uppercase"}>
-                            {issue.priority}
+                            {issue.priority === "high" ? (isPolish ? "wysoki" : "high") : issue.priority === "medium" ? (isPolish ? "średni" : "medium") : isPolish ? "niski" : "low"}
                           </span>
 {app.roiAllowed && (<>
                           <span>·</span>
                           <span className="font-bold text-slate-800">
-                            {issue.estimatedHours ?? 2}h ({Math.round((issue.estimatedHours ?? 2) * hourlyRate)} {currency})
+                            ~{issue.estimatedHours ?? 2}h ({Math.round((issue.estimatedHours ?? 2) * hourlyRate)} {currency}), {isPolish ? "orientacyjnie, ustalamy po rozmowie" : "estimate, confirmed after a call"}
                           </span>
 </>)}
                         </div>
                       </div>
                       <p className="text-xs text-slate-600">{issue.description}</p>
                       <div className="text-xs text-emerald-800 font-medium">
-                        <strong>{isPolish ? "Wpływ na biznes:" : "Business Impact:"}</strong> {issue.businessImpact || "Poprawa szybkości ładowania i wyższa konwersja zapytań."}
+                        <strong>{isPolish ? "Co to oznacza:" : "What it means:"}</strong> {issue.businessImpact || "Poprawa szybkości ładowania i wyższa konwersja zapytań."}
                       </div>
                       {viewMode === "agency" && (
                         <div className="text-xs font-mono text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200">
