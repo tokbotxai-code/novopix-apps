@@ -12,7 +12,7 @@ const jobs = new Map<string, Job>();
 
 const MAX_PAGES = 40;
 const DEADLINE_MS = 150000;
-const MAX_JOBS = 2;
+const MAX_JOBS = 3;
 const dnsT = <T,>(p: Promise<T>, ms = 4000): Promise<T> => Promise.race([p, new Promise<T>((_, rej) => setTimeout(() => rej(new Error("dns timeout")), ms))]);
 const SUBS = ["www", "mail", "webmail", "smtp", "imap", "ftp", "panel", "app", "api", "blog", "shop", "store", "dev", "staging", "test", "admin", "cdn", "static", "docs", "status", "scanner", "autodiscover", "vpn", "intranet", "portal"];
 
@@ -186,12 +186,12 @@ export function registerFullReview(app: Express) {
     return res.json(g ? { found: true, domain: g.domain } : { found: false });
   });
   app.post("/api/agency/full-review", requireAgencyAuth, (req, res) => {
-    const limit = checkRateLimit(`fullreview_${req.ip || "local"}`, 6, 60 * 60 * 1000);
+    const limit = checkRateLimit(`fullreview_${req.ip || "local"}`, 30, 60 * 60 * 1000);
     if (!limit.allowed) return res.status(429).json({ error: "Zbyt wiele przeglądów. Spróbuj za chwilę." });
     const v = validateSafePublicUrl(req.body?.url);
     if (!v.valid) return res.status(400).json({ error: v.error || "Nieprawidłowy adres." });
     for (const [k, j] of jobs) if (Date.now() - j.startedAt > 60 * 60 * 1000) jobs.delete(k);
-    if ([...jobs.values()].filter((j) => !j.done).length >= MAX_JOBS) return res.status(429).json({ error: "Trwają już dwa przeglądy. Poczekaj, aż się skończą." });
+    if ([...jobs.values()].filter((j) => !j.done).length >= MAX_JOBS) return res.status(429).json({ error: "Trwają już trzy przeglądy. Poczekaj, aż się skończą." });
     const job: Job = { id: crypto.randomBytes(8).toString("hex"), startedAt: Date.now(), done: false, progress: "start" };
     jobs.set(job.id, job);
     run(job, String(req.body.url))
