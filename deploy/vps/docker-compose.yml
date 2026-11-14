@@ -1,0 +1,78 @@
+# NovoPix VPS: po jednym kontenerze na aplikację, Caddy jako reverse proxy z HTTPS.
+# Użycie: cd /opt/novopix && docker compose --env-file .env up -d --build
+name: novopix
+
+x-app: &app
+  restart: unless-stopped
+  mem_limit: 512m
+  init: true
+  networks: [web]
+  healthcheck:
+    test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+    interval: 30s
+    timeout: 5s
+    retries: 3
+    start_period: 40s
+
+services:
+  scanner:
+    <<: *app
+    build: { context: ../.., dockerfile: Dockerfile }
+    environment:
+      NODE_ENV: production
+      APP_MODE: public
+      AGENCY_API_URL: http://panel:3000   # wewnętrznie, po sieci Docker (bez DNS i HTTPS)
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
+      PAGESPEED_API_KEY: ${PAGESPEED_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+
+  panel:
+    <<: *app
+    build: { context: ../.., dockerfile: Dockerfile }
+    environment:
+      NODE_ENV: production
+      APP_MODE: agency
+      AGENCY_PIN: ${AGENCY_PIN}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
+      PAGESPEED_API_KEY: ${PAGESPEED_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      # Poczta wychodząca panelu (opcjonalna; bez nich panel pokazuje "SMTP nie skonfigurowane")
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      ALERT_EMAIL: ${ALERT_EMAIL:-}
+    volumes:
+      - panel-data:/app/data   # baza JSON + kopie; to jest dysk trwały
+
+  fridgebite:
+    <<: *app
+    build: { context: ../../fridgebite, dockerfile: Dockerfile }
+    environment:
+      NODE_ENV: production
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      # Limity AI: AI_PER_MINUTE=20, AI_DAILY_PER_IP=80, AI_DAILY_TOTAL=600 (domyslne w aplikacji)
+
+  # Dodawane w kolejnych krokach:
+  #   pantrypal   -> statyczne pliki z katalogu pantrypal-site (serwuje Caddy)
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    networks: [web]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+      - ../../pantrypal-site:/srv/pantrypal:ro
+    depends_on: [scanner, panel, fridgebite]
+
+networks:
+  web:
+
+volumes:
+  panel-data:
+  caddy-data:
+  caddy-config:

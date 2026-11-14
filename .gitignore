@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+.env.local
+data/
+*.log
+
+# Gotowa aplikacja FridgeBite (bez kodu zrodlowego)
+!fridgebite/dist
+!fridgebite/dist/**

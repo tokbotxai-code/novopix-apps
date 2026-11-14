@@ -1,0 +1,6 @@
+{
+  "name": "NovoPix Website Growth Scanner",
+  "description": "Professional website performance, SEO, accessibility, and Core Web Vitals audit scanner by NovoPix Digital Studio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
