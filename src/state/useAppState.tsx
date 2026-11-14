@@ -685,6 +685,11 @@ export function useAppState() {
 
       if (!scanRes.ok || data.measurementStatus === "failed") {
         const errMsg =
+          (scanRes.status === 502 || scanRes.status === 503 || scanRes.status === 504
+            ? isPolish
+              ? "Serwis jest chwilowo niedostępny (np. trwa aktualizacja). Spróbuj ponownie za 2–3 minuty."
+              : "The service is briefly unavailable (for example an update is running). Please try again in 2–3 minutes."
+            : "") ||
           data.error ||
           (isPolish
             ? `Nie udało się wykonać pomiaru dla "${query}". Sprawdź poprawność domeny.`

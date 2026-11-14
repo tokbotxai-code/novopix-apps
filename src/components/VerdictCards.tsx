@@ -71,6 +71,13 @@ export function VerdictCards({
             ))}
           </div>
         )}
+        <a
+          href={`mailto:contact@novopix.uk?subject=${encodeURIComponent(L("Bezpłatna rozmowa o wyniku skanu", "Free call about my scan result"))}`}
+          className="mt-3 inline-block px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm"
+          data-testid="book-call"
+        >
+          {L("Umów bezpłatną rozmowę", "Book a free call")}
+        </a>
         <p className="text-xs text-slate-500 mt-3">
           {L("Rekomendacja wynika z jawnych reguł i nie jest obietnicą wyniku. Kontrole dostępności są automatyczne: to nie certyfikat ani ocena zgodności z WCAG.", "The recommendation comes from open rules and is not a promise of results. Accessibility checks are automated: this is not a certificate or a WCAG conformance assessment.")}
           {audience === "institution" ? ` ${L("To nie jest opinia prawna.", "This is not legal advice.")}` : ""}

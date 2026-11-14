@@ -158,7 +158,9 @@ export function buildReportPdf(client: AgencyClient, snap0: ScanSnapshot, lang: 
     snap.issues.slice(0, 12).forEach((it, i) => {
       if (doc.y > doc.page.height - 120) doc.addPage();
       doc.font("B").fontSize(10).fillColor("#0e2733").text(`${i + 1}. ${it.title} (${t.prio[it.priority] || it.priority})`, 50, doc.y, { width: W });
-      if (it.description) doc.font("R").fontSize(9).fillColor("#444").text(it.description, 62, doc.y + 1, { width: W - 12 });
+      const looksEn = (x: string) => (x.match(/\b(the|and|can|your|of|to|that|this|for|with|are|is)\b/gi) || []).length >= 3;
+      const desc = lang === "pl" && it.description && looksEn(it.description) ? "Szczegóły i sposób naprawy znajdziesz w dokumentacji Google Lighthouse (nazwa audytu podana w oryginale)." : it.description;
+      if (desc) doc.font("R").fontSize(9).fillColor("#444").text(desc, 62, doc.y + 1, { width: W - 12 });
       doc.moveDown(0.5);
     });
 
