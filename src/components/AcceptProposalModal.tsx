@@ -108,8 +108,8 @@ export function AcceptProposalModal({
               </h3>
               <p className="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
                 {isPolish
-                  ? "Nasz główny inżynier otrzymał potwierdzenie zakresu prac i skontaktuje się z Państwem w celu rozpoczęcia wdrożenia."
-                  : "Our lead engineer has received your confirmation and will contact you shortly to begin implementation."}
+                  ? "Otrzymaliśmy Twoją akceptację. Zakres i cenę potwierdzimy z Tobą e-mailem, zanim zaczniemy pracę."
+                  : "We received your acceptance. We will confirm scope and price with you by email before any work starts."}
               </p>
               <button
                 onClick={() => {

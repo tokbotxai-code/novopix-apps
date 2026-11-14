@@ -145,7 +145,7 @@ export default function PublicFunnel({ app }: { app: AppState }) {
     <section className="bg-white rounded-2xl p-6 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6" data-testid="fix-cta">
       <div>
         <h3 className="text-base font-extrabold text-slate-900">{pl ? "Chcesz, żebyśmy to naprawili?" : "Want us to fix it?"}</h3>
-        {offer.text && <p className="text-sm text-slate-700 mt-1" data-testid="fix-cta-offer">{pl ? "Pakiety od …" : "Packages from …"} <strong>{offer.text}</strong></p>}
+        {offer.text && <p className="text-sm text-slate-700 mt-1" data-testid="fix-cta-offer">{pl ? "Przykładowy pakiet:" : "Example package:"} <strong>{offer.text}</strong></p>}
         <p className="text-[11px] text-slate-600 mt-1">{pl ? "Ceny netto, zakres potwierdzamy na piśmie przed rozpoczęciem pracy." : "Prices exclude VAT; we confirm the scope in writing before any work begins."}</p>
       </div>
       <a href={pricingUrl} target="_blank" rel="noopener" className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-sm font-bold text-center whitespace-nowrap">{offer.cta}</a>

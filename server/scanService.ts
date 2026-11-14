@@ -34,6 +34,36 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
     i18n[pl] = en;
     return pl;
   };
+
+  const LH_PL: Record<string, string> = {
+    "Largest Contentful Paint element": "Element największego wyrenderowania (LCP)",
+    "LCP breakdown": "Podział czasu LCP",
+    "Legacy JavaScript": "Przestarzały JavaScript",
+    "Render blocking requests": "Zasoby blokujące renderowanie",
+    "Reduce unused JavaScript": "Zmniejsz nieużywany JavaScript",
+    "Reduce unused CSS": "Zmniejsz nieużywany CSS",
+    "Minify JavaScript": "Zminimalizuj JavaScript",
+    "Minify CSS": "Zminimalizuj CSS",
+    "Serve images in next-gen formats": "Używaj nowoczesnych formatów obrazów",
+    "Properly size images": "Dopasuj rozmiar obrazów",
+    "Efficiently encode images": "Skompresuj obrazy",
+    "Enable text compression": "Włącz kompresję tekstu",
+    "Eliminate render-blocking resources": "Usuń zasoby blokujące renderowanie",
+    "Avoid enormous network payloads": "Unikaj bardzo dużych transferów",
+    "Reduce initial server response time": "Skróć czas odpowiedzi serwera",
+    "Preconnect to required origins": "Użyj preconnect dla wymaganych domen",
+    "Image elements do not have explicit width and height": "Obrazy bez podanej szerokości i wysokości",
+    "Avoid long main-thread tasks": "Unikaj długich zadań wątku głównego",
+    "Forced reflow": "Wymuszone przeliczenie układu",
+    "Network dependency tree": "Drzewo zależności sieciowych",
+    "Improve image delivery": "Popraw dostarczanie obrazów",
+    "Use efficient cache lifetimes": "Ustaw sensowny czas cache",
+  };
+  const lhTitle = (t: string) => { const pl = LH_PL[t]; return pl ? T(pl, t) : t; };
+  const lhValue = (v: string) => {
+    const m = v.match(/^Est savings of ([\d.,]+\s?(?:KiB|MiB|ms|s))$/i);
+    return m ? T(`Szac. oszczędność: ${m[1]}`, v) : v;
+  };
   const res: any = {
     status(n: number) {
       code = n;
@@ -150,16 +180,16 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
         .slice(0, 10)
         .map((a: any, idx: number) => ({
           id: a.id || `opp-${idx}`,
-          title: a.title,
+          title: lhTitle(a.title),
           description: String(a.description || "").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1"),
-          displayValue: a.displayValue || "",
+          displayValue: lhValue(a.displayValue || ""),
           priority: (a.score ?? 1) < 0.5 ? ("high" as const) : ("medium" as const),
           category: "performance" as const,
           savingsMs: Math.round(a.details?.overallSavingsMs || 0),
           estimatedHours: (a.score ?? 1) < 0.5 ? 3.0 : 1.5,
           businessImpact:
             (a.score ?? 1) < 0.5
-              ? T("Krytyczne wąskie gardło wydajności wykryte w teście Google Lighthouse", "Critical performance bottleneck found by Google Lighthouse")
+              ? T("Ten element najbardziej spowalnia stronę według testu Google Lighthouse", "This item slows the page down the most according to Google Lighthouse")
               : T("Element wymagający optymalizacji w celu poprawy wskaźników Core Web Vitals", "Item that needs optimisation to improve Core Web Vitals"),
           developerFix:
             T("Optymalizacja zasobu zgodnie z wytycznymi raportu Google Lighthouse (kompresja, priorytetyzacja lub redukcja blokowania wątku głównego).", "Optimise the resource following the Google Lighthouse guidance (compression, prioritisation or reducing main-thread blocking)."),

@@ -213,8 +213,8 @@ export default function OverviewTab({ app }: { app: AppState }) {
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                       <h2 className="text-base font-extrabold text-slate-900 font-heading">
                         {isPolish
-                          ? "Wpływ Błędów Technicznych na Sprzedaż i Pozyskiwanie Klientów"
-                          : "Business & Conversion Impact Diagnosis"}
+                          ? "Co wyniki znaczą dla Twojej strony"
+                          : "What the results mean for your site"}
                       </h2>
                       {hasRoiAssumptions && (
                         <span className="text-xs font-mono font-semibold text-emerald-700">
@@ -224,8 +224,8 @@ export default function OverviewTab({ app }: { app: AppState }) {
                     </div>
                     <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                       {isPolish
-                        ? `Przeskanowana witryna (${currentReport.finalUrl}) uzyskuje wynik ${currentReport.overallScore}/100. Czas ładowania głównej treści (LCP: ${currentReport.coreWebVitals.lcp.displayValue}) oraz wykryte blokady renderowania powodują, że część klientów mobilnych opuszcza stronę przed wysłaniem zapytania. Poniżej znajdują się 3 kluczowe parametry finansowe wyliczone dla tej domeny:`
-                        : `The audited website (${currentReport.finalUrl}) scores ${currentReport.overallScore}/100. Current Largest Contentful Paint (${currentReport.coreWebVitals.lcp.displayValue}) and render-blocking scripts cause mobile visitor drop-offs before form submission:`}
+                        ? `Przeskanowana witryna (${currentReport.finalUrl}) uzyskuje wynik ${currentReport.overallScore}/100. Czas ładowania głównej treści (LCP: ${currentReport.coreWebVitals.lcp.displayValue}) oraz wykryte blokady renderowania wpływają na szybkość ładowania strony. Poniżej wyniki pomiaru i scenariusze oparte na Twoich założeniach (to nie jest prognoza):`
+                        : `The audited website (${currentReport.finalUrl}) scores ${currentReport.overallScore}/100. Current Largest Contentful Paint (${currentReport.coreWebVitals.lcp.displayValue}) and render-blocking scripts affect page loading speed. Below are the measured results and scenarios based on your inputs (not a forecast):`}
                     </p>
                   </div>
 
@@ -429,7 +429,7 @@ export default function OverviewTab({ app }: { app: AppState }) {
                       </div>
                       <p className="text-xs text-slate-600">{issue.description}</p>
                       <div className="text-xs text-emerald-800 bg-emerald-50/80 border border-emerald-200/70 rounded-lg p-2.5">
-                        <strong>{isPolish ? "Wpływ na biznes i konwersję:" : "Business Impact:"}</strong>{" "}
+                        <strong>{isPolish ? "Co to oznacza:" : "What it means:"}</strong>{" "}
                         {issue.businessImpact || (isPolish ? "Obniża pozycję organiczną w Google i wydłuża czas oczekiwania klienta." : "Reduces Google organic rank and increases visitor bounce rate.")}
                       </div>
 
@@ -444,8 +444,8 @@ export default function OverviewTab({ app }: { app: AppState }) {
                             <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                             <span>
                               {isPolish
-                                ? "Bezpieczna naprawa architektoniczna realizowana przez inżynierów NovoPix z testami formularzy i koszyka po wdrożeniu."
-                                : "Architectural remediation executed by NovoPix engineers with form and checkout testing after deployment."}
+                                ? "Naprawę wykonuje zespół NovoPix, a po wdrożeniu sprawdzamy działanie formularzy."
+                                : "The NovoPix team makes the fixes and checks that your forms work after deployment."}
                             </span>
                           </span>
                         </div>

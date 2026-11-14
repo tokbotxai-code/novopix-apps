@@ -1299,7 +1299,7 @@ export function useAppState() {
         <div class="issue">
           <div style="display:flex; justify-content:space-between; font-weight:bold; color:#0f172a;">
             <span>${i.title}</span>
-            <span style="color:#d97706;">${L("Priorytet","Priority")}: ${i.priority.toUpperCase()}</span>
+            <span style="color:#d97706;">${L("Priorytet","Priority")}: ${i.priority==="high"?L("wysoki","HIGH"):i.priority==="medium"?L("średni","MEDIUM"):L("niski","LOW")}</span>
           </div>
           <div style="margin-top:4px; color:#475569;">${i.description}</div>
           <div style="margin-top:6px; font-weight:bold; color:#047857;">${L("Wpływ na biznes","Business impact")}: ${i.businessImpact || L("Ogranicza widoczność w Google i konwersję mobilną.","Limits visibility in Google and mobile conversion.")}</div>
@@ -1320,7 +1320,7 @@ export function useAppState() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${L("ekspertyza","report")}-novopix-${domain}-${new Date().toISOString().slice(0, 10)}.html`;
+    a.download = `${L("raport","report")}-novopix-${domain}-${new Date().toISOString().slice(0, 10)}.html`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -1346,7 +1346,7 @@ export function useAppState() {
     { id: "reports", label: isPolish ? "Raporty PDF & Link Klienta" : "Reports & Share Link", short: isPolish ? "Raporty & Link" : "Reports & Share", icon: Share2, highlight: true },
     { id: "webscore", label: isPolish ? "Trend oceny strony i historia" : "WebScore & History", short: isPolish ? "Ocena strony" : "WebScore", icon: TrendingUp },
     { id: "diagnostics", label: isPolish ? "Diagnostyka Indeksowania" : "Crawl Diagnostics", short: isPolish ? "Diagnostyka" : "Diagnostics", icon: Activity },
-    { id: "accessibility", label: isPolish ? "Kontrole dostępności" : "Accessibility checks", short: isPolish ? "Dostępność" : "Access.", icon: Eye },
+    { id: "accessibility", label: isPolish ? "Kontrole dostępności" : "Accessibility checks", short: isPolish ? "Dostępność" : "Accessibility", icon: Eye },
     { id: "checklist", label: isPolish ? "Lista Kontrolna Wdrożenia" : "Action Checklist", short: isPolish ? "Checklista" : "Checklist", icon: CheckCircle2 },
   ];
 
