@@ -326,12 +326,12 @@ export interface AuditReport {
 export const DEFAULT_SCOPE_TASKS: ScopeTaskItem[] = [
   {
     id: "task-lcp",
-    title: "Optymalizacja LCP i konwersja zasobów graficznych do AVIF / WebP",
+    title: "Optymalizacja LCP i konwersja obrazów do nowoczesnego formatu WebP",
     category: "performance",
     hours: 3.0,
     selected: true,
     businessBenefit: "Szybsze wyświetlenie głównej sekcji oferty na telefonach, mniejsza utrata odwiedzających",
-    technicalScope: "Konwersja PNG/JPEG do AVIF/WebP, preload zasobów Hero, fetchpriority='high', rozmiary responsywne srcset.",
+    technicalScope: "Konwersja PNG/JPEG do formatu WebP, preload zasobów Hero, fetchpriority='high', rozmiary responsywne srcset.",
   },
   {
     id: "task-js",
@@ -415,7 +415,7 @@ export function buildDynamicAuditArtifacts(
     {
       id: "task-lcp",
       title: isPolish
-        ? `Optymalizacja LCP (${report.coreWebVitals.lcp.displayValue}) i kompresja ${imgCount} obrazów do AVIF/WebP${detectedCmsLabel}`
+        ? `Optymalizacja LCP (${report.coreWebVitals.lcp.displayValue}) i kompresja ${imgCount} obrazów do formatu WebP${detectedCmsLabel}`
         : `LCP Optimization (${report.coreWebVitals.lcp.displayValue}) & ${imgCount} Images AVIF/WebP Pipeline${detectedCmsLabel}`,
       category: "performance",
       hours: lcpHours,
@@ -424,7 +424,7 @@ export function buildDynamicAuditArtifacts(
         ? "Szybsze wyświetlenie głównej treści strony na smartfonach, mniejsza utrata odwiedzających"
         : "Faster main content rendering on mobile devices, lower visitor drop-off",
       technicalScope: isPolish
-        ? `Konwersja ${imgCount} grafik do AVIF/WebP, preload zasobu LCP, wdrożenie fetchpriority="high" oraz wymiarów responsywnych.`
+        ? `Konwersja ${imgCount} grafik do formatu WebP, preload zasobu LCP, wdrożenie fetchpriority="high" oraz wymiarów responsywnych.`
         : `Convert ${imgCount} images to AVIF/WebP, preload LCP asset, add fetchpriority="high" and responsive dimensions.`,
     },
     {
@@ -500,7 +500,7 @@ export function buildDynamicAuditArtifacts(
       priority: "high",
       impact: `${lcpHours}h · Core Web Vitals`,
       description: isPolish
-        ? "Wdrożenie kompresji AVIF/WebP i priorytetyzacji ładowania głównego widoku."
+        ? "Wdrożenie kompresji obrazów (WebP) i priorytetyzacji ładowania głównego widoku."
         : "Deploy AVIF/WebP compression and fetchpriority='high' on Hero assets.",
       estimatedHours: lcpHours,
     },
