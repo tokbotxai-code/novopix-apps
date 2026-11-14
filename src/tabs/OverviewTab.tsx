@@ -496,7 +496,7 @@ export default function OverviewTab({ app }: { app: AppState }) {
                       {viewMode === "agency" ? (
                         <div className="text-xs text-slate-700 bg-white border border-slate-200 rounded-lg p-2.5 font-mono">
                           <strong className="text-slate-900">{isPolish ? "[TRYB AGENCJI — Instrukcja dla Dewelopera]:" : "[AGENCY VIEW — Developer Fix]:"}</strong>{" "}
-                          {issue.developerFix || "Optymalizacja zasobów w potoku budowania, kompresja AVIF/Brotli oraz wydzielenie Critical CSS."}
+                          {issue.developerFix || "Optymalizacja zasobów w potoku budowania, kompresja obrazów i skryptów oraz szybsze ładowanie górnej części strony."}
                         </div>
                       ) : (
                         <div className="text-xs text-slate-600 bg-slate-100 border border-slate-200 rounded-lg p-2.5 flex items-center justify-between gap-2">

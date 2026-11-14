@@ -416,7 +416,7 @@ export function buildDynamicAuditArtifacts(
       id: "task-lcp",
       title: isPolish
         ? `Optymalizacja LCP (${report.coreWebVitals.lcp.displayValue}) i kompresja ${imgCount} obrazów do formatu WebP${detectedCmsLabel}`
-        : `LCP Optimization (${report.coreWebVitals.lcp.displayValue}) & ${imgCount} Images AVIF/WebP Pipeline${detectedCmsLabel}`,
+        : `LCP Optimization (${report.coreWebVitals.lcp.displayValue}) & ${imgCount} Images in Modern Formats${detectedCmsLabel}`,
       category: "performance",
       hours: lcpHours,
       selected: true,
@@ -425,7 +425,7 @@ export function buildDynamicAuditArtifacts(
         : "Faster main content rendering on mobile devices, lower visitor drop-off",
       technicalScope: isPolish
         ? `Konwersja ${imgCount} grafik do formatu WebP, preload zasobu LCP, wdrożenie fetchpriority="high" oraz wymiarów responsywnych.`
-        : `Convert ${imgCount} images to AVIF/WebP, preload LCP asset, add fetchpriority="high" and responsive dimensions.`,
+        : `Convert ${imgCount} images to modern formats (WebP), preload LCP asset, add fetchpriority="high" and responsive dimensions.`,
     },
     {
       id: "task-js",
@@ -501,7 +501,7 @@ export function buildDynamicAuditArtifacts(
       impact: `${lcpHours}h · Core Web Vitals`,
       description: isPolish
         ? "Wdrożenie kompresji obrazów (WebP) i priorytetyzacji ładowania głównego widoku."
-        : "Deploy AVIF/WebP compression and fetchpriority='high' on Hero assets.",
+        : "Compress the main images (modern formats) and load the top-of-page image first.",
       estimatedHours: lcpHours,
     },
     {
