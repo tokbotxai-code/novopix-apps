@@ -5,12 +5,22 @@ import { TEMPLATE_LABELS, TemplateId, buildTemplate } from "../utils/mailTemplat
 
 export type SendSeed = { template: TemplateId; offerLines?: string[] };
 
-export default function SendReportModal({ ctx, open, onClose, scanId, host, score, issues, seed, defaultEmail }: {
-  ctx: AgencyCtx; open: boolean; onClose: () => void; scanId?: string; host: string; score: number | null; issues: string[]; seed: SendSeed; defaultEmail?: string;
+export default function SendReportModal({ ctx, open, onClose, scanId, host, score, issues, seed, defaultEmail, htmlLang }: {
+  ctx: AgencyCtx; open: boolean; onClose: () => void; scanId?: string; host: string; score: number | null; issues: string[]; seed: SendSeed; defaultEmail?: string; htmlLang?: string | null;
 }) {
   const pl = ctx.isPolish;
   const L = (a: string, b: string) => (pl ? a : b);
-  const [lang, setLang] = useState<"pl" | "en">(pl ? "pl" : "en");
+  // Język maila proponujemy z faktów (a Ty możesz go zmienić): 1) język strony (atrybut lang), 2) końcówka .pl, 3) język panelu.
+  const suggested: { lang: "pl" | "en"; why: string } = (() => {
+    const hl = (htmlLang || "").toLowerCase();
+    if (hl.startsWith("pl")) return { lang: "pl", why: pl ? "strona ma język polski (lang=pl)" : "the site is in Polish (lang=pl)" };
+    if (hl.startsWith("en")) return { lang: "en", why: pl ? "strona ma język angielski (lang=en)" : "the site is in English (lang=en)" };
+    if (/\.pl$/.test(host)) return { lang: "pl", why: pl ? "domena kończy się na .pl" : "the domain ends in .pl" };
+    if (/\.(uk|com|org|net|eu)$/.test(host)) return { lang: "en", why: pl ? "domena nie jest polska" : "the domain is not Polish" };
+    return { lang: pl ? "pl" : "en", why: pl ? "brak danych o stronie, użyto języka panelu" : "no data about the site, the panel language is used" };
+  })();
+  const [lang, setLang] = useState<"pl" | "en">(suggested.lang);
+  useEffect(() => { if (open) setLang(suggested.lang); }, [open, suggested.lang, host]);
   const [tpl, setTpl] = useState<TemplateId>(seed.template);
   const [email, setEmail] = useState(defaultEmail || "");
   const [subject, setSubject] = useState("");
@@ -44,7 +54,8 @@ export default function SendReportModal({ ctx, open, onClose, scanId, host, scor
               {(Object.keys(TEMPLATE_LABELS) as TemplateId[]).map((k) => <option key={k} value={k}>{TEMPLATE_LABELS[k][pl ? "pl" : "en"]}</option>)}
             </select></label>
           <label className="space-y-1"><span className="font-bold text-slate-700">{L("Język", "Language")}</span>
-            <select value={lang} onChange={(e) => setLang(e.target.value as "pl" | "en")} className="w-full border border-slate-200 rounded-lg px-2 py-2"><option value="pl">Polski</option><option value="en">English</option></select></label>
+            <select value={lang} onChange={(e) => setLang(e.target.value as "pl" | "en")} className="w-full border border-slate-200 rounded-lg px-2 py-2"><option value="pl">Polski</option><option value="en">English</option></select>
+            <span className="block text-[11px] text-slate-500" data-testid="lang-hint">{L("Zaproponowano", "Suggested")}: {suggested.lang.toUpperCase()}, {suggested.why}.</span></label>
         </div>
         <label className="block text-xs space-y-1"><span className="font-bold text-slate-700">{L("E-mail klienta", "Client e-mail")}</span>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="klient@firma.pl" /></label>
