@@ -37,6 +37,7 @@ import { snapshotFromScan } from "./server/scanSnapshot";
 import { rememberScan, recallScan } from "./server/scanCache";
 import { normalizeFormLang } from "./server/language";
 import { registerFullReview } from "./server/fullReview";
+import { registerAgencyTools, recordScanHistory } from "./server/agencyTools";
 import { registerPanelFunnel, registerPublicFunnel, stubClient } from "./server/funnel";
 import { buildReportPdf } from "./server/pdfReport";
 import { hostOf } from "./server/resultPage";
@@ -170,6 +171,7 @@ if (APP_MODE === "agency") {
   registerAgencyBulkRoutes(app);
   registerAgencyStatusRoutes(app);
   registerFullReview(app);
+  registerAgencyTools(app);
   registerPanelFunnel(app, requireInternal);
   registerHitEndpoint(app, recordHit);
   registerStatsRoutes(app, requireInternal);
@@ -1005,6 +1007,7 @@ app.post("/api/scan", requireScannerAccess, async (req, res) => {
     // scanId lets a later quote/report/public link refer to this server-measured result.
     const snap = snapshotFromScan(out.body, strat, String(url || ""));
     if (snap) out.body.scanId = rememberScan(snap);
+    if (APP_MODE === "agency" && strat === "mobile") recordScanHistory(String(url || ""), out.body);
     return res.status(out.status).json(out.body);
   } catch {
     const error = "Nie udało się wykonać skanu. Spróbuj ponownie.";

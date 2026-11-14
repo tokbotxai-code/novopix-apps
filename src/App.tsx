@@ -32,6 +32,7 @@ const StatusTab = lazy(() => import("./tabs/StatusTab"));
 const StatsTab = lazy(() => import("./tabs/StatsTab"));
 const FullReviewTab = lazy(() => import("./tabs/FullReviewTab"));
 const FullReportPage = lazy(() => import("./tabs/FullReportPage"));
+const TodayWidget = lazy(() => import("./tabs/TodayWidget"));
 const CrmTab = lazy(() => import("./tabs/CrmTab"));
 const ReportsTab = lazy(() => import("./tabs/ReportsTab"));
 
@@ -646,6 +647,13 @@ export default function App() {
               >
                 {isScanning ? (isPolish ? "Skanuję…" : "Scanning…") : isPolish ? "Skanuj stronę" : "Scan website"}
               </button>
+              {agencyToken && (
+                <div className="pt-4 mt-2 border-t border-slate-100">
+                  <Suspense fallback={null}>
+                    <TodayWidget ctx={agencyCtx} onScan={(h) => { setUrlInput(h); handleRunScan(h); }} />
+                  </Suspense>
+                </div>
+              )}
               <div className="pt-4 mt-2 border-t border-slate-100" data-testid="quick-actions">
                 <div className="text-xs font-bold text-slate-500 mb-2">{isPolish ? "Szybkie przejścia" : "Quick actions"}</div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">

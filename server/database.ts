@@ -23,6 +23,8 @@ export interface LeadRecord {
   consent?: { reportAndInfo: boolean; report?: boolean; marketing?: boolean; at: string; text: string; marketingText?: string; policyUrl: string };
   report?: ReportRequestState;
   clientId?: string;
+  // Kiedy odpisano na zgłoszenie (przypomnienia „bez odpowiedzi”).
+  repliedAt?: string;
 }
 
 export interface ReportRequestState {
@@ -258,6 +260,8 @@ export interface DatabaseSchema {
   bulkScans?: BulkScanJob[];
   packages?: ServicePackage[];
   sharedResults?: Record<string, SharedResult>;
+  // Historia pomiarów domen zmierzonych z panelu (do porównania przed i po, bez danych osobowych).
+  domainHistory?: Record<string, Array<{ at: string; overall: number | null; performance: number | null; seo: number | null; accessibility: number | null }>>;
   settings?: PanelSettings;
   // Dzienne sumy odwiedzin i zdarzeń (server/stats.ts); bez adresów IP i identyfikatorów.
   stats?: Record<string, { pages: Record<string, { v: number; u: number }>; refs: Record<string, number>; langs: Record<string, number>; events: Record<string, number> }>;
@@ -302,6 +306,7 @@ export function loadDb(): DatabaseSchema {
         // Starsza baza nie ma pakietów/ustawień: dosiewamy domyślne (istniejące dane nie są zmieniane).
         packages: Array.isArray(parsed.packages) && parsed.packages.length ? parsed.packages : clonePackages(),
         sharedResults: parsed.sharedResults && typeof parsed.sharedResults === "object" ? parsed.sharedResults : {},
+        domainHistory: parsed.domainHistory && typeof parsed.domainHistory === "object" ? parsed.domainHistory : {},
         stats: parsed.stats && typeof parsed.stats === "object" ? parsed.stats : {},
         settings: { autoSendReport: !!parsed.settings?.autoSendReport },
         agencyPin:

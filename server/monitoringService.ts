@@ -186,6 +186,7 @@ async function mailAlert(dom: MonitoredDomain, entry: MonitoringAlertEntry) {
 export async function runPsiOncePerDay(dom: MonitoredDomain, force = false): Promise<"ran" | "limit"> {
   if (!force && dom.psiAttemptDay === today()) return "limit";
   dom.psiAttemptDay = today();
+  const prevPsiOverall = dom.psi?.status === "live_lighthouse" ? dom.psi.overall : null;
   const key = process.env.PAGESPEED_API_KEY || "";
   const api = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(dom.domain)}&strategy=mobile&category=PERFORMANCE&category=SEO&category=ACCESSIBILITY&category=BEST_PRACTICES${key ? `&key=${key}` : ""}`;
   const at = new Date().toISOString();
@@ -216,6 +217,20 @@ export async function runPsiOncePerDay(dom: MonitoredDomain, force = false): Pro
   }
 
   if (!Array.isArray(dom.alertsLog)) dom.alertsLog = [];
+  // Spadek względny: o co najmniej 10 punktów od poprzedniego pomiaru PageSpeed (nawet gdy wynik jest nad progiem).
+  if (dom.psi.status === "live_lighthouse" && dom.psi.overall !== null && prevPsiOverall !== null && prevPsiOverall - dom.psi.overall >= 10) {
+    const entry: MonitoringAlertEntry = {
+      id: `al_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      timestamp: at,
+      type: "psi_drop",
+      message: `Wynik Google PageSpeed spadł o ${prevPsiOverall - dom.psi.overall} pkt (z ${prevPsiOverall} do ${dom.psi.overall}/100, telefon).`,
+      seen: false,
+      emailed: smtpConfigured() ? undefined : "not_configured",
+    };
+    dom.alertsLog.unshift(entry);
+    if (dom.alertsLog.length > 30) dom.alertsLog.pop();
+    void mailAlert(dom, entry);
+  }
   if (dom.psi.status === "live_lighthouse" && dom.psi.overall !== null && dom.psi.overall < dom.threshold) {
     const last = dom.alertsLog[0];
     if (!(last && last.type === "psi_drop" && Date.now() - new Date(last.timestamp).getTime() < ALERT_REPEAT_MS)) {

@@ -7,7 +7,7 @@ import { requireAgencyAuth, checkRateLimit, safeFetchHtml, validateSafePublicUrl
 import { checkDomainHealth } from "./domainHealth";
 
 type PageRow = { url: string; status: number; ms: number; title: string; description: boolean; h1: number; imgNoAlt: number; noindex: boolean };
-type Job = { id: string; startedAt: number; done: boolean; error?: string; progress: string; result?: any };
+type Job = { id: string; startedAt: number; done: boolean; error?: string; progress: string; result?: any; host?: string };
 const jobs = new Map<string, Job>();
 
 const MAX_PAGES = 40;
@@ -191,8 +191,13 @@ export function registerFullReview(app: Express) {
     const v = validateSafePublicUrl(req.body?.url);
     if (!v.valid) return res.status(400).json({ error: v.error || "Nieprawidłowy adres." });
     for (const [k, j] of jobs) if (Date.now() - j.startedAt > 60 * 60 * 1000) jobs.delete(k);
+    // ten sam adres: oddajemy już trwający albo świeży (do 5 min) przegląd zamiast uruchamiać kolejny
+    const hostKey = String(v.parsed?.hostname || "").toLowerCase().replace(/^www\./, "");
+    for (const j of jobs.values()) {
+      if (j.host === hostKey && (!j.done || (!j.error && Date.now() - j.startedAt < 5 * 60 * 1000))) return res.json({ jobId: j.id, reused: true });
+    }
     if ([...jobs.values()].filter((j) => !j.done).length >= MAX_JOBS) return res.status(429).json({ error: "Trwają już trzy przeglądy. Poczekaj, aż się skończą." });
-    const job: Job = { id: crypto.randomBytes(8).toString("hex"), startedAt: Date.now(), done: false, progress: "start" };
+    const job: Job = { id: crypto.randomBytes(8).toString("hex"), startedAt: Date.now(), done: false, progress: "start", host: hostKey };
     jobs.set(job.id, job);
     run(job, String(req.body.url))
       .catch((e) => { job.error = String(e?.message || e); })

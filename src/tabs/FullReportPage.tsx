@@ -11,6 +11,7 @@ const AccessibilityTab = lazy(() => import("./AccessibilityTab"));
 const DiagnosticsTab = lazy(() => import("./DiagnosticsTab"));
 const ChecklistTab = lazy(() => import("./ChecklistTab"));
 const FullReviewTab = lazy(() => import("./FullReviewTab"));
+import { ReportActions, OfferBox, HistoryCard } from "./ReportExtras";
 
 // Jeden raport dla agencji: wszystkie sekcje audytu jedna pod drugą, bez przełączania zakładek.
 export default function FullReportPage({ app, ctx }: { app: AppState; ctx: AgencyCtx }) {
@@ -42,7 +43,8 @@ export default function FullReportPage({ app, ctx }: { app: AppState; ctx: Agenc
           <a key={id} href={`#fr-${id}`} className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold hover:bg-slate-100">{label}</a>
         ))}
       </div>
-      <Section id="overview" title={L("Podsumowanie", "Summary")}><OverviewTab app={app} /></Section>
+      <ReportActions app={app} ctx={ctx} />
+      <Section id="overview" title={L("Podsumowanie", "Summary")}><OverviewTab app={app} /><div className="mt-4 space-y-4"><HistoryCard app={app} ctx={ctx} /><OfferBox app={app} ctx={ctx} /></div></Section>
       <Section id="advisor" title={L("Doradca AI i skrypty rozmów", "AI advisor and sales scripts")}><AiAdvisorTab app={app} /></Section>
       <Section id="speed" title={L("Szybkość i Core Web Vitals", "Speed and Core Web Vitals")}><PerformanceTab app={app} /></Section>
       <Section id="seo" title={L("SEO szczegółowo", "Detailed SEO")}><SeoTab app={app} /></Section>
