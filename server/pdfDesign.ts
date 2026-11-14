@@ -59,8 +59,8 @@ export type FullExtras = {
   recipient?: string;
 };
 
-function setup(title: string) {
-  const doc = new PDFDocument({ size: "A4", margins: { top: 60, bottom: 64, left: 46, right: 46 }, bufferPages: true, info: { Title: title, Author: "NovoPix" } });
+function setup(title: string, landscape = false) {
+  const doc = new PDFDocument({ size: "A4", layout: landscape ? "landscape" : "portrait", margins: { top: 60, bottom: 64, left: 46, right: 46 }, bufferPages: true, info: { Title: title, Author: "NovoPix" } });
   doc.registerFont("R", fontFile("Inter-Regular.otf", "DejaVuSans.ttf"));
   doc.registerFont("B", fontFile("Inter-Bold.otf", "DejaVuSans-Bold.ttf"));
   return doc;
@@ -104,13 +104,13 @@ function para(doc: PDFKit.PDFDocument, text: string, W: number, size = 9.5, colo
 
 function footers(doc: PDFKit.PDFDocument, t: typeof T.pl, W: number) {
   const range = doc.bufferedPageRange();
-  for (let i = range.start; i < range.start + range.count; i++) {
+  for (let i = range.start + 1; i < range.start + range.count; i++) {
     doc.switchToPage(i);
     doc.page.margins.bottom = 0; // stopka leży poniżej marginesu: bez tego pdfkit dodaje nowe strony
     const y = doc.page.height - 44;
     doc.moveTo(46, y - 6).lineTo(46 + W, y - 6).lineWidth(0.6).strokeColor(C.line).stroke();
     doc.font("R").fontSize(7.5).fillColor(C.mute).text(t.disclaimer, 46, y, { width: W - 80, height: 30 });
-    doc.font("B").fontSize(8).fillColor(C.ink).text(`${t.page} ${i + 1} ${t.of} ${range.count}`, 46 + W - 70, y, { width: 70, align: "right", lineBreak: false });
+    doc.font("B").fontSize(8).fillColor(C.ink).text(`${t.page} ${i} ${t.of} ${range.count - 1}`, 46 + W - 70, y, { width: 70, align: "right", lineBreak: false });
   }
 }
 
@@ -185,23 +185,136 @@ function metaBlock(doc: PDFKit.PDFDocument, snap: ScanSnapshot, t: typeof T.pl, 
   doc.moveDown(0.6);
 }
 
+// ===== Okładka w stylu panelu „Growth Scanner” (układ 1:1 ze wzoru, dane tylko z prawdziwych pomiarów) =====
+const D = { bg1: "#070d24", bg2: "#12285a", card: "#0e1a3a", edge: "#2d4f9c", txt: "#ffffff", mut: "#9fb3d9", cyan: "#22d3ee", green: "#34d399", amber: "#fbbf24", red: "#f87171", violet: "#8b5cf6" };
+const dtone = (v: number | null) => (v === null ? D.mut : v >= 90 ? D.green : v >= 50 ? D.amber : D.red);
+
+function dCard(doc: PDFKit.PDFDocument, x: number, y: number, w: number, h: number, title?: string) {
+  doc.save().roundedRect(x, y, w, h, 12).fillOpacity(0.92).fill(D.card).restore();
+  doc.save().roundedRect(x, y, w, h, 12).lineWidth(0.9).strokeOpacity(0.7).stroke(D.edge).restore();
+  if (title) doc.font("B").fontSize(10.5).fillColor(D.txt).text(title, x + 14, y + 12, { width: w - 28, lineBreak: false });
+}
+function dRing(doc: PDFKit.PDFDocument, cx: number, cy: number, r: number, v: number | null, label?: string, lw = 6) {
+  doc.save().lineWidth(lw).strokeOpacity(0.25).strokeColor(D.mut).circle(cx, cy, r).stroke().restore();
+  if (v !== null && v > 0) {
+    const a = (Math.min(100, v) / 100) * 2 * Math.PI - 0.0001;
+    doc.save().lineCap("round").lineWidth(lw).strokeColor(dtone(v)).path(`M ${cx} ${cy - r} A ${r} ${r} 0 ${a > Math.PI ? 1 : 0} 1 ${cx + r * Math.sin(a)} ${cy - r * Math.cos(a)}`).stroke().restore();
+  }
+  doc.font("B").fontSize(r > 24 ? 15 : 10).fillColor(D.txt).text(v === null ? "–" : `${v}${r > 24 ? "" : "%"}`, cx - r, cy - (r > 24 ? 9 : 6), { width: 2 * r, align: "center", lineBreak: false });
+  if (label) doc.font("R").fontSize(7.8).fillColor(D.mut).text(label, cx - r - 20, cy + r + 6, { width: 2 * r + 40, align: "center", lineBreak: false });
+}
+function dGauge(doc: PDFKit.PDFDocument, cx: number, cy: number, r: number, v: number | null) {
+  const arc = (from: number, to: number) => { const p = (a: number) => [cx + r * Math.cos(Math.PI - a), cy - r * Math.sin(Math.PI - a)]; const [x1, y1] = p(from), [x2, y2] = p(to); return `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`; };
+  doc.save().lineCap("round").lineWidth(14).strokeOpacity(0.25).strokeColor(D.mut).path(arc(0, Math.PI - 0.001)).stroke().restore();
+  if (v !== null && v > 0) doc.save().lineCap("round").lineWidth(14).strokeColor(dtone(v)).path(arc(0, Math.max(0.02, (Math.min(100, v) / 100) * Math.PI - 0.001))).stroke().restore();
+  doc.font("B").fontSize(40).fillColor(D.txt).text(v === null ? "–" : String(v), cx - 60, cy - 46, { width: 120, align: "center", lineBreak: false });
+  doc.font("R").fontSize(11).fillColor(D.mut).text("/100", cx - 60, cy - 4, { width: 120, align: "center", lineBreak: false });
+}
+function dBar(doc: PDFKit.PDFDocument, x: number, y: number, w: number, label: string, value: string, frac: number, color: string) {
+  doc.font("R").fontSize(8.5).fillColor(D.mut).text(label, x, y, { width: w - 60, lineBreak: false });
+  doc.font("B").fontSize(8.5).fillColor(D.txt).text(value, x + w - 60, y, { width: 60, align: "right", lineBreak: false });
+  doc.save().roundedRect(x, y + 13, w, 6, 3).fillOpacity(0.25).fill(D.mut).restore();
+  if (frac > 0) doc.roundedRect(x, y + 13, Math.max(6, w * Math.min(1, frac)), 6, 3).fill(color);
+}
+
+function dashboardCover(doc: PDFKit.PDFDocument, snap: ScanSnapshot, extras: FullExtras, lang: Lang, mode: "full" | "short") {
+  const pl = lang === "pl";
+  const t = T[lang];
+  doc.page.margins = { top: 0, bottom: 0, left: 0, right: 0 };
+  const PW = doc.page.width, PH = doc.page.height;
+  const g = doc.linearGradient(0, 0, PW, PH); g.stop(0, D.bg1).stop(1, D.bg2);
+  doc.rect(0, 0, PW, PH).fill(g);
+  // nagłówek
+  drawLogo(doc, 32, 24, 34);
+  doc.font("B").fontSize(23).fillColor(D.txt).text("NovoPix", 74, 24, { lineBreak: false });
+  doc.font("B").fontSize(17).fillColor(D.cyan).text(pl ? "Raport techniczny strony" : "Website technical report", 74, 52, { lineBreak: false });
+  doc.font("R").fontSize(10).fillColor(D.mut).text(snap.finalUrl, 32, 82, { width: PW - 64, lineBreak: false });
+  const when = new Date(snap.scannedAt).toLocaleString(pl ? "pl-PL" : "en-GB", { timeZone: pl ? "Europe/Warsaw" : "Europe/London" });
+  doc.font("R").fontSize(8.5).fillColor(D.mut).text(`${t.date}: ${when} · ${snap.measurementStatus === "live_lighthouse" ? "Google Lighthouse" : (pl ? "pomiar częściowy" : "partial measurement")} · ${mode === "full" ? t.full : t.short}`, 32, 97, { width: PW - 64, lineBreak: false });
+  const M = 32, G = 12, top = 122;
+  const colW = (PW - 2 * M - 2 * G) / 3;
+  const c = snap.categories;
+  const label = snap.overallScore === null ? t.none : snap.overallScore >= 90 ? t.good : snap.overallScore >= 65 ? t.improve : t.attention;
+  // 1) wynik ogólny
+  const h1 = 200;
+  dCard(doc, M, top, colW, h1, t.overall);
+  dGauge(doc, M + colW / 2, top + 100, 64, snap.overallScore);
+  const pillW = 78; doc.roundedRect(M + colW / 2 - pillW / 2, top + 108, pillW, 18, 9).fillOpacity(0.2).fill(dtone(snap.overallScore)).fillOpacity(1);
+  doc.font("B").fontSize(9).fillColor(dtone(snap.overallScore)).text(label, M + colW / 2 - pillW / 2, top + 113, { width: pillW, align: "center", lineBreak: false });
+  const mini: Array<[string, number | null]> = [[t.perf, c.performance], [t.seo, c.seo], [t.acc, c.accessibility], [t.bp, c.bestPractices]];
+  mini.forEach(([k, v], i) => { const yy = top + 138 + i * 14; doc.font("R").fontSize(8.5).fillColor(D.mut).text(k, M + 16, yy, { width: colW - 90, lineBreak: false }); doc.font("B").fontSize(8.5).fillColor(dtone(v)).text(v === null ? t.none : `${v}/100`, M + colW - 80, yy, { width: 64, align: "right", lineBreak: false }); });
+  // 2) SEO i szybkość (pierścienie z prawdziwych wyników)
+  const x2 = M + colW + G;
+  dCard(doc, x2, top, colW, h1, pl ? "Wyniki kategorii" : "Category scores");
+  const rings: Array<[string, number | null]> = [[t.perf, c.performance], [t.seo, c.seo], [t.bp, c.bestPractices], [pl ? "Dostępność" : "Accessibility", c.accessibility]];
+  rings.forEach(([k, v], i) => dRing(doc, x2 + colW * (0.27 + (i % 2) * 0.46), top + 66 + Math.floor(i / 2) * 78, 24, v, k, 6));
+  // 3) dostępność: rozbicie
+  const x3 = x2 + colW + G;
+  dCard(doc, x3, top, colW, h1, pl ? "Dostępność (automaty)" : "Accessibility (automated)");
+  const b = extras.a11y?.breakdown || {};
+  const a11y: Array<[string, number | null]> = [[pl ? "Kontrast" : "Contrast", b.contrast ?? null], [pl ? "Nawigacja" : "Navigation", b.navigation ?? null], [pl ? "Nazwy" : "Names", b.names ?? null], ["ARIA / ALT", b.aria ?? null]];
+  if (b.contrast === undefined && b.navigation === undefined) dRing(doc, x3 + colW / 2, top + 95, 34, c.accessibility, pl ? "Wynik dostępności" : "Accessibility score", 8);
+  else a11y.forEach(([k, v], i) => dRing(doc, x3 + colW * (0.27 + (i % 2) * 0.46), top + 66 + Math.floor(i / 2) * 78, 24, v, k, 6));
+  doc.font("R").fontSize(7).fillColor(D.mut).text(pl ? "To nie ocena zgodności z WCAG ani certyfikat." : "Not a WCAG conformance rating or certificate.", x3 + 12, top + h1 - 16, { width: colW - 24, align: "center", lineBreak: false });
+  // dolny rząd
+  const top2 = top + h1 + G, h2 = PH - top2 - 38;
+  const issues = [...snap.issues].sort((a, z) => (a.priority === "high" ? 0 : 1) - (z.priority === "high" ? 0 : 1));
+  const high = issues.filter((i) => i.priority === "high").length, med = issues.length - high;
+  // 4) postęp audytu
+  dCard(doc, M, top2, colW, h2, pl ? "Bilans kontroli" : "Audit summary");
+  const rv = extras.review?.summary;
+  const tot = Math.max(1, issues.length + 4);
+  dBar(doc, M + 16, top2 + 36, colW - 32, pl ? "Priorytet wysoki" : "High priority", String(high), high / tot, D.red);
+  dBar(doc, M + 16, top2 + 66, colW - 32, pl ? "Priorytet średni" : "Medium priority", String(med), med / tot, D.amber);
+  if (rv) { dBar(doc, M + 16, top2 + 96, colW - 32, t.pagesChecked, String(rv.pages), rv.pages / 40, D.cyan); dBar(doc, M + 16, top2 + 126, colW - 32, (pl ? "Błędne strony / linki" : "Broken pages / links"), `${rv.broken} / ${rv.brokenExternal}`, (rv.broken + rv.brokenExternal) / Math.max(1, rv.pages), D.red); }
+  // 5) lista działań
+  dCard(doc, x2, top2, colW, h2, pl ? "Co poprawić najpierw" : "What to fix first");
+  issues.slice(0, 5).forEach((it, i) => {
+    const yy = top2 + 34 + i * 25;
+    doc.roundedRect(x2 + 14, yy, 12, 12, 3).lineWidth(1).stroke(it.priority === "high" ? D.red : D.amber);
+    doc.font("R").fontSize(8.6).fillColor(D.txt).text(it.title, x2 + 34, yy + 1, { width: colW - 52, lineBreak: false, ellipsis: true });
+  });
+  if (!issues.length) doc.font("R").fontSize(9).fillColor(D.mut).text(t.noissues, x2 + 14, top2 + 38, { width: colW - 28 });
+  // 6) historia / oferta
+  dCard(doc, x3, top2, colW, h2, mode === "short" ? "Core Web Vitals" : pl ? "Historia wyniku" : "Score history");
+  if (mode === "short") {
+    snap.cwv.slice(0, 5).forEach((m, i) => {
+      const yy = top2 + 38 + i * 24;
+      doc.font("B").fontSize(9).fillColor(D.txt).text(m.acronym, x3 + 16, yy, { width: 44, lineBreak: false });
+      doc.font("R").fontSize(8.5).fillColor(D.mut).text(`${t.target}: ${CWV_TARGET[m.acronym] || ""}`, x3 + 62, yy + 1, { width: 100, lineBreak: false });
+      const col = m.status === "good" ? D.green : m.status === "poor" ? D.red : m.status === "needs-improvement" ? D.amber : D.txt;
+      doc.font("B").fontSize(9).fillColor(col).text(m.status === "unavailable" ? t.none : m.displayValue.replace(/\s*\((pomiar laboratoryjny|lab measurement)\)/, ""), x3 + colW - 110, yy, { width: 94, align: "right", lineBreak: false });
+    });
+    doc.font("R").fontSize(7.4).fillColor(D.mut).text(pl ? "Pełny raport (panel) zawiera historię, domenę, SEO i ofertę." : "The full report (panel) adds history, domain, SEO and the offer.", x3 + 14, top2 + h2 - 24, { width: colW - 28, lineBreak: false });
+  }
+  const hist = mode === "short" ? [] : (extras.history || []).filter((h) => typeof h.overall === "number") as Array<{ at: string; overall: number }>;
+  if (mode === "short") { /* karta Core Web Vitals narysowana wyżej */ } else if (hist.length >= 2) {
+    const gx = x3 + 18, gy = top2 + 34, gw = colW - 36, gh = h2 - 70;
+    doc.save().lineWidth(0.5).strokeOpacity(0.25).strokeColor(D.mut);
+    [0, 0.5, 1].forEach((f) => doc.moveTo(gx, gy + gh * f).lineTo(gx + gw, gy + gh * f).stroke());
+    doc.restore();
+    const pts = hist.map((h, i) => [gx + (i / (hist.length - 1)) * gw, gy + gh - (h.overall / 100) * gh]);
+    doc.save().lineWidth(2).strokeColor(D.green).moveTo(pts[0][0], pts[0][1]);
+    pts.slice(1).forEach(([px, py]) => doc.lineTo(px, py));
+    doc.stroke().restore();
+    pts.forEach(([px, py]) => doc.circle(px, py, 2.6).fill(D.green));
+    const d = hist[hist.length - 1].overall - hist[0].overall;
+    doc.font("B").fontSize(9).fillColor(d >= 0 ? D.green : D.red).text(`${hist[0].overall} → ${hist[hist.length - 1].overall}  (${d > 0 ? "+" : ""}${d})`, x3 + 14, top2 + h2 - 26, { width: colW - 28, align: "center", lineBreak: false });
+  } else {
+    doc.font("R").fontSize(8.8).fillColor(D.mut).text(pl ? "Historia pojawi się po drugim pomiarze tej strony z panelu." : "History appears after a second measurement of this site from the panel.", x3 + 14, top2 + 40, { width: colW - 28 });
+    (extras.offerLines || []).slice(0, 3).forEach((l, i) => doc.font("R").fontSize(8.3).fillColor(D.txt).text(l.replace(/^- /, "• "), x3 + 14, top2 + 78 + i * 22, { width: colW - 28, height: 20 }));
+  }
+  doc.font("R").fontSize(7.2).fillColor(D.mut).text(t.disclaimer, M, PH - 30, { width: PW - 2 * M, lineBreak: false, ellipsis: true });
+}
+
 export function buildSummaryPdf(client: AgencyClient, snap0: ScanSnapshot, lang: Lang): Promise<Buffer> {
   const t = T[lang];
   const snap = localizeSnapshot(snap0, lang);
   return new Promise((resolve, reject) => {
-    const doc = setup(`${t.short} – ${snap.finalUrl}`);
+    const doc = setup(`${t.short} – ${snap.finalUrl}`, true);
     const chunks: Buffer[] = [];
     doc.on("data", (c) => chunks.push(c)); doc.on("end", () => resolve(Buffer.concat(chunks))); doc.on("error", reject);
-    const W = doc.page.width - 92;
-    header(doc, t, t.short, W);
-    metaBlock(doc, snap, t, lang, client, W, t.short);
-    scoresBlock(doc, snap, t, W);
-    if (snap.cwv.length) cwvTable(doc, snap, t, lang, W);
-    section(doc, t.top3, W);
-    issueRows(doc, snap, t, W, 3, lang);
-    section(doc, t.inFull, W);
-    t.fullList.forEach((x) => para(doc, `•  ${x}`, W, 9.5, C.mute));
-    footers(doc, t, W);
+    dashboardCover(doc, snap, {}, lang, "short");
     doc.end();
   });
 }
@@ -210,9 +323,11 @@ export function buildFullPdf(client: AgencyClient, snap0: ScanSnapshot, lang: La
   const t = T[lang];
   const snap = localizeSnapshot(snap0, lang);
   return new Promise((resolve, reject) => {
-    const doc = setup(`${t.full} – ${snap.finalUrl}`);
+    const doc = setup(`${t.full} – ${snap.finalUrl}`, true);
     const chunks: Buffer[] = [];
     doc.on("data", (c) => chunks.push(c)); doc.on("end", () => resolve(Buffer.concat(chunks))); doc.on("error", reject);
+    dashboardCover(doc, snap, extras, lang, "full");
+    doc.addPage({ size: "A4", layout: "portrait", margins: { top: 60, bottom: 64, left: 46, right: 46 } });
     const W = doc.page.width - 92;
     header(doc, t, t.full, W);
     metaBlock(doc, snap, t, lang, client, W, t.full);
