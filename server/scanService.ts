@@ -58,6 +58,17 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
     "Network dependency tree": "Drzewo zależności sieciowych",
     "Improve image delivery": "Popraw dostarczanie obrazów",
     "Use efficient cache lifetimes": "Ustaw sensowny czas cache",
+    "Initial server response time was short": "Czas odpowiedzi serwera jest krótki",
+    "Speed Index": "Indeks szybkości (Speed Index)",
+    "Max Potential First Input Delay": "Maksymalne potencjalne opóźnienie pierwszej interakcji",
+    "Avoid multiple page redirects": "Unikaj wielokrotnych przekierowań",
+    "Reduce the impact of third-party code": "Ogranicz wpływ kodu firm trzecich",
+    "Avoid an excessive DOM size": "Unikaj zbyt dużego drzewa DOM",
+    "Minimize main-thread work": "Zmniejsz obciążenie wątku głównego",
+    "Reduce JavaScript execution time": "Skróć czas wykonywania JavaScript",
+    "Avoid serving legacy JavaScript to modern browsers": "Nie wysyłaj przestarzałego JavaScriptu nowoczesnym przeglądarkom",
+    "Defer offscreen images": "Odrocz ładowanie obrazów poza ekranem",
+    "Ensure text remains visible during webfont load": "Zadbaj, by tekst był widoczny podczas ładowania czcionek",
   };
   const lhTitle = (t: string) => { const pl = LH_PL[t]; return pl ? T(pl, t) : t; };
   const lhValue = (v: string) => {
