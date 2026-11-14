@@ -436,8 +436,8 @@ export default function OverviewTab({ app }: { app: AppState }) {
                       <BarChart3 className="w-4 h-4 text-emerald-600" />
                       <span>
                         {isPolish
-                          ? "Wykryte Problemy Techniczne i Ich Wpływ na Twój Biznes"
-                          : "Detected Bottlenecks & Business Impact"}
+                          ? "Wykryte problemy techniczne i co oznaczają"
+                          : "Detected issues and what they mean"}
                       </span>
                     </h3>
                   </div>
