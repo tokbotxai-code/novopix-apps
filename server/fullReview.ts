@@ -11,6 +11,9 @@ type Job = { id: string; startedAt: number; done: boolean; error?: string; progr
 const jobs = new Map<string, Job>();
 
 const MAX_PAGES = 40;
+const DEADLINE_MS = 150000;
+const MAX_JOBS = 2;
+const dnsT = <T,>(p: Promise<T>, ms = 4000): Promise<T> => Promise.race([p, new Promise<T>((_, rej) => setTimeout(() => rej(new Error("dns timeout")), ms))]);
 const SUBS = ["www", "mail", "webmail", "smtp", "imap", "ftp", "panel", "app", "api", "blog", "shop", "store", "dev", "staging", "test", "admin", "cdn", "static", "docs", "status", "scanner", "autodiscover", "vpn", "intranet", "portal"];
 
 const abs = (href: string, base: string): string | null => {
@@ -26,11 +29,14 @@ const abs = (href: string, base: string): string | null => {
 
 function analyse(html: string) {
   const title = (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "").replace(/\s+/g, " ").trim().slice(0, 120);
-  const description = /<meta[^>]+name=["']description["'][^>]*content=["'][^"']+/i.test(html);
+  const metaTags = html.match(/<meta\b[^>]*>/gi) || [];
+  const attr = (tag: string, n: string) => tag.match(new RegExp(`(?:^|[\\s"'])${n}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`, "i"));
+  const metaBy = (name: string) => metaTags.filter((t) => (attr(t, "name")?.[1] ?? attr(t, "name")?.[2] ?? "").toLowerCase() === name);
+  const description = metaBy("description").some((t) => (attr(t, "content")?.[1] ?? attr(t, "content")?.[2] ?? "").trim().length > 0);
   const h1 = (html.match(/<h1[\s>]/gi) || []).length;
   const imgs = html.match(/<img\b[^>]*>/gi) || [];
-  const imgNoAlt = imgs.filter((t) => !/\balt\s*=/.test(t)).length;
-  const noindex = /<meta[^>]+name=["']robots["'][^>]*noindex/i.test(html);
+  const imgNoAlt = imgs.filter((t) => !/(?:^|[\s"'])alt\s*=/i.test(t)).length;
+  const noindex = metaBy("robots").some((t) => /noindex/i.test(attr(t, "content")?.[1] ?? attr(t, "content")?.[2] ?? ""));
   const links = [...html.matchAll(/<a\b[^>]*\shref=["']([^"']+)["']/gi)].map((m) => m[1]);
   return { title, description, h1, imgNoAlt, noindex, links };
 }
@@ -64,7 +70,14 @@ async function run(job: Job, rawUrl: string) {
   };
 
   job.progress = "pages";
-  const start = `https://${host}/`;
+  let start = v.parsed.protocol === "http:" ? `http://${host}/` : `https://${host}/`;
+  if (v.parsed.protocol !== "http:") {
+    const probe = await safeFetchHtml(start, 7000, 50000).catch(() => null);
+    if (!probe || probe.status === 0) {
+      const alt = await safeFetchHtml(`http://${host}/`, 7000, 50000).catch(() => null);
+      if (alt && alt.status > 0) start = `http://${host}/`;
+    }
+  }
   const queue: string[] = [start];
   const seen = new Set<string>([start]);
   // mapa strony
@@ -79,7 +92,8 @@ async function run(job: Job, rawUrl: string) {
   const external = new Set<string>();
   const linkedFrom = new Map<string, string>();
   let cursor = 0;
-  while (cursor < queue.length && pages.length < MAX_PAGES) {
+  const deadline = job.startedAt + DEADLINE_MS;
+  while (cursor < queue.length && pages.length < MAX_PAGES && Date.now() < deadline) {
     const batch = queue.slice(cursor, cursor + 5).slice(0, MAX_PAGES - pages.length);
     cursor += batch.length;
     const rows = await pool(batch, 5, async (u) => {
@@ -113,7 +127,7 @@ async function run(job: Job, rawUrl: string) {
   const subs = await pool(SUBS, 8, async (s) => {
     const name = `${s}.${base}`;
     try {
-      const addrs = await dns.resolve4(name);
+      const addrs = await dnsT(dns.resolve4(name));
       const r = await safeFetchHtml(`https://${name}/`, 6000, 60000).catch(() => null);
       return { name, resolves: true, ip: addrs[0], status: r ? r.status : 0 };
     } catch {
@@ -158,6 +172,7 @@ export function registerFullReview(app: Express) {
     const v = validateSafePublicUrl(req.body?.url);
     if (!v.valid) return res.status(400).json({ error: v.error || "Nieprawidłowy adres." });
     for (const [k, j] of jobs) if (Date.now() - j.startedAt > 60 * 60 * 1000) jobs.delete(k);
+    if ([...jobs.values()].filter((j) => !j.done).length >= MAX_JOBS) return res.status(429).json({ error: "Trwają już dwa przeglądy. Poczekaj, aż się skończą." });
     const job: Job = { id: crypto.randomBytes(8).toString("hex"), startedAt: Date.now(), done: false, progress: "start" };
     jobs.set(job.id, job);
     run(job, String(req.body.url))

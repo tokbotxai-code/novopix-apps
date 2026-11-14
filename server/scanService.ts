@@ -546,7 +546,7 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
     measurementStatus: "partial_html",
     measurementNote: T(`Częściowy pomiar rzeczywisty (Live HTML + HTTP): zmierzono prawdziwy kod DOM, TTFB (${liveInspection.responseTimeMs} ms), obrazy (${liveInspection.images.total}) i nagłówki. Pełny silnik laboratoryjny Google Lighthouse był niedostępny (${psiErrorReason || "limit zapytań API"}).`, `Partial real measurement (live HTML + HTTP): the real DOM, TTFB (${liveInspection.responseTimeMs} ms), images (${liveInspection.images.total}) and headings were measured. The full Google Lighthouse lab engine was unavailable (${psiErrorReason || "API quota limit"}).`),
     overallScore: overallPartial,
-    overallLabel: "Not measured (partial check)",
+    overallLabel: T("Brak pomiaru (kontrola częściowa)", "Not measured (partial check)"),
     categories: {
       performance: measuredPerfProxy,
       seo: measuredSeo,

@@ -1,4 +1,6 @@
 import crypto from "crypto";
+import dns from "node:dns/promises";
+import net from "node:net";
 import type { Request, Response, NextFunction } from "express";
 
 // --- 1. SSRF Protection & Safe URL Validator ---
@@ -27,6 +29,32 @@ export interface SafeUrlValidationResult {
   normalizedUrl?: string;
   parsed?: URL;
   error?: string;
+}
+
+
+// Ochrona przed domenami, które wskazują na adresy wewnętrzne (DNS): sprawdzamy rekordy A i AAAA przed każdym połączeniem i po każdym przekierowaniu.
+function isPrivateIp(ip: string): boolean {
+  if (net.isIPv4(ip)) {
+    if (PRIVATE_IPV4_PATTERNS.some((p) => p.test(ip))) return true;
+    const [a, b] = ip.split(".").map(Number);
+    return a === 172 && b >= 16 && b <= 31 || (a === 100 && b >= 64 && b <= 127) || a >= 224;
+  }
+  const v6 = ip.toLowerCase();
+  if (v6.startsWith("::ffff:")) return isPrivateIp(v6.slice(7));
+  return v6 === "::1" || v6 === "::" || v6.startsWith("fe80:") || v6.startsWith("fc") || v6.startsWith("fd") || v6.startsWith("fec0:");
+}
+export async function hostResolvesToPublicOnly(hostname: string): Promise<boolean> {
+  const h = hostname.replace(/^\[|\]$/g, "");
+  if (net.isIP(h)) return !isPrivateIp(h);
+  try {
+    const addrs = await Promise.race([
+      dns.lookup(h, { all: true }),
+      new Promise<never>((_, rej) => setTimeout(() => rej(new Error("dns timeout")), 4000)),
+    ]);
+    return addrs.length > 0 && addrs.every((a) => !isPrivateIp(a.address));
+  } catch {
+    return true; // brak rozwiązania nazwy: zwykły błąd połączenia zakończy zapytanie
+  }
 }
 
 export function validateSafePublicUrl(rawInput: unknown): SafeUrlValidationResult {
@@ -150,6 +178,19 @@ export async function safeFetchHtml(
       };
     }
 
+    if (!(await hostResolvesToPublicOnly(new URL(check.normalizedUrl).hostname))) {
+      return {
+        ok: false,
+        status: 0,
+        finalUrl: currentUrl,
+        responseTimeMs: Date.now() - startTime,
+        redirectCount: redirectChain.length,
+        redirectChain,
+        headers: new Headers(),
+        htmlText: "",
+        error: "Ten adres wskazuje na sieć wewnętrzną i nie może być skanowany.",
+      };
+    }
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 

@@ -234,7 +234,7 @@ export default function App() {
                 <button
                   onClick={() => setMoreOpen((v) => !v)}
                   className="w-full mt-2 px-3 py-2 rounded-xl text-[11px] font-bold text-[#8fd8ff] hover:bg-[#103247] cursor-pointer text-left"
-                  aria-expanded={moreOpen}
+                  aria-expanded={moreOpen || ["compare", "webscore", "diagnostics", "accessibility", "checklist", "bulk", "packages", "stats"].includes(activeTab)}
                 >
                   {moreOpen ? (isPolish ? "Mniej narzędzi ▴" : "Fewer tools ▴") : isPolish ? "Więcej narzędzi ▾" : "More tools ▾"}
                 </button>

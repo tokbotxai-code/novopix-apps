@@ -24,7 +24,7 @@ function useCountUp(target: number, ms = 900) {
 
 const tone = (n: number) => (n >= 90 ? "#10b981" : n >= 50 ? "#f59e0b" : "#ef4444");
 
-function Ring({ value, label, size = 96, stroke = 9, na = false }: { value: number; label: string; size?: number; stroke?: number; na?: boolean }) {
+function Ring({ value, label, size = 96, stroke = 9, na = false, naText = "" }: { value: number; label: string; size?: number; stroke?: number; na?: boolean; naText?: string }) {
   const shown = useCountUp(na ? 0 : value);
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
@@ -49,7 +49,7 @@ function Ring({ value, label, size = 96, stroke = 9, na = false }: { value: numb
           {na ? "–" : shown}
         </div>
       </div>
-      <div className="text-[11px] font-bold text-slate-600 text-center">{label}{na ? " (brak pomiaru / not measured)" : ""}</div>
+      <div className="text-[11px] font-bold text-slate-600 text-center">{label}{na ? naText : ""}</div>
     </div>
   );
 }
@@ -64,11 +64,11 @@ export function ScoreHero({ report, isPolish }: { report: AuditReport; isPolish:
     <div className="bg-white rounded-2xl p-6 border border-slate-200" data-testid="score-hero">
       <style>{"@media (prefers-reduced-motion: no-preference){[data-testid=score-hero] circle:nth-child(2){transition:stroke-dashoffset .2s linear}}"}</style>
       <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
-        <Ring value={report.overallScore || 0} na={!live} label={L("Wynik ogólny", "Overall score")} size={132} stroke={12} />
+        <Ring value={report.overallScore || 0} na={!live} naText={L(" (brak pomiaru)", " (not measured)")} label={L("Wynik ogólny", "Overall score")} size={132} stroke={12} />
         <div className="grid grid-cols-3 gap-4 flex-1 w-full">
-          <Ring value={report.categories.performance || 0} na={!live} label={L("Szybkość", "Speed")} />
+          <Ring value={report.categories.performance || 0} na={!live} naText={L(" (brak pomiaru)", " (not measured)")} label={L("Szybkość", "Speed")} />
           <Ring value={report.categories.seo || 0} label="SEO" />
-          <Ring value={report.categories.accessibility || 0} na={!live} label={L("Dostępność (automaty)", "Accessibility (automated)")} />
+          <Ring value={report.categories.accessibility || 0} na={!live} naText={L(" (brak pomiaru)", " (not measured)")} label={L("Dostępność (automaty)", "Accessibility (automated)")} />
         </div>
       </div>
       {prev && delta !== null && (
