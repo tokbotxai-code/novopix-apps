@@ -110,7 +110,7 @@ export default function InsightsTab({ app }: { app: AppState }) {
                       </div>
                       {viewMode === "agency" && (
                         <div className="text-xs font-mono text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200">
-                          <strong>[Instrukcja Inżynieryjna]:</strong> {issue.developerFix || "Optymalizacja zasobów statycznych i ścieżki krytycznej DOM."}
+                          <strong>{isPolish ? "Jak naprawić:" : "How to fix:"}</strong> {issue.developerFix || (isPolish ? "Optymalizacja zasobów statycznych i ścieżki krytycznej DOM." : "Optimise static resources and the critical rendering path.")}
                         </div>
                       )}
                     </div>

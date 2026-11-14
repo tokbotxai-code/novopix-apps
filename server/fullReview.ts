@@ -9,6 +9,11 @@ import { checkDomainHealth } from "./domainHealth";
 type PageRow = { url: string; status: number; ms: number; title: string; description: boolean; h1: number; imgNoAlt: number; noindex: boolean };
 type Job = { id: string; startedAt: number; done: boolean; error?: string; progress: string; result?: any; host?: string };
 const jobs = new Map<string, Job>();
+const lastByHost = new Map<string, { at: number; result: any }>();
+export function getLastReview(host: string): any | null {
+  const h = lastByHost.get(String(host).toLowerCase().replace(/^www\./, ""));
+  return h && Date.now() - h.at < 6 * 60 * 60 * 1000 ? h.result : null;
+}
 
 const MAX_PAGES = 40;
 const DEADLINE_MS = 150000;
@@ -163,6 +168,7 @@ async function run(job: Job, rawUrl: string) {
     subdomains: subs.filter((s) => s.resolves),
     domainHealth: health.body,
   };
+  lastByHost.set(base, { at: Date.now(), result: job.result });
 }
 
 // Samo „onet” w panelu: sprawdzamy popularne końcówki i bierzemy pierwszą, pod którą strona odpowiada (kolejność zależy od języka).

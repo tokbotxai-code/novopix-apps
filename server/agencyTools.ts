@@ -7,6 +7,8 @@ import { requireAgencyAuth, checkRateLimit } from "./security";
 import { db, saveDb, LeadRecord, AgencyClient } from "./database";
 import { recallScan } from "./scanCache";
 import { buildReportPdf } from "./pdfReport";
+import { buildFullPdf } from "./pdfDesign";
+import { getLastReview } from "./fullReview";
 import { stubClient } from "./funnel";
 import { hostOf } from "./resultPage";
 import { sendMail, smtpConfigured } from "./mailer";
@@ -61,6 +63,30 @@ export function registerAgencyTools(app: Express) {
     const lead = db.leads.find((l) => l.email.toLowerCase() === email.toLowerCase() && !l.repliedAt);
     if (lead) { lead.repliedAt = new Date().toISOString(); saveDb(); }
     return res.json({ ok: true });
+  });
+
+  // Pełny raport PDF dla agencji: wszystkie sekcje (wynik, CWV, problemy, domena i poczta, przegląd podstron, historia, oferta).
+  app.post("/api/agency/full-pdf", requireAgencyAuth, async (req, res) => {
+    const lang = req.body?.lang === "en" ? "en" : "pl";
+    const snap = recallScan(req.body?.scanId);
+    if (!snap) return res.status(410).json({ error: lang === "pl" ? "Wynik skanu wygasł. Zeskanuj stronę ponownie." : "The scan result has expired. Scan the site again.", code: "SCAN_EXPIRED" });
+    try {
+      const host = hostOf(snap).replace(/^www\./, "").toLowerCase();
+      const ex = req.body?.extras || {};
+      const pdf = await buildFullPdf(stubClient({ email: "" } as any, snap), snap, lang, {
+        review: getLastReview(host),
+        domainHealth: ex.domainHealth && typeof ex.domainHealth === "object" ? ex.domainHealth : undefined,
+        contact: ex.contact && typeof ex.contact === "object" ? ex.contact : undefined,
+        offerLines: Array.isArray(ex.offerLines) ? ex.offerLines.slice(0, 12).map((x: any) => String(x).slice(0, 200)) : undefined,
+        history: (db.domainHistory || {})[host] || [],
+      });
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="NovoPix-${lang === "pl" ? "pelny-raport" : "full-report"}-${host.replace(/[^\w.-]+/g, "_")}.pdf"`);
+      return res.send(pdf);
+    } catch (e: any) {
+      console.warn("full-pdf error:", e?.message);
+      return res.status(500).json({ error: lang === "pl" ? "Nie udało się przygotować PDF." : "Could not prepare the PDF." });
+    }
   });
 
   // 3, 5) Ekran „Dziś”: zgłoszenia bez odpowiedzi, alerty monitoringu, ostatnie skany.

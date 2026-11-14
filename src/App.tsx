@@ -158,7 +158,7 @@ export default function App() {
       )}
 
       {/* Sidebar Navigation — Authentic NovoPix Oceanic Theme (#0b2230 -> #103247) */}
-      <aside className="hidden lg:flex w-64 novopix-sidebar-bg text-slate-300 flex-col justify-between shrink-0 min-h-screen border-r border-[#8fd8ff]/15 no-print">
+      <aside className="hidden lg:flex w-64 novopix-sidebar-bg text-slate-300 flex-col justify-between shrink-0 sticky top-0 h-screen overflow-y-auto border-r border-[#8fd8ff]/15 no-print">
         <div>
           {/* Brand Header — Authentic NovoPix 5x5 Animated Pixel-Grid Logo (N-O-V-O-P-I-X) + Wordmark */}
           <div className="p-6 pb-5 flex items-center gap-3 border-b border-[#8fd8ff]/15">
@@ -677,7 +677,7 @@ export default function App() {
           {/* ================================================================= */}
           {shownTab === "fullreport" && viewMode === "agency" && (
             <Suspense fallback={<TabFallback isPolish={isPolish} />}>
-              <FullReportPage app={app} ctx={agencyCtx} />
+              <FullReportPage app={app} ctx={agencyCtx} onClientAdded={(c) => setCrmClients((prev) => [c, ...prev.filter((x) => x.id !== c.id)])} />
             </Suspense>
           )}
           {shownTab === "overview" && (

@@ -33,6 +33,12 @@ export default function SendReportModal({ ctx, open, onClose, scanId, host, scor
     const t = buildTemplate(tpl, { host, score, issues, lang, offerLines: seed.offerLines });
     setSubject(t.subject); setMessage(t.body);
   }, [open, tpl, lang, host, score, issues.join("|"), (seed.offerLines || []).join("|")]);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
   if (!open) return null;
   const send = async () => {
     setBusy(true); setMsg(null);

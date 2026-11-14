@@ -11,10 +11,11 @@ const AccessibilityTab = lazy(() => import("./AccessibilityTab"));
 const DiagnosticsTab = lazy(() => import("./DiagnosticsTab"));
 const ChecklistTab = lazy(() => import("./ChecklistTab"));
 const FullReviewTab = lazy(() => import("./FullReviewTab"));
+const BulkTab = lazy(() => import("./BulkTab"));
 import { ReportActions, OfferBox, HistoryCard } from "./ReportExtras";
 
 // Jeden raport dla agencji: wszystkie sekcje audytu jedna pod drugą, bez przełączania zakładek.
-export default function FullReportPage({ app, ctx }: { app: AppState; ctx: AgencyCtx }) {
+export default function FullReportPage({ app, ctx, onClientAdded }: { app: AppState; ctx: AgencyCtx; onClientAdded?: (c: any) => void }) {
   const pl = app.isPolish;
   const L = (a: string, b: string) => (pl ? a : b);
   const host = (app.currentReport.finalUrl || app.currentReport.scannedUrl || "").replace(/^https?:\/\//, "").replace(/\/.*$/, "");
@@ -34,6 +35,7 @@ export default function FullReportPage({ app, ctx }: { app: AppState; ctx: Agenc
     ["crawl", L("Indeksowanie", "Crawling")],
     ["todo", L("Do zrobienia", "To do")],
     ["domain", L("Cała domena", "Whole domain")],
+    ["bulk", L("Skan wielu stron", "Bulk scan")],
   ];
   return (
     <div className="space-y-8" data-testid="full-report">
@@ -54,6 +56,9 @@ export default function FullReportPage({ app, ctx }: { app: AppState; ctx: Agenc
       <Section id="todo" title={L("Lista rzeczy do poprawy", "To-do list")}><ChecklistTab app={app} /></Section>
       <Section id="domain" title={L("Cała domena: podstrony, linki, subdomeny, poczta", "Whole domain: pages, links, subdomains, email")}>
         <FullReviewTab ctx={ctx} initialUrl={host} autoRunKey={app.currentReport.scanId || app.currentReport.id} />
+      </Section>
+      <Section id="bulk" title={L("Skan wielu stron i leady", "Bulk scan and leads")}>
+        <BulkTab ctx={ctx} onClientAdded={(c) => onClientAdded?.(c)} />
       </Section>
     </div>
   );

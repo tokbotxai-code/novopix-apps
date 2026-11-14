@@ -259,6 +259,7 @@ app.post("/api/ai-advisor", requireStaffOnly, async (req, res) => {
     const wait = !perIp.allowed ? perIp.retryAfterSec : total.retryAfterSec;
     return res.status(429).json({ error: `Limit zapytań AI Advisor. Spróbuj ponownie za ${wait} s.` });
   }
+  let fallbackFn: (() => any) | null = null; // wersja zapasowa zawsze w języku z żądania
   try {
     const {
       website,
@@ -349,6 +350,7 @@ app.post("/api/ai-advisor", requireStaffOnly, async (req, res) => {
         ? `Krótszy czas ładowania i uporządkowane techniczne SEO zmniejszają współczynnik odrzuceń na urządzeniach mobilnych`
         : `Faster load times and clean technical SEO reduce mobile bounce rates and improve search crawlability`,
     });
+    fallbackFn = buildFallbackAdvisor;
 
     if (!ai) {
       return res.json({ advisor: publicAdvisor(buildFallbackAdvisor()) });
@@ -439,7 +441,7 @@ Respond strictly in JSON matching the schema.`;
   } catch (err: any) {
     console.warn("AI Advisor fallback used:", err?.message);
     return res.json({
-      advisor: publicAdvisor({
+      advisor: publicAdvisor(fallbackFn ? fallbackFn() : {
         summary: `Audyt techniczny domeny ${req.body?.website || ""} wykazał wynik ${req.body?.overallScore || 65}/100. Optymalizacja wskaźników Core Web Vitals oraz uporządkowanie struktury H1-H6 i meta tagów poprawi szybkość ładowania na urządzeniach mobilnych oraz czytelność dla robotów Google.`,
         businessLossAnalysis:
           "Strony ładujące się wolniej na urządzeniach mobilnych częściej tracą odwiedzających przed zapoznaniem się z ofertą.",

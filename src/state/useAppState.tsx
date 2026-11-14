@@ -1415,7 +1415,13 @@ export function useAppState() {
       return;
     }
     try {
-      const r = await fetch("/api/report-pdf", { method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ scanId, lang: isPolish ? "pl" : "en" }) });
+      const isStaff = !isPublicMode && !!agencyToken;
+      let extras: any = undefined;
+      if (isStaff) {
+        const v = computeVerdict(currentReport as any, audience, isPolish, verdictExtras(contactCheck, domainHealth, isPolish));
+        extras = { domainHealth, contact: contactCheck, offerLines: (v?.items || []).map((it) => `- ${it.service}: ${it.price} (${it.problem})`) };
+      }
+      const r = await fetch(isStaff ? "/api/agency/full-pdf" : "/api/report-pdf", { method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ scanId, lang: isPolish ? "pl" : "en", extras }) });
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
         showToast(j.error || (isPolish ? "Nie udało się pobrać PDF." : "Could not download the PDF."));
@@ -1466,7 +1472,7 @@ export function useAppState() {
         : viewMode === "client"
         ? allWorkspaceTabs.filter((t) => !t.agencyOnly && t.id !== "roi-calculator")
         : agencyToken
-        ? allWorkspaceTabs.filter((t) => !["overview", "ai-advisor", "seo", "performance", "insights", "compare", "webscore", "diagnostics", "accessibility", "checklist", "reports", "packages", "fullreview"].includes(t.id))
+        ? allWorkspaceTabs.filter((t) => !["overview", "ai-advisor", "seo", "performance", "insights", "compare", "webscore", "diagnostics", "accessibility", "checklist", "reports", "packages", "fullreview", "bulk"].includes(t.id))
         : allWorkspaceTabs.filter((t) => t.id !== "roi-calculator"),
     [viewMode, isPolish, isPublicMode, agencyToken, currentReport.demo?.scoreHistory?.length]
   );
