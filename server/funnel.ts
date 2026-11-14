@@ -162,7 +162,7 @@ export function registerPanelFunnel(app: Express, requireInternal: (req: any, re
     }
     void sendMail({
       to: alertRecipient(),
-      subject: `[NovoPix] Prośba o raport PDF: ${hostOf(lead.report!.snapshot!)}`,
+      subject: `[NovoPix] Prośba o raport PDF (${String(lead.lang || "pl").toUpperCase()}): ${hostOf(lead.report!.snapshot!)}`,
       text: autoSent
         ? `Raport PDF wysłano automatycznie (tryb automatyczny włączony).\n\nStrona: ${lead.website}\nE-mail: ${lead.email}\nJęzyk: ${lead.lang}\nZgoda: zapisana (${lead.consent?.at})`
         : `Nowa prośba o raport PDF – raport czeka na zatwierdzenie w panelu.\n\nStrona: ${lead.website}\nE-mail: ${lead.email}\nJęzyk: ${lead.lang}\nZgoda: zapisana (${lead.consent?.at})\n\nOtwórz panel agencji → CRM → „Skaner publiczny”.`,
