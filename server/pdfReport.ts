@@ -157,7 +157,7 @@ export function buildReportPdf(client: AgencyClient, snap0: ScanSnapshot, lang: 
     if (!snap.issues.length) doc.font("R").fontSize(10).fillColor("#222").text(t.noissues, 50, doc.y, { width: W });
     snap.issues.slice(0, 12).forEach((it, i) => {
       if (doc.y > doc.page.height - 120) doc.addPage();
-      doc.font("B").fontSize(10).fillColor("#0e2733").text(`${i + 1}. ${it.title}  [${t.prio[it.priority] || it.priority}]`, 50, doc.y, { width: W });
+      doc.font("B").fontSize(10).fillColor("#0e2733").text(`${i + 1}. ${it.title} (${t.prio[it.priority] || it.priority})`, 50, doc.y, { width: W });
       if (it.description) doc.font("R").fontSize(9).fillColor("#444").text(it.description, 62, doc.y + 1, { width: W - 12 });
       doc.moveDown(0.5);
     });
