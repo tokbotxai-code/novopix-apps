@@ -209,6 +209,7 @@ export default function OverviewTab({ app }: { app: AppState }) {
 
               {desktopScores && (
                 <div className="bg-white rounded-2xl p-5 border border-slate-200" data-testid="device-compare">
+                  <style>{"@keyframes npbar{from{width:0}}@media (prefers-reduced-motion:reduce){[data-testid=device-compare] *{animation:none!important}}"}</style>
                   <h2 className="text-sm font-extrabold text-slate-900 font-heading mb-3">{isPolish ? "Telefon i komputer: jeden test, dwa pomiary" : "Phone and desktop: one test, two measurements"}</h2>
                   <div className="grid grid-cols-3 gap-2 text-center text-xs">
                     <div />
@@ -222,8 +223,14 @@ export default function OverviewTab({ app }: { app: AppState }) {
                     ] as Array<[string, number, number]>).map(([label, a, b]) => (
                       <React.Fragment key={label}>
                         <div className="text-left text-slate-700 font-semibold">{label}</div>
-                        <div className="font-mono font-extrabold tabular-nums text-slate-900">{a}/100</div>
-                        <div className="font-mono font-extrabold tabular-nums text-slate-900">{b}/100</div>
+                        {[a, b].map((v, i) => (
+                          <div key={i}>
+                            <div className="font-mono font-extrabold tabular-nums text-slate-900">{v}/100</div>
+                            <div className="h-1.5 mt-1 rounded-full bg-slate-100 overflow-hidden">
+                              <div className={`h-full rounded-full ${v >= 90 ? "bg-emerald-500" : v >= 50 ? "bg-amber-400" : "bg-rose-500"}`} style={{ width: `${Math.max(0, Math.min(100, v))}%`, animation: "npbar 0.9s ease-out" }} />
+                            </div>
+                          </div>
+                        ))}
                       </React.Fragment>
                     ))}
                   </div>
