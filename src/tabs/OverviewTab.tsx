@@ -2,6 +2,7 @@ import { BarChart3, Bot, Briefcase, Calculator, CheckCircle2, Gauge, ShieldCheck
 import { ProgressSummaryCard, ScoreBarCard, ScoreGaugeCard } from "../components/ScoreCards";
 import React from "react";
 import type { AppState } from "../state/useAppState";
+import { ScoreHero } from "../components/ScoreHero";
 import { VerdictCards } from "../components/VerdictCards";
 import { DomainHealthCard } from "../components/DomainHealthCard";
 import { StatementCard } from "../components/StatementCard";
@@ -88,8 +89,10 @@ export default function OverviewTab({ app }: { app: AppState }) {
                   }}
                 />
               )}
-              {/* Top 4 KPI Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+              <ScoreHero report={currentReport} isPolish={isPolish} />
+              <details className="group" data-testid="score-details">
+                <summary className="cursor-pointer text-xs font-bold text-slate-700 px-1 py-2">{isPolish ? "Szczegóły wyników (rozwiń)" : "Score details (expand)"}</summary>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch mt-2">
                 <ScoreGaugeCard
                   title={isPolish ? "Indeks kondycji strony" : "Overall Health Index"}
                   score={currentReport.overallScore}
@@ -118,6 +121,7 @@ export default function OverviewTab({ app }: { app: AppState }) {
                 />
                 <ProgressSummaryCard report={currentReport} isPolish={isPolish} />
               </div>
+              </details>
 
               {/* AURA Executive Status Grid (Matching reference SaaS Dashboard UI) */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
