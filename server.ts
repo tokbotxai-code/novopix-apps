@@ -55,8 +55,17 @@ dotenv.config();
 const APP_MODE: "public" | "agency" = process.env.APP_MODE === "public" ? "public" : "agency";
 if (APP_MODE === "agency") initAgencyPin();
 
+const requireScannerAccess: express.RequestHandler = (req, res, next) =>
+  APP_MODE === "public" ? next() : requireAgencyAuth(req, res, next);
+const requireStaffOnly: express.RequestHandler = (req, res, next) =>
+  APP_MODE === "agency" ? requireAgencyAuth(req, res, next) : res.status(404).json({ error: "Not found" });
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+const MAX_ACTIVE_SCAN_REQUESTS = 6;
+let activeScanRequests = 0;
+const MAX_ACTIVE_SEO_CHECKS = 4;
+let activeSeoChecks = 0;
 
 app.set("trust proxy", 1);
 app.use(express.json({ limit: "1mb" }));
@@ -239,7 +248,7 @@ function publicAdvisor(a: any): any {
   return out;
 }
 
-app.post("/api/ai-advisor", async (req, res) => {
+app.post("/api/ai-advisor", requireStaffOnly, async (req, res) => {
   // Ochrona klucza AI: limit na IP (8 / 10 min) i dzienny limit całkowity (300).
   const advisorIp = req.ip || "local";
   const perIp = checkRateLimit(`advisor_${advisorIp}`, 8, 10 * 60 * 1000);
@@ -473,7 +482,7 @@ Respond strictly in JSON matching the schema.`;
 });
 
 // --- Deep Live HTML, Technical SEO, CMS Detection & Subpage Crawler (POST /api/seo-check) ---
-app.post("/api/seo-check", async (req, res) => {
+app.post("/api/seo-check", requireScannerAccess, async (req, res) => {
   const clientIp = req.ip || "local";
   const limit = checkRateLimit(`seocheck_${clientIp}`, 35, 5 * 60 * 1000);
   if (!limit.allowed) {
@@ -488,9 +497,19 @@ app.post("/api/seo-check", async (req, res) => {
       error: check.error || "Nieprawidłowy lub zablokowany adres URL.",
     });
   }
-
-  const inspection = await performDeepLiveSeoInspection(check.normalizedUrl);
-  return res.json(inspection);
+  if (activeSeoChecks >= MAX_ACTIVE_SEO_CHECKS) {
+    res.setHeader("Retry-After", "6");
+    return res.status(503).json({ error: "Kontrola SEO jest chwilowo obciążona. Spróbuj ponownie za moment." });
+  }
+  activeSeoChecks++;
+  try {
+    const inspection = await performDeepLiveSeoInspection(check.normalizedUrl);
+    return res.json(inspection);
+  } catch {
+    return res.status(502).json({ error: "Nie udało się zakończyć kontroli SEO." });
+  } finally {
+    activeSeoChecks--;
+  }
 });
 
 // --- Public Lead Submission (POST /api/contact) ---
@@ -928,7 +947,7 @@ app.delete("/api/monitoring/:id", requireAgencyAuth, (req, res) => {
 // State 1: "live_lighthouse" — Full Google PageSpeed Insights Lighthouse lab + field data
 // State 2: "partial_html"   — Live HTTP/HTML DOM measurement when PSI API quota/WAF blocks Lighthouse
 // State 3: "failed"         — Target domain unreachable (zero fabricated/hash scores!)
-app.post("/api/domain-health", async (req, res) => {
+app.post("/api/domain-health", requireScannerAccess, async (req, res) => {
   const clientIp = req.ip || "local";
   const limit = checkRateLimit(`dh_${clientIp}`, 20, 5 * 60 * 1000);
   if (!limit.allowed) return res.status(429).json({ error: `Rate limit. Retry in ${limit.retryAfterSec} s.` });
@@ -940,7 +959,7 @@ app.post("/api/domain-health", async (req, res) => {
   }
 });
 
-app.post("/api/accessibility-statement", async (req, res) => {
+app.post("/api/accessibility-statement", requireScannerAccess, async (req, res) => {
   const clientIp = req.ip || "local";
   const limit = checkRateLimit(`as_${clientIp}`, 12, 5 * 60 * 1000);
   if (!limit.allowed) return res.status(429).json({ error: `Rate limit. Retry in ${limit.retryAfterSec} s.` });
@@ -952,7 +971,7 @@ app.post("/api/accessibility-statement", async (req, res) => {
   }
 });
 
-app.post("/api/contact-check", async (req, res) => {
+app.post("/api/contact-check", requireScannerAccess, async (req, res) => {
   const clientIp = req.ip || "local";
   const limit = checkRateLimit(`cc_${clientIp}`, 20, 5 * 60 * 1000);
   if (!limit.allowed) return res.status(429).json({ error: `Rate limit. Retry in ${limit.retryAfterSec} s.` });
@@ -964,30 +983,7 @@ app.post("/api/contact-check", async (req, res) => {
   }
 });
 
-
-const SCAN_MAX_PARALLEL = 4;
-const SCAN_MAX_WAITING = 12;
-const scanQueue = { running: 0, waiting: 0, resolvers: [] as Array<() => void> };
-function acquireScanSlot(): Promise<void> {
-  if (scanQueue.running < SCAN_MAX_PARALLEL) {
-    scanQueue.running++;
-    return Promise.resolve();
-  }
-  scanQueue.waiting++;
-  return new Promise((resolve) =>
-    scanQueue.resolvers.push(() => {
-      scanQueue.waiting--;
-      resolve();
-    })
-  );
-}
-function releaseScanSlot() {
-  const next = scanQueue.resolvers.shift();
-  if (next) next(); // slot przechodzi do kolejnego zadania
-  else scanQueue.running--;
-}
-
-app.post("/api/scan", async (req, res) => {
+app.post("/api/scan", requireScannerAccess, async (req, res) => {
   const clientIp = req.ip || "local";
   const limit = checkRateLimit(`scan_${clientIp}`, 30, 5 * 60 * 1000);
   if (!limit.allowed) {
@@ -995,28 +991,31 @@ app.post("/api/scan", async (req, res) => {
       error: `Przekroczono limit skanowania. Odczekaj ${limit.retryAfterSec} s.`,
     });
   }
-  const { url, strategy = "mobile" } = req.body || {};
-  const strat = strategy === "desktop" ? "desktop" : "mobile";
-  // Wspólny limit równoległych pomiarów (chroni limit Google PSI i serwer): nadmiar czeka w krótkiej kolejce albo dostaje 503.
-  if (scanQueue.waiting >= SCAN_MAX_WAITING) {
-    return res.status(503).json({ error: "Serwis jest chwilowo zajęty. Spróbuj ponownie za minutę.", measurementStatus: "failed" });
+  if (activeScanRequests >= MAX_ACTIVE_SCAN_REQUESTS) {
+    res.setHeader("Retry-After", "6");
+    const error = "Skaner jest chwilowo obciążony. Spróbuj ponownie za moment.";
+    return res.status(503).json({ error, i18n: { [error]: "The scanner is busy. Please try again shortly." } });
   }
-  await acquireScanSlot();
-  let out: Awaited<ReturnType<typeof performScan>>;
+  activeScanRequests++;
   try {
-    out = await performScan(url, strat);
+    const { url, strategy = "mobile" } = req.body || {};
+    const strat = strategy === "desktop" ? "desktop" : "mobile";
+    const out = await performScan(url, strat);
+    trackEvent(scanEventName(APP_MODE === "public" ? "public" : "panel", out.body?.measurementStatus));
+    // scanId lets a later quote/report/public link refer to this server-measured result.
+    const snap = snapshotFromScan(out.body, strat, String(url || ""));
+    if (snap) out.body.scanId = rememberScan(snap);
+    return res.status(out.status).json(out.body);
+  } catch {
+    const error = "Nie udało się wykonać skanu. Spróbuj ponownie.";
+    return res.status(500).json({ error, i18n: { [error]: "The scan could not be completed. Please try again." } });
   } finally {
-    releaseScanSlot();
+    activeScanRequests--;
   }
-  trackEvent(scanEventName(APP_MODE === "public" ? "public" : "panel", out.body?.measurementStatus));
-  // scanId pozwala powiązać późniejsze zgłoszenie (lead, raport PDF, publiczny link) z wynikiem zmierzonym przez serwer.
-  const snap = snapshotFromScan(out.body, strat, String(url || ""));
-  if (snap) out.body.scanId = rememberScan(snap);
-  return res.status(out.status).json(out.body);
 });
 
 // Pobranie raportu PDF dla wyniku zmierzonego przez serwer (scanId), bez zapisu danych i bez e-maila.
-app.post("/api/report-pdf", async (req, res) => {
+app.post("/api/report-pdf", requireScannerAccess, async (req, res) => {
   const lang = req.body?.lang === "en" ? "en" : "pl";
   const limit = checkRateLimit(`pdf_${req.ip || "local"}`, 20, 60 * 60 * 1000);
   if (!limit.allowed) return res.status(429).json({ error: lang === "pl" ? "Zbyt wiele żądań. Spróbuj ponownie później." : "Too many requests. Please try again later." });

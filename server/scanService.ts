@@ -1,4 +1,4 @@
-import { validateSafePublicUrl, safeFetchHtml } from "./security";
+import { resolvePublicAddress, validateSafePublicUrl, safeFetchHtml } from "./security";
 import { extractVisual } from "./visualMarks";
 import { performDeepLiveSeoInspection } from "./seoCrawler";
 
@@ -7,6 +7,7 @@ const URL_ERRORS_EN: Record<string, string> = {
   "Adres URL jest wymagany.": "A website address is required.",
   "Adres URL nie może być pusty.": "The website address cannot be empty.",
   "Nieprawidłowy format adresu URL.": "Invalid URL format.",
+  "Adres URL nie może zawierać danych logowania.": "The URL must not contain login credentials.",
   "Dozwolone są wyłącznie protokoły HTTP oraz HTTPS.": "Only HTTP and HTTPS are allowed.",
   "Ze względów bezpieczeństwa (ochrona Anti-SSRF) skanowanie adresów lokalnych i wewnętrznych jest zablokowane.": "For security reasons (anti-SSRF protection) scanning local and internal addresses is blocked.",
   "Blokada bezpieczeństwa Anti-SSRF: prywatne adresy IP nie mogą być skanowane.": "Anti-SSRF security block: private IP addresses cannot be scanned.",
@@ -94,6 +95,13 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
   }
 
   const targetUrl = urlValidation.normalizedUrl;
+  const publicAddress = await resolvePublicAddress(new URL(targetUrl).hostname);
+  if (!publicAddress) {
+    return res.status(400).json({
+      error: T("Nie udało się bezpiecznie potwierdzić publicznego adresu tej domeny. Sprawdź adres i spróbuj ponownie.", "We could not safely confirm that this domain resolves to a public address. Check the address and try again."),
+      measurementStatus: "failed",
+    });
+  }
   let psiErrorReason: string | null = null;
 
   try {

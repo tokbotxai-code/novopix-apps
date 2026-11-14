@@ -85,36 +85,13 @@ async function verifySubpageHttpStatus(subUrl: string, source: "html" | "sitemap
   }
   const start = Date.now();
   try {
-    const res = await fetch(check.normalizedUrl, {
-      method: "HEAD",
-      redirect: "manual",
-      signal: AbortSignal.timeout(3200),
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; NovoPixAuditBot/2.0; +https://novopix.uk)",
-      },
-    });
-    const elapsed = Date.now() - start;
-    // If server rejects HEAD with 405, fallback to lightweight GET
-    if (res.status === 405) {
-      const getRes = await fetch(check.normalizedUrl, {
-        method: "GET",
-        redirect: "manual",
-        signal: AbortSignal.timeout(3200),
-      });
-      return {
-        url: subUrl,
-        status: getRes.status,
-        source,
-        responseTimeMs: Date.now() - start,
-        redirected: [301, 302, 303, 307, 308].includes(getRes.status),
-      };
-    }
+    const res = await safeFetchHtml(check.normalizedUrl, 3200, 16384);
     return {
       url: subUrl,
       status: res.status,
       source,
-      responseTimeMs: elapsed,
-      redirected: [301, 302, 303, 307, 308].includes(res.status),
+      responseTimeMs: Date.now() - start,
+      redirected: res.redirectCount > 0,
     };
   } catch {
     return {
@@ -270,17 +247,17 @@ export async function performDeepLiveSeoInspection(targetUrl: string) {
   try {
     const rCheck = validateSafePublicUrl(`${parsedOrigin}/robots.txt`);
     if (rCheck.valid && rCheck.normalizedUrl) {
-      const rRes = await fetch(rCheck.normalizedUrl, { method: "HEAD", signal: AbortSignal.timeout(3000) });
+      const rRes = await safeFetchHtml(rCheck.normalizedUrl, 3000, 8192);
       hasRobots = rRes.ok;
     }
   } catch {}
   try {
     const sCheck = validateSafePublicUrl(`${parsedOrigin}/sitemap.xml`);
     if (sCheck.valid && sCheck.normalizedUrl) {
-      const sRes = await fetch(sCheck.normalizedUrl, { signal: AbortSignal.timeout(3500) });
+      const sRes = await safeFetchHtml(sCheck.normalizedUrl, 3500, 300000);
       hasSitemap = sRes.ok;
       if (sRes.ok) {
-        const sitemapXml = await sRes.text();
+        const sitemapXml = sRes.htmlText;
         const locMatches = sitemapXml.match(/<loc>\s*([^<\s]+)\s*<\/loc>/gi) || [];
         for (const locTag of locMatches) {
           if (rawCandidateSubpages.length >= 8) break;

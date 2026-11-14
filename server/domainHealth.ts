@@ -2,7 +2,8 @@
 // Tylko publicznie widoczne dane (DNS, certyfikat, nagłówki odpowiedzi); żadnych opinii prawnych.
 import dns from "node:dns/promises";
 import tls from "node:tls";
-import { safeFetchHtml, validateSafePublicUrl } from "./security";
+import net from "node:net";
+import { resolvePublicAddress, safeFetchHtml, validateSafePublicUrl } from "./security";
 import type { DomainHealth, Presence } from "../src/utils/domainHealthTypes";
 
 const DKIM_SELECTORS = ["google", "default", "selector1", "selector2", "k1", "k2", "mail", "s1", "s2", "dkim", "smtp", "mandrill"];
@@ -65,10 +66,12 @@ async function mailChecks(domain: string): Promise<DomainHealth["mail"]> {
   return { mx, spf, dmarc, dmarcPolicy: policy, dkim };
 }
 
-function sslCheck(host: string): Promise<DomainHealth["ssl"]> {
+async function sslCheck(host: string): Promise<DomainHealth["ssl"]> {
+  const address = await resolvePublicAddress(host);
+  if (!address) return { status: "unknown", daysLeft: null, validTo: null };
   return withTimeout(
     new Promise<DomainHealth["ssl"]>((resolve) => {
-      const socket = tls.connect({ host, port: 443, servername: host, timeout: 6000, rejectUnauthorized: false }, () => {
+      const socket = tls.connect({ host: address, port: 443, servername: net.isIP(host) ? undefined : host, timeout: 6000, rejectUnauthorized: false }, () => {
         const cert = socket.getPeerCertificate();
         const authorized = socket.authorized;
         socket.end();

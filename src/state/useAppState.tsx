@@ -171,6 +171,12 @@ export function useAppState() {
       return null;
     }
   });
+  const getAuthHeaders = useCallback((tokenOverride?: string | null): Record<string, string> => {
+    const tok = tokenOverride !== undefined ? tokenOverride : agencyToken;
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (tok) headers.Authorization = `Bearer ${tok}`;
+    return headers;
+  }, [agencyToken]);
   // Jedno miejsce decyduje o ekranie logowania panelu (App i tytuł karty).
   const showLoginScreen = shouldShowLogin({ isPublicMode, agencyToken, viewMode, clientView: startParams.clientView });
   const [isDefaultPinWarning, setIsDefaultPinWarning] = useState<boolean>(false);
@@ -194,13 +200,13 @@ export function useAppState() {
     let cancelled = false;
     setDomainHealth(null);
     setDomainHealthLoading(true);
-    fetch("/api/domain-health", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: target }) })
+    fetch("/api/domain-health", { method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ url: target }) })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (!cancelled) setDomainHealth(d && d.host ? d : null); })
       .catch(() => { if (!cancelled) setDomainHealth(null); })
       .finally(() => { if (!cancelled) setDomainHealthLoading(false); });
     return () => { cancelled = true; };
-  }, [rawReport.scanId, rawReport.finalUrl, rawReport.scannedUrl, rawReport.isSample, rawReport.measurementStatus]);
+  }, [rawReport.scanId, rawReport.finalUrl, rawReport.scannedUrl, rawReport.isSample, rawReport.measurementStatus, getAuthHeaders]);
   const [statement, setStatement] = useState<StatementCheck | null>(null);
   const [statementLoading, setStatementLoading] = useState<boolean>(false);
   useEffect(() => {
@@ -210,13 +216,13 @@ export function useAppState() {
     let cancelled = false;
     setStatement(null);
     setStatementLoading(true);
-    fetch("/api/accessibility-statement", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: target }) })
+    fetch("/api/accessibility-statement", { method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ url: target }) })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (!cancelled) setStatement(d && d.host ? d : null); })
       .catch(() => { if (!cancelled) setStatement(null); })
       .finally(() => { if (!cancelled) setStatementLoading(false); });
     return () => { cancelled = true; };
-  }, [rawReport.scanId, rawReport.finalUrl, rawReport.scannedUrl, rawReport.isSample, rawReport.measurementStatus, isPublicMode, audience]);
+  }, [rawReport.scanId, rawReport.finalUrl, rawReport.scannedUrl, rawReport.isSample, rawReport.measurementStatus, isPublicMode, audience, getAuthHeaders]);
   const [contactCheck, setContactCheck] = useState<ContactCheck | null>(null);
   const [contactLoading, setContactLoading] = useState<boolean>(false);
   useEffect(() => {
@@ -226,27 +232,18 @@ export function useAppState() {
     let cancelled = false;
     setContactCheck(null);
     setContactLoading(true);
-    fetch("/api/contact-check", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: target }) })
+    fetch("/api/contact-check", { method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ url: target }) })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (!cancelled) setContactCheck(d && d.host ? d : null); })
       .catch(() => { if (!cancelled) setContactCheck(null); })
       .finally(() => { if (!cancelled) setContactLoading(false); });
     return () => { cancelled = true; };
-  }, [rawReport.scanId, rawReport.finalUrl, rawReport.scannedUrl, rawReport.isSample, rawReport.measurementStatus, isPublicMode, audience]);
+  }, [rawReport.scanId, rawReport.finalUrl, rawReport.scannedUrl, rawReport.isSample, rawReport.measurementStatus, isPublicMode, audience, getAuthHeaders]);
   const competitorReport = useMemo(() => (rawCompetitorReport ? localizeDeep(rawCompetitorReport, rawCompetitorReport.i18n, !isPolish) : null), [rawCompetitorReport, isPolish]);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 3200);
-  };
-
-  const getAuthHeaders = (tokenOverride?: string | null): Record<string, string> => {
-    const tok = tokenOverride !== undefined ? tokenOverride : agencyToken;
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (tok) {
-      headers["Authorization"] = `Bearer ${tok}`;
-    }
-    return headers;
   };
 
   const agencyCtx: AgencyCtx = {
@@ -581,7 +578,7 @@ export function useAppState() {
     try {
       const res = await fetch("/api/seo-check", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ url: targetUrl }),
       });
       if (res.ok) {
@@ -603,7 +600,7 @@ export function useAppState() {
     try {
       const res = await fetch("/api/ai-advisor", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           website: rep.finalUrl || rep.scannedUrl,
           overallScore: rep.overallScore,
@@ -654,7 +651,7 @@ export function useAppState() {
       const scanDesktop = () =>
         fetch("/api/scan", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ url: query, strategy: "desktop" }),
         })
           .then((r) => r.json().catch(() => null))
@@ -665,7 +662,7 @@ export function useAppState() {
           const call = () =>
             fetch("/api/scan", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: getAuthHeaders(),
               body: JSON.stringify({ url: query, strategy: "mobile" }),
             });
           let r = await call();
@@ -824,7 +821,7 @@ export function useAppState() {
     try {
       const res = await fetch("/api/scan", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ url: competitorUrl.trim(), strategy }),
       });
       const data = await res.json().catch(() => ({}));
@@ -1398,7 +1395,7 @@ export function useAppState() {
       return;
     }
     try {
-      const r = await fetch("/api/report-pdf", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scanId, lang: isPolish ? "pl" : "en" }) });
+      const r = await fetch("/api/report-pdf", { method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ scanId, lang: isPolish ? "pl" : "en" }) });
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
         showToast(j.error || (isPolish ? "Nie udało się pobrać PDF." : "Could not download the PDF."));

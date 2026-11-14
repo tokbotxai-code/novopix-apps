@@ -1,7 +1,9 @@
 import crypto from "crypto";
 import dns from "node:dns/promises";
 import net from "node:net";
-import { Agent, fetch as undiciFetch } from "undici";
+import http from "node:http";
+import https from "node:https";
+import type { LookupFunction } from "node:net";
 import type { Request, Response, NextFunction } from "express";
 
 // --- 1. SSRF Protection & Safe URL Validator ---
@@ -36,44 +38,105 @@ export interface SafeUrlValidationResult {
 // Ochrona przed domenami, które wskazują na adresy wewnętrzne (DNS): sprawdzamy rekordy A i AAAA przed każdym połączeniem i po każdym przekierowaniu.
 function isPrivateIp(ip: string): boolean {
   if (net.isIPv4(ip)) {
-    if (PRIVATE_IPV4_PATTERNS.some((p) => p.test(ip))) return true;
-    const [a, b] = ip.split(".").map(Number);
-    return a === 172 && b >= 16 && b <= 31 || (a === 100 && b >= 64 && b <= 127) || a >= 224;
+    const [a, b, c] = ip.split(".").map(Number);
+    return PRIVATE_IPV4_PATTERNS.some((p) => p.test(ip)) ||
+      a === 172 && b >= 16 && b <= 31 || (a === 100 && b >= 64 && b <= 127) ||
+      a === 192 && ((b === 0 && (c === 0 || c === 2)) || (b === 88 && c === 99)) ||
+      a === 198 && (b === 18 || b === 19 || (b === 51 && c === 100)) ||
+      a === 203 && b === 0 && c === 113 || a >= 224;
   }
   const v6 = ip.toLowerCase();
-  if (v6.startsWith("::ffff:")) return isPrivateIp(v6.slice(7));
-  return v6 === "::1" || v6 === "::" || v6.startsWith("fe80:") || v6.startsWith("fc") || v6.startsWith("fd") || v6.startsWith("fec0:");
+  if (v6.startsWith("::ffff:") || v6.startsWith("::")) return true;
+  // Block non-global IPv6, transition mechanisms and documentation ranges.
+  return v6 === "::1" || v6 === "::" || v6.startsWith("fe80:") || v6.startsWith("fc") || v6.startsWith("fd") ||
+    v6.startsWith("fec0:") || v6.startsWith("ff") || v6.startsWith("2001:db8:") || v6.startsWith("2001:10:") ||
+    v6.startsWith("2001:0:") || v6.startsWith("2002:") || v6.startsWith("64:ff9b:1:");
 }
 export async function hostResolvesToPublicOnly(hostname: string): Promise<boolean> {
   const h = hostname.replace(/^\[|\]$/g, "");
   if (net.isIP(h)) return !isPrivateIp(h);
+  let timeout: ReturnType<typeof setTimeout> | undefined;
   try {
     const addrs = await Promise.race([
       dns.lookup(h, { all: true }),
-      new Promise<never>((_, rej) => setTimeout(() => rej(new Error("dns timeout")), 4000)),
+      new Promise<never>((_, rej) => { timeout = setTimeout(() => rej(new Error("dns timeout")), 4000); }),
     ]);
     return addrs.length > 0 && addrs.every((a) => !isPrivateIp(a.address));
   } catch {
-    return false; // nie udało się bezpiecznie sprawdzić nazwy: odrzucamy zapytanie
+    return false;
+  } finally {
+    if (timeout) clearTimeout(timeout);
   }
 }
 
-// Agent HTTP, który sprawdza adres IP dokładnie w chwili łączenia (ochrona przed DNS rebinding):
-// połączenie nie może pójść na adres wewnętrzny, nawet jeśli nazwa wskazywała go dopiero po wcześniejszej kontroli.
-const safeAgent = new Agent({
-  connect: {
-    lookup: (hostname: string, options: any, cb: any) => {
-      dns
-        .lookup(hostname, { all: true })
-        .then((addrs) => {
-          if (!addrs.length || addrs.some((a) => isPrivateIp(a.address))) return cb(new Error("blocked: internal address"));
-          if (options && options.all) return cb(null, addrs);
-          return cb(null, addrs[0].address, addrs[0].family);
-        })
-        .catch((e) => cb(e));
-    },
-  },
-});
+async function resolvePublicAddresses(hostname: string): Promise<Array<{ address: string; family: number }>> {
+  const host = hostname.replace(/^\[|\]$/g, "");
+  if (net.isIP(host)) return isPrivateIp(host) ? [] : [{ address: host, family: net.isIP(host) }];
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const addresses = await Promise.race([
+      dns.lookup(host, { all: true, verbatim: true }),
+      new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error("DNS timeout")), 4000); }),
+    ]);
+    if (!addresses.length || addresses.some((item) => isPrivateIp(item.address))) return [];
+    return addresses.map(({ address, family }) => ({ address, family }));
+  } catch {
+    return [];
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
+
+export async function resolvePublicAddress(hostname: string): Promise<string | null> {
+  return (await resolvePublicAddresses(hostname))[0]?.address || null;
+}
+
+function pinnedHttpRequest(url: URL, address: { address: string; family: number }, timeoutMs: number, maxBytes: number) {
+  return new Promise<{ status: number; headers: Headers; body: string }>((resolve, reject) => {
+    const lookup: LookupFunction = (_hostname, options, callback) => {
+      const wantsAll = typeof options === "object" && options !== null && "all" in options && options.all;
+      const cb = callback as (...args: any[]) => void;
+      if (wantsAll) cb(null, [{ address: address.address, family: address.family }]);
+      else cb(null, address.address, address.family);
+    };
+    const requestOptions: http.RequestOptions = {
+      method: "GET",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; NovoPixAuditBot/2.0; +https://novopix.uk)",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Cache-Control": "no-cache",
+        "Accept-Encoding": "identity",
+      },
+      lookup,
+    };
+    const onResponse = (res: http.IncomingMessage) => {
+      const headers = new Headers();
+      for (let i = 0; i < res.rawHeaders.length; i += 2) headers.append(res.rawHeaders[i], res.rawHeaders[i + 1]);
+      const chunks: Buffer[] = [];
+      let received = 0;
+      res.on("data", (chunk: Buffer | string) => {
+        const data = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+        received += data.length;
+        if (received > maxBytes) {
+          chunks.push(data.subarray(0, Math.max(0, data.length - (received - maxBytes))));
+          res.destroy();
+          resolve({ status: res.statusCode || 0, headers, body: Buffer.concat(chunks).toString("utf8") });
+          return;
+        }
+        chunks.push(data);
+      });
+      res.on("end", () => resolve({ status: res.statusCode || 0, headers, body: Buffer.concat(chunks).toString("utf8") }));
+      res.on("error", reject);
+    };
+    const req = url.protocol === "https:"
+      ? https.request(url, { ...requestOptions, servername: net.isIP(url.hostname.replace(/^\[|\]$/g, "")) ? undefined : url.hostname }, onResponse)
+      : http.request(url, requestOptions, onResponse);
+    req.setTimeout(timeoutMs, () => req.destroy(new Error("Request timed out")));
+    req.on("error", reject);
+    req.end();
+  });
+}
 
 export function validateSafePublicUrl(rawInput: unknown): SafeUrlValidationResult {
   if (!rawInput || typeof rawInput !== "string") {
@@ -98,6 +161,9 @@ export function validateSafePublicUrl(rawInput: unknown): SafeUrlValidationResul
 
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     return { valid: false, error: "Dozwolone są wyłącznie protokoły HTTP oraz HTTPS." };
+  }
+  if (parsed.username || parsed.password) {
+    return { valid: false, error: "Adres URL nie może zawierać danych logowania." };
   }
 
   const hostname = parsed.hostname.toLowerCase();
@@ -196,7 +262,9 @@ export async function safeFetchHtml(
       };
     }
 
-    if (!(await hostResolvesToPublicOnly(new URL(check.normalizedUrl).hostname))) {
+    const parsed = new URL(check.normalizedUrl);
+    const addresses = await resolvePublicAddresses(parsed.hostname);
+    if (!addresses.length) {
       return {
         ok: false,
         status: 0,
@@ -209,24 +277,8 @@ export async function safeFetchHtml(
         error: "Ten adres wskazuje na sieć wewnętrzną i nie może być skanowany.",
       };
     }
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-
     try {
-      const res = await undiciFetch(check.normalizedUrl, {
-        method: "GET",
-        redirect: "manual",
-        signal: controller.signal,
-        dispatcher: safeAgent,
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (compatible; NovoPixAuditBot/2.0; +https://novopix.uk)",
-          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-          "Accept-Language": "pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7",
-          "Cache-Control": "no-cache",
-        },
-      });
-      clearTimeout(timer);
+      const res = await pinnedHttpRequest(parsed, addresses[0], timeoutMs, maxBytes);
 
       if ([301, 302, 303, 307, 308].includes(res.status)) {
         const loc = res.headers.get("location");
@@ -238,41 +290,17 @@ export async function safeFetchHtml(
         }
       }
 
-      // Read body with size limit
-      const reader = res.body?.getReader();
-      const chunks: Uint8Array[] = [];
-      let receivedBytes = 0;
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          if (value) {
-            receivedBytes += value.byteLength;
-            if (receivedBytes > maxBytes) {
-              await reader.cancel();
-              break;
-            }
-            chunks.push(value);
-          }
-        }
-      }
-
-      const combined = Buffer.concat(chunks);
-      const htmlText = combined.toString("utf-8");
-
       return {
-        ok: res.ok,
+        ok: res.status >= 200 && res.status < 300,
         status: res.status,
         finalUrl: check.normalizedUrl,
         responseTimeMs: Date.now() - startTime,
         redirectCount: redirectChain.length,
         redirectChain,
         headers: res.headers,
-        htmlText,
+        htmlText: res.body,
       };
     } catch (err: any) {
-      clearTimeout(timer);
       return {
         ok: false,
         status: 0,
@@ -282,7 +310,7 @@ export async function safeFetchHtml(
         redirectChain,
         headers: new Headers(),
         htmlText: "",
-        error: err?.name === "AbortError" ? "Przekroczono limit czasu połączenia (Timeout)" : err?.message || "Błąd połączenia HTTP",
+        error: err?.message?.includes("timed out") ? "Przekroczono limit czasu połączenia (Timeout)" : err?.message || "Błąd połączenia HTTP",
       };
     }
   }
