@@ -1419,7 +1419,7 @@ export function useAppState() {
       let extras: any = undefined;
       if (isStaff) {
         const v = computeVerdict(currentReport as any, audience, isPolish, verdictExtras(contactCheck, domainHealth, isPolish));
-        extras = { domainHealth, contact: contactCheck, offerLines: (v?.items || []).map((it) => `- ${it.service}: ${it.price} (${it.problem})`) };
+        extras = { domainHealth, contact: contactCheck, seo: liveSeo, a11y: { breakdown: currentReport.accessibilityBreakdown, statement }, offerLines: (v?.items || []).map((it) => `- ${it.service}: ${it.price} (${it.problem})`) };
       }
       const r = await fetch(isStaff ? "/api/agency/full-pdf" : "/api/report-pdf", { method: "POST", headers: getAuthHeaders(), body: JSON.stringify({ scanId, lang: isPolish ? "pl" : "en", extras }) });
       if (!r.ok) {

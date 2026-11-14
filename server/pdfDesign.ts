@@ -54,6 +54,8 @@ export type FullExtras = {
   contact?: any;
   offerLines?: string[];
   history?: Array<{ at: string; overall: number | null }>;
+  seo?: any;
+  a11y?: any;
   recipient?: string;
 };
 
@@ -111,6 +113,17 @@ function footers(doc: PDFKit.PDFDocument, t: typeof T.pl, W: number) {
     doc.font("B").fontSize(8).fillColor(C.ink).text(`${t.page} ${i + 1} ${t.of} ${range.count}`, 46 + W - 70, y, { width: 70, align: "right", lineBreak: false });
   }
 }
+
+function kvRows(doc: PDFKit.PDFDocument, rows: Array<[string, string, string]>, W: number) {
+  rows.forEach(([k, v, col], i) => {
+    if (doc.y > doc.page.height - 90) doc.addPage();
+    const y = doc.y; if (i % 2 === 0) doc.rect(46, y - 2, W, 18).fill(C.soft);
+    doc.font("B").fontSize(9.5).fillColor(C.ink).text(k, 54, y + 1, { width: W / 2 - 10, lineBreak: false, ellipsis: true });
+    doc.font("B").fontSize(9.5).fillColor(col).text(v, 46 + W / 2, y + 1, { width: W / 2 - 8, align: "right", lineBreak: false, ellipsis: true });
+    doc.y = y + 18;
+  });
+}
+const stCol = (s: string | undefined) => (s === "good" ? C.good : s === "error" ? C.bad : s === "warning" ? C.warn : C.ink);
 
 const CWV_TARGET: Record<string, string> = { LCP: "≤ 2.5 s", INP: "≤ 200 ms", CLS: "≤ 0.1", FCP: "≤ 1.8 s", TBT: "≤ 200 ms", TTFB: "≤ 800 ms" };
 const EN_NAMES: Record<string, string> = { LCP: "Largest Contentful Paint", INP: "Interaction to Next Paint", CLS: "Cumulative Layout Shift", FCP: "First Contentful Paint", TBT: "Total Blocking Time" };
@@ -237,6 +250,40 @@ export function buildFullPdf(client: AgencyClient, snap0: ScanSnapshot, lang: La
         doc.font("B").fontSize(9.5).fillColor(C.ink).text(k, 54, y + 1, { width: 140 });
         doc.font("B").fontSize(9.5).fillColor(col).text(v, 46 + W - 200, y + 1, { width: 192, align: "right" }); doc.y = y + 18;
       });
+    }
+    const sx = extras.seo;
+    if (sx) {
+      const pl = lang === "pl";
+      section(doc, pl ? "SEO szczegółowo" : "Detailed SEO", W);
+      const yn = (b: any) => (b ? (pl ? "tak" : "yes") : pl ? "nie" : "no");
+      const rows: Array<[string, string, string]> = [];
+      if (sx.title) rows.push([pl ? "Tytuł strony" : "Page title", `${sx.title.length ?? 0} ${pl ? "znaków" : "characters"}${sx.title.text ? `: ${String(sx.title.text).slice(0, 38)}` : ""}`, stCol(sx.title.status)]);
+      if (sx.description) rows.push([pl ? "Opis meta" : "Meta description", sx.description.length ? `${sx.description.length} ${pl ? "znaków" : "characters"}` : pl ? "brak" : "missing", stCol(sx.description.status)]);
+      if (sx.headings) rows.push([pl ? "Nagłówki H1 / H2 / H3" : "Headings H1 / H2 / H3", `${sx.headings.h1} / ${sx.headings.h2} / ${sx.headings.h3}`, stCol(sx.headings.status)]);
+      if (sx.canonical) rows.push(["Canonical", sx.canonical.url ? (sx.canonical.isSelf ? (pl ? "wskazuje tę stronę" : "points to this page") : String(sx.canonical.url).slice(0, 38)) : pl ? "brak" : "missing", stCol(sx.canonical.status)]);
+      if (sx.indexing) rows.push([pl ? "Indeksowanie (robots.txt / mapa strony)" : "Indexing (robots.txt / sitemap)", `${yn(sx.indexing.hasRobotsTxt)} / ${yn(sx.indexing.hasSitemapXml)}`, stCol(sx.indexing.status)]);
+      if (sx.images) rows.push([pl ? "Obrazy (razem / bez ALT)" : "Images (total / without ALT)", `${sx.images.total} / ${sx.images.missingAlt}`, stCol(sx.images.status)]);
+      if (sx.links) rows.push([pl ? "Linki (wewnętrzne / zewnętrzne)" : "Links (internal / external)", `${sx.links.internal} / ${sx.links.external}`, C.ink]);
+      if (sx.social) rows.push([pl ? "Open Graph i dane strukturalne" : "Open Graph and structured data", `${sx.social.ogTitle ? "OG" : "–"} · JSON-LD: ${sx.social.schemaJsonLdCount ?? 0}`, stCol(sx.social.status)]);
+      if (typeof sx.responseTimeMs === "number") rows.push([pl ? "Czas odpowiedzi serwera" : "Server response time", `${sx.responseTimeMs} ms`, sx.responseTimeMs > 800 ? C.warn : C.good]);
+      if (typeof sx.htmlSizeKb === "number") rows.push([pl ? "Rozmiar HTML" : "HTML size", `${sx.htmlSizeKb} kB`, C.ink]);
+      if (sx.scriptStats) rows.push([pl ? "Skrypty (razem / blokujące) i arkusze CSS" : "Scripts (total / render-blocking) and stylesheets", `${sx.scriptStats.totalScripts} / ${sx.scriptStats.renderBlockingScripts} · ${sx.scriptStats.stylesheets}`, sx.scriptStats.renderBlockingScripts ? C.warn : C.good]);
+      if (sx.htmlLang !== undefined) rows.push([pl ? "Język strony (lang)" : "Page language (lang)", sx.htmlLang || (pl ? "brak" : "missing"), sx.htmlLang ? C.good : C.warn]);
+      rows.push([pl ? "HTTPS / widok mobilny" : "HTTPS / mobile viewport", `${yn(sx.https)} / ${yn(sx.viewport)}`, sx.https && sx.viewport ? C.good : C.warn]);
+      const tech = (sx.techStack && sx.techStack.length ? sx.techStack.join(", ") : sx.cmsTech) || "";
+      if (tech) rows.push([pl ? "Wykryta technologia" : "Detected technology", String(tech).slice(0, 40), C.ink]);
+      kvRows(doc, rows, W);
+    }
+    const ax = extras.a11y;
+    if (ax) {
+      const pl = lang === "pl";
+      section(doc, pl ? "Dostępność: kontrole automatyczne" : "Accessibility: automated checks", W);
+      const b = ax.breakdown || {};
+      const rowsA: Array<[string, string, string]> = [];
+      ([[pl ? "Kontrast tekstu" : "Text contrast", b.contrast], [pl ? "Nawigacja i fokus" : "Navigation and focus", b.navigation], [pl ? "Nazwy elementów" : "Element names", b.names], [pl ? "Atrybuty ARIA i ALT" : "ARIA and ALT", b.aria]] as Array<[string, number | null]>).forEach(([k, v]) => { if (typeof v === "number") rowsA.push([k, `${v}/100`, tone(v)]); });
+      if (ax.statement) rowsA.push([pl ? "Deklaracja dostępności" : "Accessibility statement", ax.statement.found === true ? (pl ? "znaleziona" : "found") : ax.statement.found === false ? (pl ? "nie znaleziono" : "not found") : pl ? "nie udało się sprawdzić" : "could not be checked", ax.statement.found === true ? C.good : ax.statement.found === false ? C.warn : C.mute]);
+      if (rowsA.length) kvRows(doc, rowsA, W);
+      para(doc, pl ? "Automaty sprawdzają tylko część wymagań. To nie jest ocena zgodności z WCAG ani certyfikat. Klawiaturę, czytnik ekranu i treść trzeba sprawdzić ręcznie." : "Automated checks cover only part of the requirements. This is not a WCAG conformance assessment or a certificate. Keyboard use, screen readers and content must be reviewed by hand.", W, 8.5, C.mute);
     }
     if (extras.contact?.ok) {
       section(doc, t.contact, W);

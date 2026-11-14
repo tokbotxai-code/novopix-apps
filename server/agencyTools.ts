@@ -77,6 +77,8 @@ export function registerAgencyTools(app: Express) {
         review: getLastReview(host),
         domainHealth: ex.domainHealth && typeof ex.domainHealth === "object" ? ex.domainHealth : undefined,
         contact: ex.contact && typeof ex.contact === "object" ? ex.contact : undefined,
+        seo: ex.seo && typeof ex.seo === "object" ? ex.seo : undefined,
+        a11y: ex.a11y && typeof ex.a11y === "object" ? ex.a11y : undefined,
         offerLines: Array.isArray(ex.offerLines) ? ex.offerLines.slice(0, 12).map((x: any) => String(x).slice(0, 200)) : undefined,
         history: (db.domainHistory || {})[host] || [],
       });
