@@ -45,6 +45,7 @@ function TabFallback({ isPolish }: { isPolish: boolean }) {
 
 export default function App() {
   const app = useAppState();
+  const [moreOpen, setMoreOpen] = React.useState(false);
   const {
     activeTab,
     agencyCtx,
@@ -189,7 +190,9 @@ export default function App() {
             <nav className={`space-y-0.5 ${isPublicMode && !hasScan ? "hidden" : ""}`}>
               {(() => {
                 const gOf = (id: string) => (["monitoring", "status", "stats", "statistics"].includes(id) ? 2 : ["roi-calculator", "packages", "reports", "crm", "bulk"].includes(id) ? 1 : 0);
-                return [...workspaceTabs].sort((x, y) => gOf(x.id) - gOf(y.id));
+                const SECONDARY = ["compare", "webscore", "diagnostics", "accessibility", "checklist", "bulk", "packages", "stats"];
+                const open = moreOpen || SECONDARY.includes(activeTab);
+                return [...workspaceTabs].sort((x, y) => gOf(x.id) - gOf(y.id)).filter((t) => open || !SECONDARY.includes(t.id));
               })().map((item, idx, arr) => {
                 const IconComponent = item.icon;
                 const isActive = activeTab === item.id;
@@ -226,6 +229,15 @@ export default function App() {
                 );
               })}
             </nav>
+              {!isPublicMode && !isClientLinkLocked && workspaceTabs.length > 10 && (
+                <button
+                  onClick={() => setMoreOpen((v) => !v)}
+                  className="w-full mt-2 px-3 py-2 rounded-xl text-[11px] font-bold text-[#8fd8ff] hover:bg-[#103247] cursor-pointer text-left"
+                  aria-expanded={moreOpen}
+                >
+                  {moreOpen ? (isPolish ? "Mniej narzędzi ▴" : "Fewer tools ▴") : isPolish ? "Więcej narzędzi ▾" : "More tools ▾"}
+                </button>
+              )}
           </div>
 
           {/* Secondary links */}
