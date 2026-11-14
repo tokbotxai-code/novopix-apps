@@ -126,7 +126,9 @@ async function run(job: Job, rawUrl: string) {
     const r = await safeFetchHtml(u, 6000, 60000).catch(() => null);
     return { url: u, status: r ? r.status : 0 };
   });
-  const brokenExternal = extRows.filter((e) => e.status === 0 || e.status >= 400);
+  // status 0 = nie udało się połączyć z naszego serwera (np. strona blokuje roboty): to nie jest dowód, że link jest martwy
+  const brokenExternal = extRows.filter((e) => e.status >= 400);
+  const unverifiedExternal = extRows.filter((e) => e.status === 0);
 
   job.progress = "subdomains";
   const subs = await pool(SUBS, 8, async (s) => {
@@ -165,6 +167,7 @@ async function run(job: Job, rawUrl: string) {
     pages,
     broken,
     brokenExternal,
+    unverifiedExternal,
     subdomains: subs.filter((s) => s.resolves),
     domainHealth: health.body,
   };

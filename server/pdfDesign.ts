@@ -254,7 +254,9 @@ export function buildFullPdf(client: AgencyClient, snap0: ScanSnapshot, lang: La
         doc.font("R").fontSize(8).fillColor(C.mute).text(`${p.ms} ms`, 46 + W - 80, y + 1, { width: 72, align: "right" }); doc.y = y + 16;
       });
       const bl = [...(extras.review.broken || []), ...(extras.review.brokenExternal || [])];
+      const unv = extras.review.unverifiedExternal || [];
       if (bl.length) { section(doc, t.broken, W); bl.slice(0, 20).forEach((b: any) => para(doc, `•  ${b.status || "–"}  ${String(b.url).slice(0, 90)}`, W, 8.5, C.bad)); }
+      if (unv.length) { section(doc, lang === "pl" ? "Linki, których nie udało się sprawdzić" : "Links that could not be checked", W); unv.slice(0, 15).forEach((b: any) => para(doc, `•  ${String(b.url).slice(0, 90)}`, W, 8.5, C.mute)); }
       const sd = extras.review.subdomains || [];
       if (sd.length) { section(doc, t.subdomains, W); sd.slice(0, 20).forEach((s: any) => para(doc, `•  ${s.name}  (HTTP ${s.status || "–"})`, W, 8.5, C.ink)); }
     }

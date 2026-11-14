@@ -107,6 +107,13 @@ export default function FullReviewTab({ ctx, initialUrl, autoRunKey }: { ctx: Ag
               </tbody>
             </table>
           </div>
+          {(res.unverifiedExternal || []).length > 0 && (
+            <div className="bg-white rounded-2xl p-5 border border-slate-200" data-testid="unverified-links">
+              <h3 className="text-sm font-extrabold text-slate-900 mb-1">{L("Linki zewnętrzne, których nie udało się sprawdzić", "External links that could not be checked")}</h3>
+              <p className="text-[11px] text-slate-500 mb-2">{L("Nasz serwer nie połączył się z tymi adresami (strona może blokować roboty). To nie znaczy, że link jest martwy: otwórz go ręcznie.", "Our server could not connect to these addresses (the site may block robots). That does not mean the link is dead: open it by hand.")}</p>
+              <ul className="text-xs space-y-1 font-mono break-all">{(res.unverifiedExternal as any[]).map((b) => <li key={b.url}>{b.url}</li>)}</ul>
+            </div>
+          )}
           {(res.broken.length > 0 || res.brokenExternal.length > 0) && (
             <div className="bg-white rounded-2xl p-5 border border-rose-200">
               <h3 className="text-sm font-extrabold text-slate-900 mb-2">{L("Błędne linki", "Broken links")}</h3>
