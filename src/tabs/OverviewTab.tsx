@@ -3,6 +3,7 @@ import { ProgressSummaryCard, ScoreBarCard, ScoreGaugeCard } from "../components
 import React from "react";
 import type { AppState } from "../state/useAppState";
 import { ScoreHero } from "../components/ScoreHero";
+import GrowthDashboard from "../components/GrowthDashboard";
 import { VerdictCards } from "../components/VerdictCards";
 import { DomainHealthCard } from "../components/DomainHealthCard";
 import { StatementCard } from "../components/StatementCard";
@@ -90,7 +91,7 @@ export default function OverviewTab({ app }: { app: AppState }) {
                   }}
                 />
               )}
-              <ScoreHero report={currentReport} isPolish={isPolish} />
+              <GrowthDashboard app={app} />
               <details className="group" data-testid="score-details">
                 <summary className="cursor-pointer text-xs font-bold text-slate-700 px-1 py-2">{isPolish ? "Szczegóły wyników (rozwiń)" : "Score details (expand)"}</summary>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch mt-2">
