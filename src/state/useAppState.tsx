@@ -65,6 +65,7 @@ export function useAppState() {
   const [strategy, setStrategy] = useState<"mobile" | "desktop">("mobile");
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const scanSeqRef = React.useRef(0);
+  const [desktopPending, setDesktopPending] = useState<boolean>(false);
   const [desktopScores, setDesktopScores] = useState<{ overall: number; performance: number; seo: number; accessibility: number; lcp: string } | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -646,6 +647,7 @@ export function useAppState() {
     setScanError(null);
 
     setDesktopScores(null);
+    setDesktopPending(false);
     const scanSeq = ++scanSeqRef.current;
     try {
       // Jeden test = dwa pomiary naraz: telefon (główny raport) i komputer (porównanie wyników).
@@ -679,12 +681,14 @@ export function useAppState() {
       // Telefon pokazujemy od razu; wynik na komputerze dochodzi chwilę później (nie obciążamy serwera dwoma pomiarami naraz).
       const desktopP = Promise.resolve().then(async () => {
         if (!scanRes.ok) return null;
+        if (scanSeq === scanSeqRef.current) setDesktopPending(true);
         const d: any = await scanDesktop();
         if (d && d.measurementStatus === "live_lighthouse") return d;
         await new Promise((r) => setTimeout(r, 5000));
         return scanDesktop();
       });
       desktopP.then((d: any) => {
+        if (scanSeq === scanSeqRef.current) setDesktopPending(false);
         if (scanSeq !== scanSeqRef.current) return; // spóźniona odpowiedź z poprzedniego skanu
         if (d && d.measurementStatus === "live_lighthouse" && typeof d.overallScore === "number") {
           setDesktopScores({
@@ -1559,6 +1563,7 @@ export function useAppState() {
     isScanning,
     setIsScanning,
     desktopScores,
+    desktopPending,
     toastMsg,
     setToastMsg,
     viewMode,

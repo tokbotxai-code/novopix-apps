@@ -28,6 +28,7 @@ export default function OverviewTab({ app }: { app: AppState }) {
     setIsQuoteOpen,
     strategy,
     desktopScores,
+    desktopPending,
     viewMode,
     audience,
     setAudience,
@@ -211,6 +212,12 @@ export default function OverviewTab({ app }: { app: AppState }) {
                 </div>
               </div>
 
+              {desktopPending && !desktopScores && (
+                <div className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-xs text-slate-700 flex items-center gap-3" role="status" data-testid="desktop-pending">
+                  <span aria-hidden="true" className="w-4 h-4 rounded-full border-2 border-emerald-200 border-t-emerald-600 animate-spin" />
+                  <span>{isPolish ? "Wynik na telefonie jest gotowy. Pomiar na komputerze jeszcze trwa, porównanie pojawi się tu za chwilę." : "The phone result is ready. The desktop measurement is still running; the comparison will appear here shortly."}</span>
+                </div>
+              )}
               {desktopScores && (
                 <div className="bg-white rounded-2xl p-5 border border-slate-200" data-testid="device-compare">
                   <style>{"@keyframes npbar{from{width:0}}@media (prefers-reduced-motion:reduce){[data-testid=device-compare] *{animation:none!important}}"}</style>
