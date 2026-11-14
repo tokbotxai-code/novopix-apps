@@ -474,7 +474,7 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
       category: "seo",
       savingsMs: 0,
       estimatedHours: 2.0,
-      businessImpact: T("Brak szans na rozszerzone wyniki (Rich Snippets) w wyszukiwarce Google.", "No chance of rich results (rich snippets) in Google search."),
+      businessImpact: T("Brak danych strukturalnych ogranicza możliwość kwalifikacji do niektórych wyników rozszerzonych; nie przesądza o wszystkich typach wyników Google.", "Missing structured data may limit eligibility for some rich results; it does not rule out every Google result type."),
       developerFix: T("Wdróż skrypt <script type='application/ld+json'> ze schematem Organization / LocalBusiness.", "Add a <script type='application/ld+json'> block with an Organization / LocalBusiness schema."),
     });
   }
@@ -494,7 +494,7 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
       category: "accessibility",
       savingsMs: 0,
       estimatedHours: 1.5,
-      businessImpact: T("Naruszenie kryterium WCAG 2.1 AA (1.1.1) oraz słabsze indeksowanie w Google Grafika.", "Fails WCAG 2.1 AA criterion 1.1.1 and weakens indexing in Google Images."),
+      businessImpact: T("Brak alt może utrudnić dostęp do treści obrazu; sprawdź ręcznie, czy obraz wymaga tekstu alternatywnego. To nie jest ocena zgodności z WCAG.", "A missing alt attribute may make image content inaccessible; manually check whether the image needs alternative text. This is not a WCAG conformance assessment."),
       developerFix: T("Uzupełnij opisowe atrybuty alt dla wszystkich grafik merytorycznych.", "Add descriptive alt attributes to all meaningful images."),
     });
   }

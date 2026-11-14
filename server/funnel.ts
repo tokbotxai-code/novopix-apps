@@ -13,8 +13,13 @@ import { esc, hostOf, renderResultPage, renderOgImage, ogImageAvailable } from "
 
 export const POLICY_URL = "https://novopix.uk/privacy/";
 export const CONSENT_TEXT: Record<Lang, string> = {
-  pl: "Wyrażam zgodę na otrzymanie raportu PDF na podany adres e-mail oraz informacji o usługach NovoPix.",
-  en: "I agree to receive the PDF report at the e-mail address provided and information about NovoPix services.",
+  pl: "Wyrażam zgodę na wysłanie raportu PDF na podany adres e-mail.",
+  en: "I agree to the PDF report being sent to the e-mail address provided.",
+};
+
+export const MARKETING_TEXT: Record<Lang, string> = {
+  pl: "Chcę dodatkowo otrzymywać informacje o usługach NovoPix (nieobowiązkowe).",
+  en: "I would also like to receive information about NovoPix services (optional).",
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -136,7 +141,7 @@ export function createReportLead(body: any): { status: number; data: any } {
     kind: "report",
     lang,
     clientId: client.id,
-    consent: { reportAndInfo: true, at: now, text: CONSENT_TEXT[lang], policyUrl: POLICY_URL },
+    consent: { reportAndInfo: body?.marketing === true, report: true, marketing: body?.marketing === true, at: now, text: CONSENT_TEXT[lang], marketingText: body?.marketing === true ? MARKETING_TEXT[lang] : "", policyUrl: POLICY_URL },
     report: { status: "pending", requestedAt: now, snapshot: snap, log: [{ at: now, action: "requested", detail: lang }] },
   };
   db.leads.unshift(lead);
@@ -165,7 +170,7 @@ export function registerPanelFunnel(app: Express, requireInternal: (req: any, re
       subject: `[NovoPix] Prośba o raport PDF (${String(lead.lang || "pl").toUpperCase()}): ${hostOf(lead.report!.snapshot!)}`,
       text: autoSent
         ? `Raport PDF wysłano automatycznie (tryb automatyczny włączony).\n\nStrona: ${lead.website}\nE-mail: ${lead.email}\nJęzyk: ${lead.lang}\nZgoda: zapisana (${lead.consent?.at})`
-        : `Nowa prośba o raport PDF – raport czeka na zatwierdzenie w panelu.\n\nStrona: ${lead.website}\nE-mail: ${lead.email}\nJęzyk: ${lead.lang}\nZgoda: zapisana (${lead.consent?.at})\n\nOtwórz panel agencji → CRM → „Skaner publiczny”.`,
+        : `Nowa prośba o raport PDF – raport czeka na zatwierdzenie w panelu.\n\nStrona: ${lead.website}\nE-mail: ${lead.email}\nJęzyk: ${lead.lang}\nZgoda na raport: zapisana (${lead.consent?.at}); zgoda marketingowa: ${lead.consent?.marketing ? "TAK" : "NIE"}\n\nOtwórz panel agencji → CRM → „Skaner publiczny”.`,
       replyTo: lead.email,
     }).catch(() => {});
     return res.json({ success: true, autoSent });
@@ -375,7 +380,7 @@ export function registerPublicFunnel(app: Express, forward: Forward) {
     const snapshot = recallScan(req.body?.scanId);
     if (!snapshot) return res.status(410).json({ error: lang === "pl" ? "Wynik skanu wygasł – zeskanuj stronę ponownie." : "The scan result has expired – please scan the website again.", code: "SCAN_EXPIRED" });
     try {
-      const out = await forward("/api/internal/report-request", "POST", { email: req.body?.email, consent: req.body?.consent === true, lang, snapshot });
+      const out = await forward("/api/internal/report-request", "POST", { email: req.body?.email, consent: req.body?.consent === true, marketing: req.body?.marketing === true, lang, snapshot });
       return res.status(out.status).json(out.data);
     } catch {
       return bad(res, lang);

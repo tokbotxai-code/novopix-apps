@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import dns from "node:dns/promises";
 import net from "node:net";
+import { Agent, fetch as undiciFetch } from "undici";
 import type { Request, Response, NextFunction } from "express";
 
 // --- 1. SSRF Protection & Safe URL Validator ---
@@ -53,9 +54,26 @@ export async function hostResolvesToPublicOnly(hostname: string): Promise<boolea
     ]);
     return addrs.length > 0 && addrs.every((a) => !isPrivateIp(a.address));
   } catch {
-    return true; // brak rozwiązania nazwy: zwykły błąd połączenia zakończy zapytanie
+    return false; // nie udało się bezpiecznie sprawdzić nazwy: odrzucamy zapytanie
   }
 }
+
+// Agent HTTP, który sprawdza adres IP dokładnie w chwili łączenia (ochrona przed DNS rebinding):
+// połączenie nie może pójść na adres wewnętrzny, nawet jeśli nazwa wskazywała go dopiero po wcześniejszej kontroli.
+const safeAgent = new Agent({
+  connect: {
+    lookup: (hostname: string, options: any, cb: any) => {
+      dns
+        .lookup(hostname, { all: true })
+        .then((addrs) => {
+          if (!addrs.length || addrs.some((a) => isPrivateIp(a.address))) return cb(new Error("blocked: internal address"));
+          if (options && options.all) return cb(null, addrs);
+          return cb(null, addrs[0].address, addrs[0].family);
+        })
+        .catch((e) => cb(e));
+    },
+  },
+});
 
 export function validateSafePublicUrl(rawInput: unknown): SafeUrlValidationResult {
   if (!rawInput || typeof rawInput !== "string") {
@@ -195,10 +213,11 @@ export async function safeFetchHtml(
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const res = await fetch(check.normalizedUrl, {
+      const res = await undiciFetch(check.normalizedUrl, {
         method: "GET",
         redirect: "manual",
         signal: controller.signal,
+        dispatcher: safeAgent,
         headers: {
           "User-Agent":
             "Mozilla/5.0 (compatible; NovoPixAuditBot/2.0; +https://novopix.uk)",

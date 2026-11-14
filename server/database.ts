@@ -20,7 +20,7 @@ export interface LeadRecord {
   lang?: "pl" | "en";
   // Zgłoszenie „Wyślij mi pełny raport PDF”: zgoda i status raportu (raport czeka na zatwierdzenie przez człowieka).
   kind?: "quote" | "report";
-  consent?: { reportAndInfo: boolean; at: string; text: string; policyUrl: string };
+  consent?: { reportAndInfo: boolean; report?: boolean; marketing?: boolean; at: string; text: string; marketingText?: string; policyUrl: string };
   report?: ReportRequestState;
   clientId?: string;
 }

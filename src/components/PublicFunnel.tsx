@@ -29,6 +29,7 @@ export default function PublicFunnel({ app }: { app: AppState }) {
 
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
+  const [marketing, setMarketing] = useState(false);
   const [hp, setHp] = useState("");
   const [busy, setBusy] = useState<"report" | "share" | "del" | null>(null);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
@@ -61,7 +62,7 @@ export default function PublicFunnel({ app }: { app: AppState }) {
       const res = await fetch("/api/report-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scanId, email: email.trim(), consent: true, lang: pl ? "pl" : "en", hp }),
+        body: JSON.stringify({ scanId, email: email.trim(), consent: true, marketing, lang: pl ? "pl" : "en", hp }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
@@ -175,12 +176,16 @@ export default function PublicFunnel({ app }: { app: AppState }) {
               <label className="flex items-start gap-2 text-xs text-slate-700 leading-snug cursor-pointer">
                 <input type="checkbox" className="mt-0.5 w-4 h-4 shrink-0" checked={consent} onChange={(e) => setConsent(e.target.checked)} required />
                 <span>
-                  {pl ? "Wyrażam zgodę na otrzymanie raportu PDF na podany adres e-mail oraz informacji o usługach NovoPix. " : "I agree to receive the PDF report at the e-mail address provided and information about NovoPix services. "}
+                  {pl ? "Wyrażam zgodę na wysłanie raportu PDF na podany adres e-mail. " : "I agree to the PDF report being sent to the e-mail address provided. "}
                   <a href={pl ? "https://novopix.uk/polityka/" : POLICY_URL} target="_blank" rel="noopener noreferrer" className="underline font-bold">
                     {pl ? "Polityka prywatności" : "Privacy policy"}
                   </a>
                   .
                 </span>
+              </label>
+              <label className="flex items-start gap-2 text-xs text-slate-700 leading-snug cursor-pointer">
+                <input type="checkbox" className="mt-0.5 w-4 h-4 shrink-0" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} data-testid="marketing-consent" />
+                <span>{pl ? "Chcę dodatkowo otrzymywać informacje o usługach NovoPix (nieobowiązkowe)." : "I would also like to receive information about NovoPix services (optional)."}</span>
               </label>
               <button type="submit" disabled={busy === "report"} className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold cursor-pointer disabled:opacity-50">
                 {busy === "report" ? (pl ? "Wysyłam…" : "Sending…") : pl ? "Wyślij raport PDF" : "Send PDF report"}

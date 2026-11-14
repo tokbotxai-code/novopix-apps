@@ -105,7 +105,7 @@ export function buildReportPdf(client: AgencyClient, snap0: ScanSnapshot, lang: 
     const meta: Array<[string, string]> = [
       [t.site, snap.finalUrl],
       [t.client, client.company || client.name],
-      [t.date, new Date(snap.scannedAt).toLocaleString(lang === "pl" ? "pl-PL" : "en-GB", { timeZone: "Europe/Warsaw" })],
+      [t.date, new Date(snap.scannedAt).toLocaleString(lang === "pl" ? "pl-PL" : "en-GB", { timeZone: lang === "pl" ? "Europe/Warsaw" : "Europe/London" })],
       [t.mode, snap.measurementStatus === "live_lighthouse" ? t.lh : t.partial],
     ];
     for (const [k, v] of meta) {
@@ -226,7 +226,7 @@ const BA = {
 
 export function buildBeforeAfterPdf(client: AgencyClient, before: ScanSnapshot, after: ScanSnapshot, cmp: Comparison, lang: "pl" | "en", approvedBy: string): Promise<Buffer> {
   const t = BA[lang];
-  const loc = (d: string) => new Date(d).toLocaleString(lang === "pl" ? "pl-PL" : "en-GB", { timeZone: "Europe/Warsaw" });
+  const loc = (d: string) => new Date(d).toLocaleString(lang === "pl" ? "pl-PL" : "en-GB", { timeZone: lang === "pl" ? "Europe/Warsaw" : "Europe/London" });
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margins: { top: 56, bottom: 64, left: 50, right: 50 }, bufferPages: true, info: { Title: `${t.title} – ${after.finalUrl}`, Author: "NovoPix" } });
     const chunks: Buffer[] = [];

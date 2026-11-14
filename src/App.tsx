@@ -539,6 +539,11 @@ export default function App() {
                 <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-600" />
                 <input
                   type="text"
+                  aria-label={isPolish ? "Adres strony do zeskanowania" : "Website address to scan"}
+                  inputMode="url"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   value={urlInput}
                   onChange={(e) => setUrlInput(e.target.value)}
                   placeholder={

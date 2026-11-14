@@ -1188,6 +1188,7 @@ export function useAppState() {
     const L = (pl: string, en: string) => (isPolish ? pl : en);
     const domain = currentReport.scannedUrl.replace(/^https?:\/\//, "").replace(/\/.*$/, "") || "raport";
     // Kosztorys w eksporcie HTML tylko dla zalogowanej agencji (klient i tryb publiczny nie dostają kwot ani godzin).
+    const E = (v: unknown) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
     const quoteHtml = includeQuoteInReport && !isPublicMode && viewMode === "agency" && !!agencyToken
       ? `
       <div class="card" style="border: 2px solid #10b981; background: #f0fdf4;">
@@ -1206,8 +1207,8 @@ export function useAppState() {
               .map(
                 (t) => `
               <tr style="border-bottom:1px solid #e2e8f0; font-size:13px;">
-                <td style="padding:10px; font-weight:bold;">${t.title}</td>
-                <td style="padding:10px; color:#047857;">${t.businessBenefit}</td>
+                <td style="padding:10px; font-weight:bold;">${E(t.title)}</td>
+                <td style="padding:10px; color:#047857;">${E(t.businessBenefit)}</td>
                 <td style="padding:10px; text-align:right; font-family:monospace;">${t.hours} h</td>
               </tr>`
               )
@@ -1241,7 +1242,7 @@ export function useAppState() {
       <div class="metric"><span>${L("Czas odpowiedzi serwera / rozmiar HTML", "Server response time / HTML size")}</span><strong>${liveSeo.responseTimeMs} ms · ${liveSeo.htmlSizeKb} KB</strong></div>
       <div class="metric"><span>${L("Przekierowania / skrypty blokujące / arkusze CSS", "Redirects / render-blocking scripts / stylesheets")}</span><strong>${liveSeo.redirectCount ?? 0} · ${liveSeo.scriptStats?.renderBlockingScripts ?? "N/A"} · ${liveSeo.scriptStats?.stylesheets ?? "N/A"}</strong></div>
       <div class="metric"><span>${L("Opis meta (liczba znaków)", "Meta description (characters)")}</span><strong>${liveSeo.description?.length ?? 0}</strong></div>
-      <div class="metric"><span>${L("Technologia strony", "Detected stack")}</span><strong>${(liveSeo.techStack && liveSeo.techStack.length ? liveSeo.techStack.join(", ") : liveSeo.cmsTech) || "N/A"}</strong></div>
+      <div class="metric"><span>${L("Technologia strony", "Detected stack")}</span><strong>${E((liveSeo.techStack && liveSeo.techStack.length ? liveSeo.techStack.join(", ") : liveSeo.cmsTech) || "N/A")}</strong></div>
       <p style="font-size:12px; color:#64748b; margin:12px 0 0;">${L("Kontrole dostępności są zautomatyzowane i nie wykrywają wszystkiego. To nie jest ocena zgodności z WCAG ani certyfikat.", "Accessibility checks are automated and do not catch everything. This is not a WCAG conformance assessment or certificate.")}</p>
     </div>`
       : "";
@@ -1250,12 +1251,12 @@ export function useAppState() {
       ? `
     <div class="card" style="border-left:8px solid ${verdict.level === "great" ? "#10b981" : verdict.level === "work" ? "#f59e0b" : "#ef4444"};">
       <div style="font-size:11px; color:#64748b; font-weight:bold; letter-spacing:1px;">${L("W SKRÓCIE", "IN SHORT")}</div>
-      <div style="font-size:24px; font-weight:900; margin:4px 0;">${verdict.label}</div>
-      <p style="font-size:14px; color:#334155; margin:0;">${verdict.summary}</p>
+      <div style="font-size:24px; font-weight:900; margin:4px 0;">${E(verdict.label)}</div>
+      <p style="font-size:14px; color:#334155; margin:0;">${E(verdict.summary)}</p>
     </div>
     ${verdict.items.length ? `<div class="card">
       <h2>${L("Co z tym zrobić", "What to do about it")}</h2>
-      ${verdict.items.map((it) => `<div class="issue"><strong>${it.problem}</strong><br><span style="color:#047857; font-weight:bold;">${it.service}: ${it.price}</span><br><span style="color:#64748b;">${L("Polecamy, bo", "We suggest it because")} ${it.why}.</span></div>`).join("")}
+      ${verdict.items.map((it) => `<div class="issue"><strong>${E(it.problem)}</strong><br><span style="color:#047857; font-weight:bold;">${E(it.service)}: ${E(it.price)}</span><br><span style="color:#64748b;">${L("Polecamy, bo", "We suggest it because")} ${it.why}.</span></div>`).join("")}
       <p style="font-size:12px; color:#64748b; margin:8px 0 0;">${L("Rekomendacja wynika z jawnych reguł i nie jest obietnicą wyniku.", "The recommendation comes from open rules and is not a promise of results.")} ${L("Zapytaj: contact@novopix.uk", "Ask us: contact@novopix.uk")}</p>
     </div>` : ""}`
       : "";
@@ -1298,7 +1299,7 @@ export function useAppState() {
 <html lang="${isPolish ? "pl" : "en"}">
 <head>
   <meta charset="UTF-8">
-  <title>${L("Raport techniczny i audyt SEO","Technical & SEO audit")} — ${domain}</title>
+  <title>${L("Raport techniczny i audyt SEO","Technical & SEO audit")} — ${E(domain)}</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 32px; line-height: 1.5; }
     .container { max-width: 920px; margin: 0 auto; }
@@ -1319,8 +1320,8 @@ export function useAppState() {
     <div class="header">
       <div>
         <div style="font-size:11px; color:#34d399; font-weight:bold; letter-spacing:1px;">${L("RAPORT TECHNICZNY I AUDYT STRONY","TECHNICAL & WEBSITE AUDIT")}</div>
-        <h1>${currentReport.scannedUrl}</h1>
-        <div style="font-size:13px; color:#cbd5e1;">${isFull ? `${L("Przygotowano dla","Prepared for")}: <strong>${(clientName === "Zarząd Firmy" && !isPolish ? "Company management" : clientName) || domain}</strong> · ` : ""}${L("Audytor","Auditor")}: <strong>${auditorName}</strong></div>
+        <h1>${E(currentReport.scannedUrl)}</h1>
+        <div style="font-size:13px; color:#cbd5e1;">${isFull ? `${L("Przygotowano dla","Prepared for")}: <strong>${E((clientName === "Zarząd Firmy" && !isPolish ? "Company management" : clientName)) || domain}</strong> · ` : ""}${L("Audytor","Auditor")}: <strong>${auditorName}</strong></div>
       </div>
       <div style="text-align:right;">
         <div style="font-size:36px; font-weight:900; color:#34d399;">${currentReport.overallScore ?? "N/A"}/100</div>
@@ -1340,7 +1341,7 @@ export function useAppState() {
       <div class="metric"><span>Largest Contentful Paint (LCP — ${L("docelowo","target")} ≤ 2.5 s)</span><strong>${currentReport.coreWebVitals.lcp.displayValue}</strong></div>
       <div class="metric"><span>Interaction to Next Paint (INP — ${L("docelowo","target")} ≤ 200 ms)</span><strong>${currentReport.coreWebVitals.inp.displayValue}</strong></div>
       <div class="metric"><span>Cumulative Layout Shift (CLS — ${L("docelowo","target")} ≤ 0.1)</span><strong>${currentReport.coreWebVitals.cls.displayValue}</strong></div>
-      <div class="metric"><span>${L("Znacznik Title","Title tag")} (${liveSeo.title.length} ${L("znaków","characters")})</span><strong>${liveSeo.title.text || L("Brak","None")}</strong></div>
+      <div class="metric"><span>${L("Znacznik Title","Title tag")} (${liveSeo.title.length} ${L("znaków","characters")})</span><strong>${E(liveSeo.title.text) || L("Brak","None")}</strong></div>
       <div class="metric"><span>${L("Struktura nagłówków H1 / H2 / H3","Heading structure H1 / H2 / H3")}</span><strong>H1: ${liveSeo.headings.h1} · H2: ${liveSeo.headings.h2} · H3: ${liveSeo.headings.h3}</strong></div>
       <div class="metric"><span>${L("Obrazy bez atrybutu ALT / Bezpieczeństwo HTTPS","Images without ALT / HTTPS")}</span><strong>${L("Obrazy bez ALT w kodzie HTML","Images without ALT in HTML")}: ${liveSeo.images.missingAlt} · HTTPS: ${liveSeo.https ? L("Tak","Yes") : L("Nie","No")}</strong></div>
     </div>
@@ -1356,11 +1357,11 @@ export function useAppState() {
           (i) => `
         <div class="issue">
           <div style="display:flex; justify-content:space-between; font-weight:bold; color:#0f172a;">
-            <span>${i.title}</span>
+            <span>${E(i.title)}</span>
             <span style="color:#d97706;">${L("Priorytet","Priority")}: ${i.priority==="high"?L("wysoki","HIGH"):i.priority==="medium"?L("średni","MEDIUM"):L("niski","LOW")}</span>
           </div>
-          <div style="margin-top:4px; color:#475569;">${i.description}</div>
-          <div style="margin-top:6px; font-weight:bold; color:#047857;">${L("Wpływ na biznes","Business impact")}: ${i.businessImpact || L("Ogranicza widoczność w Google i konwersję mobilną.","Limits visibility in Google and mobile conversion.")}</div>
+          <div style="margin-top:4px; color:#475569;">${E(i.description)}</div>
+          <div style="margin-top:6px; font-weight:bold; color:#047857;">${L("Wpływ na biznes","Business impact")}: ${E(i.businessImpact) || L("Ogranicza widoczność w Google i konwersję mobilną.","Limits visibility in Google and mobile conversion.")}</div>
         </div>`
         )
         .join("")}

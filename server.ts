@@ -964,6 +964,29 @@ app.post("/api/contact-check", async (req, res) => {
   }
 });
 
+
+const SCAN_MAX_PARALLEL = 4;
+const SCAN_MAX_WAITING = 12;
+const scanQueue = { running: 0, waiting: 0, resolvers: [] as Array<() => void> };
+function acquireScanSlot(): Promise<void> {
+  if (scanQueue.running < SCAN_MAX_PARALLEL) {
+    scanQueue.running++;
+    return Promise.resolve();
+  }
+  scanQueue.waiting++;
+  return new Promise((resolve) =>
+    scanQueue.resolvers.push(() => {
+      scanQueue.waiting--;
+      resolve();
+    })
+  );
+}
+function releaseScanSlot() {
+  const next = scanQueue.resolvers.shift();
+  if (next) next(); // slot przechodzi do kolejnego zadania
+  else scanQueue.running--;
+}
+
 app.post("/api/scan", async (req, res) => {
   const clientIp = req.ip || "local";
   const limit = checkRateLimit(`scan_${clientIp}`, 30, 5 * 60 * 1000);
@@ -974,7 +997,17 @@ app.post("/api/scan", async (req, res) => {
   }
   const { url, strategy = "mobile" } = req.body || {};
   const strat = strategy === "desktop" ? "desktop" : "mobile";
-  const out = await performScan(url, strat);
+  // Wspólny limit równoległych pomiarów (chroni limit Google PSI i serwer): nadmiar czeka w krótkiej kolejce albo dostaje 503.
+  if (scanQueue.waiting >= SCAN_MAX_WAITING) {
+    return res.status(503).json({ error: "Serwis jest chwilowo zajęty. Spróbuj ponownie za minutę.", measurementStatus: "failed" });
+  }
+  await acquireScanSlot();
+  let out: Awaited<ReturnType<typeof performScan>>;
+  try {
+    out = await performScan(url, strat);
+  } finally {
+    releaseScanSlot();
+  }
   trackEvent(scanEventName(APP_MODE === "public" ? "public" : "panel", out.body?.measurementStatus));
   // scanId pozwala powiązać późniejsze zgłoszenie (lead, raport PDF, publiczny link) z wynikiem zmierzonym przez serwer.
   const snap = snapshotFromScan(out.body, strat, String(url || ""));
