@@ -1408,6 +1408,7 @@ export function useAppState() {
     { id: "compare", label: isPolish ? "Porównanie z Konkurencją" : "Competitor 1:1", short: isPolish ? "Konkurencja" : "Compare", icon: Scale },
     { id: "monitoring", label: isPolish ? "Monitoring 24/7 (Retainer)" : "24/7 Monitoring", short: "Monitoring 24/7", icon: Bell, highlight: true, agencyOnly: true },
     { id: "status", label: isPolish ? "Status usług" : "Service status", short: isPolish ? "Status usług" : "Status", icon: Activity, agencyOnly: true },
+    { id: "fullreview", label: isPolish ? "Pełny przegląd domeny" : "Full domain review", short: isPolish ? "Przegląd domeny" : "Domain review", icon: Search, agencyOnly: true },
     { id: "stats", label: isPolish ? "Statystyki odwiedzin" : "Visit statistics", short: isPolish ? "Statystyki" : "Statistics", icon: TrendingUp, agencyOnly: true },
     { id: "crm", label: isPolish ? "Panel Agencji (CRM)" : "Agency CRM", short: isPolish ? "Panel Agencji" : "Agency CRM", icon: Briefcase, highlight: true, agencyOnly: true },
     { id: "bulk", label: isPolish ? "Skan wielu stron i leady" : "Bulk scan & leads", short: isPolish ? "Leady" : "Leads", icon: ListOrdered, highlight: true, agencyOnly: true },
@@ -1525,7 +1526,7 @@ export function useAppState() {
   // Kosztorys & ROI: tylko zalogowana agencja (PIN); klient, tryb publiczny i adres/stan z parametrów go nie otworzą.
   const roiAllowed = !isPublicMode && viewMode === "agency" && !!agencyToken;
   const effectiveTab = activeTab === "roi-calculator" && !roiAllowed ? "overview" : activeTab;
-  const shownTab = !hasScan && !["roi-calculator", "monitoring", "crm", "bulk", "packages", "status", "stats"].includes(effectiveTab) ? "empty-state" : effectiveTab;
+  const shownTab = !hasScan && !["roi-calculator", "monitoring", "crm", "bulk", "packages", "status", "stats", "fullreview"].includes(effectiveTab) ? "empty-state" : effectiveTab;
 
   const pageWeight = currentReport.pageWeight || { totalKb: 0, requestCount: 0, jsKb: 0, imagesKb: 0, cssKb: 0, fontsKb: 0, serverResponseMs: 0, thirdPartyBlockingMs: 0 };
 
