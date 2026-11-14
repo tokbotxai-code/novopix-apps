@@ -40,7 +40,7 @@ export function ReportActions({ app, ctx }: { app: AppState; ctx: AgencyCtx }) {
       <button type="button" className={btn} onClick={() => { setSeed({ template: "offer", offerLines: lines }); setOpen(true); }}>{L("Wyślij ofertę", "Send an offer")}</button>
       <button type="button" className={btn} onClick={copyLink}>{L("Kopiuj link do skanu", "Copy scan link")}</button>
       <button type="button" className={btn} onClick={addMonitor}>{L("Monitoring co tydzień", "Weekly monitoring")}</button>
-      <SendReportModal ctx={ctx} open={open} onClose={() => setOpen(false)} scanId={scanId} host={host} score={app.currentReport.overallScore ?? null} issues={issues} seed={seed} htmlLang={app.currentReport.htmlLang} />
+      <SendReportModal ctx={ctx} open={open} onClose={() => setOpen(false)} scanId={scanId} host={host} score={app.currentReport.overallScore ?? null} issues={issues} seed={seed} htmlLang={app.liveSeo?.htmlLang} />
     </div>
   );
 }
@@ -63,7 +63,7 @@ export function OfferBox({ app, ctx }: { app: AppState; ctx: AgencyCtx }) {
         <button type="button" className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold cursor-pointer" onClick={async () => ctx.showToast((await copyText(text)) ? L("Skopiowano ofertę.", "Offer copied.") : text)}>{L("Kopiuj", "Copy")}</button>
         <button type="button" className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold cursor-pointer" onClick={() => setOpen(true)}>{L("Wyślij mailem", "Send by e-mail")}</button>
       </div>
-      <SendReportModal ctx={ctx} open={open} onClose={() => setOpen(false)} scanId={(app.currentReport as any).scanId} host={host} score={app.currentReport.overallScore ?? null} issues={[]} seed={{ template: "offer", offerLines: lines }} htmlLang={app.currentReport.htmlLang} />
+      <SendReportModal ctx={ctx} open={open} onClose={() => setOpen(false)} scanId={(app.currentReport as any).scanId} host={host} score={app.currentReport.overallScore ?? null} issues={[]} seed={{ template: "offer", offerLines: lines }} htmlLang={app.liveSeo?.htmlLang} />
     </div>
   );
 }
