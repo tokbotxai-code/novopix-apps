@@ -37,7 +37,7 @@ export function ScoreGaugeCard({
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-4xl font-heading font-black text-slate-900 tracking-tight tabular-nums">{score === null ? "—" : displayVal}</span>
-          <span className="mt-0.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-mono text-[10px] font-extrabold uppercase">{status}</span>
+          <span className="mt-0.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-mono text-[10px] font-extrabold">{status}</span>
         </div>
       </div>
       <div className="text-[11px] font-medium text-slate-400">{isPolish ? "Hybrydowy pomiar PSI + HTML" : "Hybrid PSI + HTML Score"}</div>
@@ -103,7 +103,7 @@ export function ProgressSummaryCard({ report, isPolish }: { report: AuditReport;
             <span className="font-mono font-bold text-amber-600 tabular-nums">{warnings}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-500">{isPolish ? "Nieudane kontrole" : "Failed checks"}</span>
+            <span className="text-slate-500">{isPolish ? "Poważniejsze uwagi Lighthouse" : "Bigger Lighthouse notes"}</span>
             <span className="font-mono font-bold text-rose-600 tabular-nums">{criticalIssues}</span>
           </div>
           <div className="flex justify-between">
@@ -112,7 +112,7 @@ export function ProgressSummaryCard({ report, isPolish }: { report: AuditReport;
           </div>
         </div>
       </div>
-      <div className="text-[11px] text-slate-400 mt-3">{isPolish ? "Zaliczone + do optymalizacji + krytyczne = wszystkie reguły" : "Passed + warnings + critical = total rules"}</div>
+      <div className="text-[11px] text-slate-400 mt-3">{isPolish ? "Zaliczone + do optymalizacji + poważniejsze uwagi = wszystkie reguły. To szczegółowe audyty Lighthouse, ich liczba nie musi się zgadzać z wynikiem ogólnym." : "Passed + to optimise + bigger notes = total rules. These are detailed Lighthouse audits, so their count need not match the overall score."}</div>
     </div>
   );
 }
