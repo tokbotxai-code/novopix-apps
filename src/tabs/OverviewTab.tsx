@@ -230,6 +230,24 @@ export default function OverviewTab({ app }: { app: AppState }) {
                 </div>
               )}
 
+              <div className="bg-white rounded-2xl p-5 border border-slate-200 text-xs text-slate-700 leading-relaxed space-y-2" data-testid="scan-scope">
+                <p>
+                  <strong>{isPolish ? "Co obejmuje skan: " : "What the scan covers: "}</strong>
+                  {isPolish
+                    ? "pomiar strony, którą wpisałeś (zwykle strony głównej), na telefonie i na komputerze oraz kontrolę domeny, poczty i kontaktu. Podstrony, koszyk i logowanie nie są sprawdzane."
+                    : "the page you entered (usually the home page), measured on phone and desktop, plus a check of your domain, email and contact details. Subpages, checkout and logins are not checked."}
+                </p>
+                <details>
+                  <summary className="cursor-pointer font-bold text-slate-900">{isPolish ? "Co znaczą skróty (LCP, INP, CLS, SPF, DMARC)?" : "What do the abbreviations mean (LCP, INP, CLS, SPF, DMARC)?"}</summary>
+                  <ul className="mt-2 space-y-1 list-disc pl-5">
+                    <li>{isPolish ? "LCP: po ilu sekundach pojawia się główna treść strony. Google zaleca do 2,5 s." : "LCP: how many seconds until the main content appears. Google recommends up to 2.5 s."}</li>
+                    <li>{isPolish ? "INP: jak szybko strona reaguje na kliknięcie. Google zaleca do 200 ms." : "INP: how quickly the page reacts to a tap or click. Google recommends up to 200 ms."}</li>
+                    <li>{isPolish ? "CLS: czy elementy „skaczą” podczas ładowania. Google zaleca do 0,1." : "CLS: whether elements jump around while loading. Google recommends up to 0.1."}</li>
+                    <li>{isPolish ? "SPF i DMARC: ustawienia domeny, które pomagają odbiorcom poznać, że mail naprawdę pochodzi od Ciebie." : "SPF and DMARC: domain settings that help recipients tell your email really comes from you."}</li>
+                  </ul>
+                </details>
+              </div>
+
               {/* Executive Business Impact & Site Snapshot Split */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
                 <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200 flex flex-col justify-between space-y-4">
