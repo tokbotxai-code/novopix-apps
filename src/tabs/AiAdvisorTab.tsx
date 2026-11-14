@@ -27,7 +27,7 @@ export default function AiAdvisorTab({ app }: { app: AppState }) {
                           ? "Strategiczny Plan Naprawczy AI dla Twojej Strony"
                           : "AI Executive Growth Roadmap"
                         : isPolish
-                        ? "AI Growth Advisor & Generator Skryptów Sprzedażowych (Gemini 3.8)"
+                        ? "AI Growth Advisor & Generator Skryptów Sprzedażowych"
                         : "AI Growth Advisor & Sales Pitch Generator"}
                     </span>
                   </h2>
