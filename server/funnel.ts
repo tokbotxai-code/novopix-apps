@@ -41,7 +41,7 @@ function reportMail(lang: Lang, host: string, snap: ScanSnapshot) {
   };
 }
 
-function stubClient(lead: LeadRecord, snap: ScanSnapshot): AgencyClient {
+export function stubClient(lead: LeadRecord, snap: ScanSnapshot): AgencyClient {
   const c = lead.clientId ? db.agencyClients.find((x) => x.id === lead.clientId) : undefined;
   return c || ({ id: "-", name: "", company: hostOf(snap), email: lead.email, phone: "", website: snap.finalUrl, status: "lead", contractValue: 0, hourlyRate: 0, estimatedHours: 0, retainerFee: 0, addedAt: lead.timestamp, lastScore: 0, notes: "" } as AgencyClient);
 }

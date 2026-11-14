@@ -624,6 +624,15 @@ export function useAppState() {
     }
   };
 
+  // Zmiana języka po skanie: odśwież teksty AI Advisor w nowym języku (wcześniej zostawał język z chwili skanu).
+  const advisorLangRef = React.useRef(isPolish);
+  React.useEffect(() => {
+    if (advisorLangRef.current === isPolish) return;
+    advisorLangRef.current = isPolish;
+    if (aiAdvisor && currentReport?.finalUrl) handleRunAiAdvisor();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPolish]);
+
   // Run Full Hybrid Scan (3 Authentic Measurement States — Never fabricates scores)
   const handleRunScan = async (targetUrl?: string, preserveCustomScope = false) => {
     const query = (targetUrl || urlInput).trim();
@@ -1328,6 +1337,33 @@ export function useAppState() {
     showToast(isPolish ? "Pobrano obrandowany raport HTML dla klienta!" : "Downloaded white-label HTML report!");
   };
 
+  const handleDownloadPdfReport = async () => {
+    const scanId = (currentReport as any)?.scanId;
+    if (!scanId) {
+      showToast(isPolish ? "Najpierw wykonaj skan." : "Run a scan first.");
+      return;
+    }
+    try {
+      const r = await fetch("/api/report-pdf", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scanId, lang: isPolish ? "pl" : "en" }) });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        showToast(j.error || (isPolish ? "Nie udało się pobrać PDF." : "Could not download the PDF."));
+        return;
+      }
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${isPolish ? "raport" : "report"}-novopix-${(currentReport as any)?.finalUrl ? new URL((currentReport as any).finalUrl).hostname : "site"}-${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    } catch {
+      showToast(isPolish ? "Nie udało się pobrać PDF." : "Could not download the PDF.");
+    }
+  };
+
   // All 14 Navigation Workspace Items (filtered when in Client Deal Room viewMode === "client")
   const allWorkspaceTabs = [
     { id: "overview", label: isPolish ? "Przegląd audytu" : "Audit overview", short: isPolish ? "Przegląd" : "Overview", icon: LayoutDashboard },
@@ -1629,6 +1665,7 @@ export function useAppState() {
     handleSaveAndCopyClientLink,
     handleCopyText,
     handleDownloadHtmlReport,
+    handleDownloadPdfReport,
     allWorkspaceTabs,
     workspaceTabs,
     filteredIssues,
