@@ -46,6 +46,7 @@ export default function OverviewTab({ app }: { app: AppState }) {
                   audience={audience}
                   setAudience={setAudience}
                   contact={contactCheck}
+                  domain={domainHealth}
                   onAsk={(seed) => {
                     setQuoteSeed(seed);
                     setIsQuoteOpen(true);

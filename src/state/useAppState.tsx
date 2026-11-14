@@ -4,7 +4,7 @@ import { AgencyCtx } from "../agencyTypes";
 import { copyText } from "../utils/clipboard";
 import { localizeDeep } from "../utils/localize";
 import { localizeIssues } from "../utils/lighthouseIssues";
-import { computeVerdict } from "../utils/verdict";
+import { computeVerdict, verdictExtras } from "../utils/verdict";
 import { contactRows, domainRows, statementRows, type CheckRow } from "../utils/checkRows";
 import type { DomainHealth } from "../utils/domainHealthTypes";
 import type { StatementCheck } from "../utils/statementTypes";
@@ -1187,7 +1187,7 @@ export function useAppState() {
       <p style="font-size:12px; color:#64748b; margin:12px 0 0;">${L("Kontrole dostępności są zautomatyzowane i nie wykrywają wszystkiego. To nie jest ocena zgodności z WCAG ani certyfikat.", "Accessibility checks are automated and do not catch everything. This is not a WCAG conformance assessment or certificate.")}</p>
     </div>`
       : "";
-    const verdict = !isFull ? computeVerdict(currentReport as any, audience, isPolish) : null;
+    const verdict = !isFull ? computeVerdict(currentReport as any, audience, isPolish, verdictExtras(contactCheck, domainHealth, isPolish)) : null;
     const verdictHtml = verdict
       ? `
     <div class="card" style="border-left:8px solid ${verdict.level === "great" ? "#10b981" : verdict.level === "work" ? "#f59e0b" : "#ef4444"};">

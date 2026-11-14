@@ -166,7 +166,7 @@ export function QuoteModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">{isPolish ? "Twoje Imię / Firma" : "Your Name / Company"}</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{isPolish ? "Imię lub firma" : "Name or company"}</label>
                   <input
                     type="text"
                     value={name}
@@ -176,7 +176,7 @@ export function QuoteModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">{isPolish ? "Adres E-mail (wymagany)" : "Email Address (required)"}</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{isPolish ? "E-mail (wymagany)" : "E-mail (required)"}</label>
                   <input
                     type="email"
                     value={email}
@@ -190,7 +190,7 @@ export function QuoteModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">{isPolish ? "Telefon" : "Phone Number"}</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{isPolish ? "Telefon (opcjonalnie)" : "Phone (optional)"}</label>
                   <input
                     type="tel"
                     value={phone}
@@ -200,18 +200,18 @@ export function QuoteModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">{isPolish ? "Audytowana Domena" : "Audited Website"}</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">{isPolish ? "Strona" : "Website"}</label>
                   <input type="text" value={targetUrl} readOnly className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-mono" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">{isPolish ? "Dodatkowe informacje / cel biznesowy" : "Project Goals"}</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">{isPolish ? "Czego potrzebujesz? (opcjonalnie)" : "What do you need? (optional)"}</label>
                 <textarea
                   rows={3}
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
-                  placeholder={isPolish ? "Opisz krótko cel (np. poprawa wyniku do 90+, przyspieszenie sklepu, SEO)..." : "Describe your goals..."}
+                  placeholder={isPolish ? "np. szybsza strona, nowa strona, dostępność" : "e.g. a faster site, a new site, accessibility"}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs"
                 />
               </div>
@@ -226,22 +226,23 @@ export function QuoteModal({
                 />
                 <span className="text-[11px] text-slate-500">
                   {isPolish
-                    ? "Wyrażam zgodę na kontakt w celu przedstawienia oferty optymalizacji strony."
-                    : "I agree to be contacted regarding this website optimization proposal."}
+                    ? "Wyrażam zgodę na kontakt w sprawie tego zapytania."
+                    : "I agree to be contacted about this request."}{" "}
+                  <a href={isPolish ? "https://novopix.uk/polityka/" : "https://novopix.uk/privacy/"} className="underline">{isPolish ? "Polityka prywatności" : "Privacy policy"}</a>
                 </span>
               </label>
 
               {errorMsg && <div className="text-xs text-rose-600 font-bold bg-rose-50 p-2.5 rounded-lg border border-rose-200">{errorMsg}</div>}
 
               <div className="pt-2 flex items-center justify-between">
-                <span className="text-[11px] text-slate-400">{isPolish ? "Zapis bezpośrednio do CRM" : "Direct CRM integration"}</span>
+                <span className="text-[11px] text-slate-400">{isPublicMode ? (isPolish ? "Odpowiadamy mailem." : "We reply by e-mail.") : isPolish ? "Zapis bezpośrednio do CRM" : "Direct CRM integration"}</span>
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>{isSubmitting ? (isPolish ? "Wysyłanie..." : "Sending...") : (isPolish ? "Wyślij i Zapisz Lead" : "Submit Enquiry")}</span>
+                  <span>{isSubmitting ? (isPolish ? "Wysyłanie..." : "Sending...") : (isPublicMode ? (isPolish ? "Wyślij zapytanie" : "Send request") : isPolish ? "Wyślij i zapisz w CRM" : "Submit enquiry")}</span>
                 </button>
               </div>
             </form>

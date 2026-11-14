@@ -1,7 +1,8 @@
 import React from "react";
 import type { AuditReport } from "../scannerTypes";
-import { Audience, computeVerdict } from "../utils/verdict";
+import { Audience, computeVerdict, verdictExtras } from "../utils/verdict";
 import type { ContactCheck } from "../utils/contactTypes";
+import type { DomainHealth } from "../utils/domainHealthTypes";
 
 export function VerdictCards({
   report,
@@ -10,6 +11,7 @@ export function VerdictCards({
   setAudience,
   onAsk,
   contact,
+  domain,
 }: {
   report: AuditReport;
   isPolish: boolean;
@@ -17,9 +19,9 @@ export function VerdictCards({
   setAudience: (a: Audience) => void;
   onAsk: (seed: string) => void;
   contact?: ContactCheck | null;
+  domain?: DomainHealth | null;
 }) {
-  const noContact = !!contact && contact.ok && !contact.telLink && !contact.mailLink && !contact.form && !contact.contactLink;
-  const v = computeVerdict(report, audience, isPolish, { noContact });
+  const v = computeVerdict(report, audience, isPolish, verdictExtras(contact, domain, isPolish));
   if (!v) return null;
   const L = (pl: string, en: string) => (isPolish ? pl : en);
   const tone = v.level === "great" ? "text-emerald-700 border-emerald-500" : v.level === "work" ? "text-amber-700 border-amber-500" : "text-red-700 border-red-500";
