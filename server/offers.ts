@@ -140,7 +140,7 @@ ${quoteLine}
 Return JSON: subject, mailBody, offerTitle, offerSections (3-5 sections with heading and body: current state, findings, proposed scope with the quote, disclaimer).`;
   try {
     const r = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: process.env.GEMINI_MODEL || "gemini-3.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",

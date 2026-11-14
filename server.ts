@@ -362,7 +362,7 @@ Language: ${isPl ? "Polish (Polski)" : "English"}
 Respond strictly in JSON matching the schema.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: process.env.GEMINI_MODEL || "gemini-3.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
