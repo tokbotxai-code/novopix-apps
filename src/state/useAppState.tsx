@@ -656,11 +656,6 @@ export function useAppState() {
           .then((r) => r.json().catch(() => null))
           .catch(() => null);
       // Google czasem odpowiada błędem przy dwóch pomiarach naraz: jedno ponowienie po kilku sekundach.
-      const desktopP = scanDesktop().then(async (d: any) => {
-        if (d && d.measurementStatus === "live_lighthouse") return d;
-        await new Promise((r) => setTimeout(r, 5000));
-        return scanDesktop();
-      });
       const [scanRes, freshSeo] = await Promise.all([
         (async () => {
           const call = () =>
@@ -679,6 +674,14 @@ export function useAppState() {
         })(),
         handleRunSeoCheck(query),
       ]);
+      // Telefon pokazujemy od razu; wynik na komputerze dochodzi chwilę później (nie obciążamy serwera dwoma pomiarami naraz).
+      const desktopP = Promise.resolve().then(async () => {
+        if (!scanRes.ok) return null;
+        const d: any = await scanDesktop();
+        if (d && d.measurementStatus === "live_lighthouse") return d;
+        await new Promise((r) => setTimeout(r, 5000));
+        return scanDesktop();
+      });
       desktopP.then((d: any) => {
         if (d && d.measurementStatus === "live_lighthouse" && typeof d.overallScore === "number") {
           setDesktopScores({

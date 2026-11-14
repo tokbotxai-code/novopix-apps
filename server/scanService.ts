@@ -73,7 +73,7 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
   const lhTitle = (t: string) => { const pl = LH_PL[t]; return pl ? T(pl, t) : t; };
   const lhValue = (v: string) => {
     const m = v.match(/^Est savings of ([\d.,]+\s?(?:KiB|MiB|ms|s))$/i);
-    return m ? T(`Szac. oszczędność: ${m[1]}`, v) : v;
+    return m ? T(`Szac. oszczędność: ${m[1]}`, `Estimated savings: ${m[1]}`) : v;
   };
   const res: any = {
     status(n: number) {
