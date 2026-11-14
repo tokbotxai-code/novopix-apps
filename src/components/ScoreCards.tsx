@@ -103,7 +103,7 @@ export function ProgressSummaryCard({ report, isPolish }: { report: AuditReport;
             <span className="font-mono font-bold text-amber-600 tabular-nums">{warnings}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-500">{isPolish ? "Błędy krytyczne" : "Critical issues"}</span>
+            <span className="text-slate-500">{isPolish ? "Nieudane kontrole" : "Failed checks"}</span>
             <span className="font-mono font-bold text-rose-600 tabular-nums">{criticalIssues}</span>
           </div>
           <div className="flex justify-between">

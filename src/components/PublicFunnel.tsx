@@ -176,7 +176,7 @@ export default function PublicFunnel({ app }: { app: AppState }) {
                 <input type="checkbox" className="mt-0.5 w-4 h-4 shrink-0" checked={consent} onChange={(e) => setConsent(e.target.checked)} required />
                 <span>
                   {pl ? "Wyrażam zgodę na otrzymanie raportu PDF na podany adres e-mail oraz informacji o usługach NovoPix. " : "I agree to receive the PDF report at the e-mail address provided and information about NovoPix services. "}
-                  <a href={POLICY_URL} target="_blank" rel="noopener noreferrer" className="underline font-bold">
+                  <a href={pl ? "https://novopix.uk/polityka/" : POLICY_URL} target="_blank" rel="noopener noreferrer" className="underline font-bold">
                     {pl ? "Polityka prywatności" : "Privacy policy"}
                   </a>
                   .
