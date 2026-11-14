@@ -215,7 +215,7 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
         measurementStatus: "live_lighthouse",
         measurementNote: T("100% rzeczywisty pomiar z oficjalnego silnika Google PageSpeed Insights / Lighthouse API.", "100% real measurement from the official Google PageSpeed Insights / Lighthouse API."),
         overallScore: overall,
-        overallLabel: overall >= 90 ? "Healthy" : overall >= 65 ? "Room to improve" : "Needs attention",
+        overallLabel: overall >= 90 ? T("Dobrze", "Healthy") : overall >= 65 ? T("Do poprawy", "Room to improve") : T("Wymaga uwagi", "Needs attention"),
         categories: {
           performance: perf,
           seo: seo,
