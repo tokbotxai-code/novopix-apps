@@ -80,13 +80,13 @@ export default function AiAdvisorTab({ app }: { app: AppState }) {
 
                     <div className="bg-white rounded-2xl p-6 border border-slate-200 space-y-3">
                       <h3 className="text-xs font-bold text-rose-700 uppercase tracking-wider">
-                        {isPolish ? "Diagnoza Strat Biznesowych (Dlaczego Klient Traci Pieniądze)" : "Business Revenue Loss Diagnosis"}
+                        {isPolish ? "Co to może oznaczać dla firmy" : "What this may mean for a business"}
                       </h3>
                       <p className="text-sm text-slate-800 leading-relaxed">{aiAdvisor.businessLossAnalysis}</p>
                       <div className="pt-2 border-t border-slate-100 text-xs text-slate-500">
                         {isPolish
-                          ? "Eliminacja wąskich gardeł bezpośrednio obniża koszt kliknięcia w Google Ads i zwiększa liczbę zapytań z ruchu organicznego."
-                          : "Eliminating rendering bottlenecks directly lowers Google Ads CPC and boosts organic conversion."}
+                          ? "Wpływ poprawek trzeba zmierzyć po ich wdrożeniu. To nie jest prognoza ani gwarancja wyniku."
+                          : "The effect of fixes has to be measured after they are made. This is not a forecast or a guarantee of results."}
                       </div>
                     </div>
                   </div>

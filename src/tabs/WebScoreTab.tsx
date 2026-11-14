@@ -41,7 +41,7 @@ export default function WebScoreTab({ app }: { app: AppState }) {
 
                 <div className="p-6 bg-slate-900 rounded-2xl text-white space-y-4">
                   <div className="flex justify-between items-center text-xs text-slate-400">
-                    <span className="font-bold text-emerald-400 uppercase">Trend Kondycji Witryny ({trendRange})</span>
+                    <span className="font-bold text-emerald-400 uppercase">{isPolish ? "Trend kondycji witryny" : "Site health trend"} ({trendRange})</span>
                     <span className="font-mono">{isPolish ? "Aktualny wynik" : "Current score"}: {currentReport.overallScore ?? (isPolish ? "brak pomiaru" : "not measured")}{typeof currentReport.overallScore === "number" ? "/100" : ""}</span>
                   </div>
                   <div className="h-44 flex items-end justify-between gap-4 pt-8 px-4 border-b border-slate-800">

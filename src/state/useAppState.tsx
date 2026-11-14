@@ -1353,7 +1353,7 @@ export function useAppState() {
   const workspaceTabs = useMemo(
     () =>
       isPublicMode
-        ? allWorkspaceTabs.filter((t) => !t.agencyOnly && t.id !== "roi-calculator" && t.id !== "reports")
+        ? allWorkspaceTabs.filter((t) => !t.agencyOnly && t.id !== "roi-calculator" && t.id !== "reports" && t.id !== "ai-advisor")
         : viewMode === "client"
         ? allWorkspaceTabs.filter((t) => !t.agencyOnly && t.id !== "roi-calculator")
         : agencyToken

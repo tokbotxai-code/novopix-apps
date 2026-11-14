@@ -24,8 +24,8 @@ export default function CompareTab({ app }: { app: AppState }) {
                   </h2>
                   <p className="text-xs text-slate-500">
                     {isPolish
-                      ? "Wpisz domenę głównego rywala Twojego klienta — zestawienie przewagi punktowej natychmiast uruchamia decyzję zakupową."
-                      : "Compare your client's domain against their main rival to trigger immediate buying urgency."}
+                      ? "Wpisz adres konkurenta, a zestawimy wyniki obu stron."
+                      : "Enter a competitor's address and we will compare the results of both sites."}
                   </p>
                 </div>
 

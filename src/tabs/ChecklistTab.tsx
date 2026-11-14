@@ -19,7 +19,7 @@ export default function ChecklistTab({ app }: { app: AppState }) {
                     {isPolish ? "Interaktywna Lista Kontrolna Wdrożenia (Dopasowana do Domeny)" : "Dynamic Optimization Checklist"}
                   </h2>
                   <p className="text-xs text-slate-500">
-                    {isPolish ? "Odznaczaj ukończone zadania podczas prac wdrożeniowych dla klienta." : "Check off completed tasks during client remediation."}
+                    {isPolish ? "Lista rzeczy do poprawy na podstawie wyniku. Odznaczaj to, co zrobisz." : "A list of things to fix based on the result. Tick off what you have done."}
                   </p>
                 </div>
 
