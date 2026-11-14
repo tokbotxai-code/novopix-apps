@@ -21,6 +21,7 @@ const DiagnosticsTab = lazy(() => import("./tabs/DiagnosticsTab"));
 const AccessibilityTab = lazy(() => import("./tabs/AccessibilityTab"));
 const ChecklistTab = lazy(() => import("./tabs/ChecklistTab"));
 import { Welcome } from "./components/Welcome";
+import { ScanProgress } from "./components/ScanProgress";
 const QuoteModal = lazy(() => import("./components/QuoteModal").then((m) => ({ default: m.QuoteModal })));
 const AcceptProposalModal = lazy(() => import("./components/AcceptProposalModal").then((m) => ({ default: m.AcceptProposalModal })));
 const BulkTab = lazy(() => import("./tabs/BulkTab"));
@@ -645,6 +646,7 @@ export default function App() {
 
         {/* Main Workspace Content Viewport */}
         <main className="flex-1 p-4 sm:p-8 max-w-[1550px] w-full mx-auto space-y-6">
+          {isPublicMode && isScanning && <ScanProgress isPolish={isPolish} host={urlInput.replace(/^https?:\/\//, "").replace(/\/.*$/, "")} />}
           {isPublicMode && !hasScan && !scanError && <Welcome isPolish={isPolish} audience={app.audience} setAudience={app.setAudience} />}
           {!(isPublicMode && !hasScan && !scanError) && (
           <AuditIntegrityBanner
