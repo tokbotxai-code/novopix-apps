@@ -80,7 +80,7 @@ test("pakiety: domyślne ceny netto PL (PLN) i EN (GBP) zgodne z ustaleniami", (
   assert.deepEqual(price("pkg_template"), [299, 149]);
   assert.deepEqual(price("pkg_start"), [990, 349]);
   assert.deepEqual(price("pkg_extended"), [2199, 1099]);
-  assert.deepEqual(price("pkg_speed_sprint"), [499, 299]);
+  assert.deepEqual(price("pkg_speed_sprint"), [499, 249]);
   assert.deepEqual(price("pkg_a11y_start"), [99, 55]);
   assert.deepEqual(price("pkg_a11y_audit"), [1790, 799]);
   assert.deepEqual(price("pkg_webapp"), [999, 500]);

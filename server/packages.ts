@@ -20,7 +20,7 @@ export const DEFAULT_PACKAGES: ServicePackage[] = [
   P("pkg_start", "web", 2, "Strona Start", "Website Start", 990, 349),
   P("pkg_standard", "web", 3, "Strona Pro", "Website Pro", 1499, 599),
   P("pkg_extended", "web", 4, "Strona Max", "Website Max", 2199, 1099),
-  P("pkg_speed_sprint", "speed", 5, "Speed Sprint", "Speed Sprint", 499, 299),
+  P("pkg_speed_sprint", "speed", 5, "Speed Sprint", "Speed Sprint", 499, 249),
   P("pkg_a11y_start", "a11y", 6, "Dostępność Start (1 podstrona)", "Accessibility Start (1 page)", 99, 55),
   P("pkg_a11y_review", "a11y", 7, "Dostępność Pro (do 5 podstron)", "Accessibility Pro (up to 5 pages)", 590, 280),
   P("pkg_a11y_audit", "a11y", 8, "Dostępność Max (do 15 podstron)", "Accessibility Max (up to 15 pages)", 1790, 799),
