@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { clonePackages } from "./packages";
+import { clonePackages, migratePackages } from "./packages";
 
 export interface LeadRecord {
   id: string;
@@ -304,7 +304,7 @@ export function loadDb(): DatabaseSchema {
         offers: parsed.offers && typeof parsed.offers === "object" ? parsed.offers : {},
         bulkScans: Array.isArray(parsed.bulkScans) ? parsed.bulkScans : [],
         // Starsza baza nie ma pakietów/ustawień: dosiewamy domyślne (istniejące dane nie są zmieniane).
-        packages: Array.isArray(parsed.packages) && parsed.packages.length ? parsed.packages : clonePackages(),
+        packages: Array.isArray(parsed.packages) && parsed.packages.length ? migratePackages(parsed.packages) : clonePackages(),
         sharedResults: parsed.sharedResults && typeof parsed.sharedResults === "object" ? parsed.sharedResults : {},
         domainHistory: parsed.domainHistory && typeof parsed.domainHistory === "object" ? parsed.domainHistory : {},
         stats: parsed.stats && typeof parsed.stats === "object" ? parsed.stats : {},

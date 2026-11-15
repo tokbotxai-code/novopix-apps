@@ -6,8 +6,8 @@ import type { DomainHealth } from "./domainHealthTypes";
 export type Audience = "company" | "institution";
 
 export const PRICES = {
-  GBP: { sprint: 490, review: 390, audit: 1200, start: 590, template: 149, care: 49 },
-  PLN: { sprint: 1990, review: 1590, audit: 4990, start: 2490, template: 590, care: 199 },
+  GBP: { sprint: 490, review: 280, audit: 799, start: 349, template: 149, care: 29.99 },
+  PLN: { sprint: 2450, review: 1400, audit: 3995, start: 1745, template: 745, care: 150 },
 } as const;
 
 export type VerdictItem = { key: string; problem: string; service: string; price: string; why: string };

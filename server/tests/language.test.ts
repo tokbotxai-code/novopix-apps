@@ -61,10 +61,10 @@ test("przełącznik PL/EN: generateOffer (bez AI) odtwarza treść w wybranym j�
   assert.match(pl.content.mailBody, /Dzień dobry/);
   assert.match(en.content.mailBody, /Hello/);
   assert.notEqual(pl.content.subject, en.content.subject);
-  assert.equal(pl.priceNet, 5490);
-  assert.equal(en.priceNet, 1290);
-  assert.match(pl.content.mailBody.replace(/\s/g, " "), /5 490 zł netto/);
-  assert.match(en.content.mailBody, /£1,290 net/);
+  assert.equal(pl.priceNet, 5245);
+  assert.equal(en.priceNet, 1049);
+  assert.match(pl.content.mailBody.replace(/\s/g, " "), /5 245 zł netto/);
+  assert.match(en.content.mailBody, /£1,049 net/);
   // tekst EN nie zawiera polskich diakrytyków (problemy skanu są tłumaczone z mapy i18n)
   const all = [en.content.subject, en.content.mailBody, ...en.content.offerSections.map((s) => s.body)].join("\n");
   assert.doesNotMatch(all, /[ąćęłńóśźż]/i);
@@ -77,15 +77,19 @@ test("pakiety: domyślne ceny netto PL (PLN) i EN (GBP) zgodne z ustaleniami", (
     const p = DEFAULT_PACKAGES.find((x) => x.id === id)!;
     return [packagePrice(p, "pl").amount, packagePrice(p, "en").amount];
   };
-  assert.deepEqual(price("pkg_template"), [590, 149]);
-  assert.deepEqual(price("pkg_start"), [2490, 590]);
-  assert.deepEqual(price("pkg_extended"), [9990, 2490]);
-  assert.deepEqual(price("pkg_speed_sprint"), [1990, 490]);
-  assert.deepEqual(price("pkg_a11y_audit"), [4990, 1200]);
-  assert.deepEqual(price("pkg_webapp"), [9990, 2500]);
-  assert.deepEqual(price("pkg_care_plus"), [799, 199]);
-  assert.equal(packageLabel(DEFAULT_PACKAGES.find((p) => p.id === "pkg_care_basic")!, "en"), "£49 / month");
-  assert.match(packageLabel(DEFAULT_PACKAGES.find((p) => p.id === "pkg_template")!, "pl"), /^od 590 zł$/);
+  assert.deepEqual(price("pkg_template"), [745, 149]);
+  assert.deepEqual(price("pkg_start"), [1745, 349]);
+  assert.deepEqual(price("pkg_extended"), [10495, 2099]);
+  assert.deepEqual(price("pkg_speed_sprint"), [2450, 490]);
+  assert.deepEqual(price("pkg_a11y_start"), [275, 55]);
+  assert.deepEqual(price("pkg_a11y_audit"), [3995, 799]);
+  assert.deepEqual(price("pkg_webapp"), [12500, 2500]);
+  assert.deepEqual(price("pkg_care_plus"), [875, 175]);
+  // PLN = GBP x 5 (zaokrąglone), usługi zaczynają się od £29.99
+  for (const p of DEFAULT_PACKAGES) assert.ok(Math.abs(p.pricePln - Math.round(p.priceGbp * 5)) <= 0.5, p.id);
+  assert.equal(Math.min(...DEFAULT_PACKAGES.map((p) => p.priceGbp)), 29.99);
+  assert.equal(packageLabel(DEFAULT_PACKAGES.find((p) => p.id === "pkg_care_basic")!, "en"), "£29.99 / month");
+  assert.match(packageLabel(DEFAULT_PACKAGES.find((p) => p.id === "pkg_template")!, "pl"), /^od 745 zł$/);
 });
 
 test("localizeSnapshot tłumaczy teksty skanu tylko dla EN", () => {
