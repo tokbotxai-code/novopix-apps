@@ -137,7 +137,7 @@ export default function PublicFunnel({ app }: { app: AppState }) {
   const pricingUrl = pl ? "https://novopix.uk/pl/cennik/" : "https://novopix.uk/pricing/";
   const offer =
     typeof perf === "number" && perf < 90
-      ? { text: pl ? "Speed Sprint od 990 zł" : "Speed Sprint from £490", cta: pl ? "Zobacz pakiet" : "See the package" }
+      ? { text: pl ? "Speed Sprint od 499 zł" : "Speed Sprint from £299", cta: pl ? "Zobacz pakiet" : "See the package" }
       : typeof acc === "number" && acc < 95
       ? { text: pl ? "Przegląd dostępności od 99 zł" : "Accessibility review from £55", cta: pl ? "Zobacz pakiet" : "See the package" }
       : { text: "", cta: pl ? "Zobacz pakiety" : "See packages" };

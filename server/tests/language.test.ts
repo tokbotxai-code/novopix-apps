@@ -61,8 +61,8 @@ test("przełącznik PL/EN: generateOffer (bez AI) odtwarza treść w wybranym j�
   assert.match(pl.content.mailBody, /Dzień dobry/);
   assert.match(en.content.mailBody, /Hello/);
   assert.notEqual(pl.content.subject, en.content.subject);
-  assert.equal(pl.priceNet, 2490);
-  assert.equal(en.priceNet, 1049);
+  assert.equal(pl.priceNet, 1499);
+  assert.equal(en.priceNet, 599);
   assert.match(pl.content.mailBody.replace(/\s/g, " "), /2 490 zł netto/);
   assert.match(en.content.mailBody, /£1,049 net/);
   // tekst EN nie zawiera polskich diakrytyków (problemy skanu są tłumaczone z mapy i18n)
@@ -79,7 +79,7 @@ test("pakiety: domyślne ceny netto PL (PLN) i EN (GBP) zgodne z ustaleniami", (
   };
   assert.deepEqual(price("pkg_template"), [299, 149]);
   assert.deepEqual(price("pkg_start"), [990, 349]);
-  assert.deepEqual(price("pkg_extended"), [4190, 2099]);
+  assert.deepEqual(price("pkg_extended"), [2199, 1099]);
   assert.deepEqual(price("pkg_speed_sprint"), [990, 490]);
   assert.deepEqual(price("pkg_a11y_start"), [99, 55]);
   assert.deepEqual(price("pkg_a11y_audit"), [1790, 799]);
