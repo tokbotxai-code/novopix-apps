@@ -374,7 +374,7 @@ export default function App() {
               </>
             )}
             <button
-              onClick={() => (viewMode === "client" && !isPublicMode ? setIsAcceptProposalOpen(true) : isPublicMode ? setIsQuoteOpen(true) : setActiveTab("crm"))}
+              onClick={() => (viewMode === "client" && !isPublicMode ? setIsAcceptProposalOpen(true) : isPublicMode ? setIsQuoteOpen(true) : setActiveTab(hasScan ? "fullreport" : "crm"))}
               className="px-4 py-2 novopix-gold-btn rounded-lg text-xs font-extrabold transition-transform hover:-translate-y-0.5 whitespace-nowrap shrink-0 cursor-pointer"
             >
               {isPublicMode

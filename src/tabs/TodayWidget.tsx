@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { localizeActivity } from "../utils/activityText";
 import type { AgencyCtx } from "../agencyTypes";
 import { api } from "./agencyApi";
 
@@ -77,7 +78,7 @@ export default function TodayWidget({ ctx, onScan }: { ctx: AgencyCtx; onScan: (
         <div className="mt-2 space-y-2">
           {!activity && <p className="text-xs text-slate-500">{L("Ładowanie…", "Loading…")}</p>}
           {activity && activity.length === 0 && <p className="text-xs text-slate-600">{L("Brak wpisów.", "No entries.")}</p>}
-          {activity && activity.slice(0, 25).map((a, i) => <div key={i} className="text-xs border-t border-slate-100 pt-1"><span className="font-mono text-slate-500">{a.at.slice(0, 16).replace("T", " ")}</span> · <strong className="break-all">{a.who}</strong>: {a.text}</div>)}
+          {activity && activity.slice(0, 25).map((a, i) => <div key={i} className="text-xs border-t border-slate-100 pt-1"><span className="font-mono text-slate-500">{a.at.slice(0, 16).replace("T", " ")}</span> · <strong className="break-all">{a.who}</strong>: {localizeActivity(a.text, pl)}</div>)}
           <label className="block text-xs pt-2 border-t border-slate-100"><span className="font-bold text-slate-700">{L("Przywróć kopię bazy (plik .json z „Kopia zapasowa”)", "Restore a database backup (.json file from “Backup”)")}</span>
             <input type="file" accept="application/json,.json" onChange={(e) => { restore(e.target.files?.[0]); e.currentTarget.value = ""; }} className="block mt-1 text-xs" /></label>
         </div>

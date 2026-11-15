@@ -139,7 +139,7 @@ export default function RoiCalculatorTab({ app }: { app: AppState }) {
                       {scopeSummary.netPrice.toLocaleString()} {currency}
                     </div>
                     <div className="text-[11px] text-slate-600 font-mono tabular-nums">
-                      {isPolish ? "Brutto (z 23% VAT):" : "Gross (incl. VAT):"} {scopeSummary.grossPrice.toLocaleString()} {currency} · {scopeSummary.totalHours} rbh
+                      {isPolish ? "Brutto (z 23% VAT):" : "Gross (incl. VAT):"} {scopeSummary.grossPrice.toLocaleString()} {currency} · {scopeSummary.totalHours} {isPolish ? "rbh (tylko zaznaczone zadania)" : "h (selected tasks only)"}
                     </div>
                   </div>
                 </div>

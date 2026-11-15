@@ -84,7 +84,7 @@ const ai = process.env.GEMINI_API_KEY
   : null;
 
 app.get("/api/health", (_req, res) => {
-  res.json({ ok: true, service: "novopix-scanner", timestamp: new Date().toISOString() });
+  res.json({ ok: true, service: process.env.APP_MODE === "agency" ? "novopix-panel" : "novopix-scanner", timestamp: new Date().toISOString() });
 });
 
 // Start real 24/7 background monitoring scheduler

@@ -3,6 +3,7 @@ import { AgencyClient } from "../scannerTypes";
 import React, { Suspense, lazy } from "react";
 import { STAGES } from "../agencyTypes";
 import type { AppState } from "../state/useAppState";
+import { localizeActivity } from "../utils/activityText";
 const ClientWorkflow = lazy(() => import("./ClientWorkflow"));
 
 export default function CrmTab({ app }: { app: AppState }) {
@@ -182,7 +183,7 @@ export default function CrmTab({ app }: { app: AppState }) {
                             {client.notes && <div className="text-[11px] text-slate-600 mt-1 italic">{client.notes}</div>}
                             {client.activityLog && client.activityLog.length > 0 && (
                               <div className="mt-1.5 text-[10px] font-mono text-slate-500 bg-slate-100/80 px-2 py-1 rounded border border-slate-200/70">
-                                {new Date(client.activityLog[0].timestamp).toLocaleDateString()} — {client.activityLog[0].summary}
+                                {new Date(client.activityLog[0].timestamp).toLocaleDateString()} — {localizeActivity(client.activityLog[0].summary, isPolish)}
                               </div>
                             )}
                           </td>

@@ -687,8 +687,8 @@ export function useAppState() {
             });
           let r = await call();
           // Serwer przebudowuje się lub jest przeciążony: jedno ponowienie po kilku sekundach zamiast pustego błędu.
-          if (r.status === 502 || r.status === 503 || r.status === 504) {
-            await new Promise((x) => setTimeout(x, 6000));
+          for (let attempt = 0; attempt < 3 && (r.status === 502 || r.status === 503 || r.status === 504); attempt++) {
+            await new Promise((x) => setTimeout(x, 6000 + attempt * 6000));
             r = await call();
           }
           return r;

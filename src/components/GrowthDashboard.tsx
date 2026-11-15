@@ -126,6 +126,12 @@ export default function GrowthDashboard({ app }: { app: AppState }) {
                 {[[L("Szybkość", "Speed"), c.performance], ["SEO", c.seo], [L("Dostępność (automaty)", "Accessibility (automated)"), c.accessibility], [L("Dobre praktyki", "Best practices"), c.bestPractices]].map(([k, v]) => (
                   <div key={String(k)} className="flex justify-between"><dt className="text-sky-100/80">{k as string}</dt><dd className="font-bold tabular-nums" style={{ color: tone(v as number | null) }}>{v === null ? L("brak pomiaru", "not measured") : `${v}/100`}</dd></div>
                 ))}
+                {(app.desktopScores || app.desktopPending) && (
+                  <div className="flex justify-between border-t border-sky-400/20 pt-1 mt-1" data-testid="desktop-line">
+                    <dt className="text-sky-100/80">{L("Komputer (desktop)", "Desktop")}</dt>
+                    <dd className="font-bold tabular-nums text-sky-100">{app.desktopScores ? `${app.desktopScores.overall}/100 · ${L("szybkość", "speed")} ${app.desktopScores.performance} · LCP ${app.desktopScores.lcp}` : L("mierzę…", "measuring…")}</dd>
+                  </div>
+                )}
                 {d1 !== null && <div className="flex justify-between"><dt className="text-sky-100/80">{L("Zmiana od poprzedniego pomiaru", "Change since the last measurement")}</dt><dd className={`font-bold ${d1 >= 0 ? "text-emerald-300" : "text-rose-300"}`}>{d1 > 0 ? `+${d1}` : d1}</dd></div>}
               </dl>
             </Card>
