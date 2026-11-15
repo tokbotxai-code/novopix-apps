@@ -30,3 +30,8 @@ Właściciel (Polak, pracuje na telefonie) chce krótkich raportów po polsku: t
 - Raport HTML: publiczny skrócony (3 problemy, ramka „raport skrócony”) vs pełny w panelu (wszystkie problemy, wyniki szczegółowe, kosztorys). Obie wersje zawierają karty kontroli.
 - Zrzut strony na telefonie z czerwonymi ramkami błędów dostępności: dane z Lighthouse (pole `fullPageScreenshot` + pozycje węzłów), bez przeglądarki na VPS (`server/visualMarks.ts`, karta `VisualCard`). Obraz ograniczony do ok. 1,3 MB, nie trafia do bazy migawek. Nie dodawaj Chromium do obrazu Dockera bez sprawdzenia pamięci VPS.
 - Po wdrożeniu przez kilka minut skaner zwraca 502 (przebudowa kontenera): testy na żywo rób po pojawieniu się nowego pliku JS.
+
+## Zero „na później” (decyzja właściciela 15.11, obowiązuje stale)
+- Każdy zauważony błąd, usterkę, niespójność języka albo drobiazg **naprawiasz od razu, w tej samej sesji**. Nie zostawiaj niczego „na osobną poprawkę”, nie odkładaj, nie pytaj. Wszystko ma być „tip top”.
+- Wynik audytu (własnego albo z innej sesji) obsługujesz do końca: naprawa, wdrożenie, kontrola na żywo. W raporcie nie ma sekcji „niezrobione”, chyba że wymaga konta, PIN-u lub kliknięcia właściciela.
+- Błąd znaleziony przy okazji innej pracy też naprawiasz automatycznie.
