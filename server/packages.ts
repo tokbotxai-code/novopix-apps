@@ -15,19 +15,19 @@ const P = (
 ): ServicePackage => ({ id, group, sort, namePl, nameEn, scopePl: "", scopeEn: "", durationPl: "", durationEn: "", pricePln, priceGbp, priceFrom, recurring, active: true });
 
 export const DEFAULT_PACKAGES: ServicePackage[] = [
-  // Ceny netto: GBP wg cennika, PLN = GBP × 5 (decyzja właściciela 15.11); usługi zaczynają się od £29.99.
-  P("pkg_template", "web", 1, "Szablon (sam)", "Template (only)", 745, 149, true),
-  P("pkg_start", "web", 2, "Strona Start", "Website Start", 1745, 349),
-  P("pkg_standard", "web", 3, "Strona Pro", "Website Pro", 5245, 1049),
-  P("pkg_extended", "web", 4, "Strona Max", "Website Max", 10495, 2099),
-  P("pkg_speed_sprint", "speed", 5, "Speed Sprint", "Speed Sprint", 2450, 490),
-  P("pkg_a11y_start", "a11y", 6, "Dostępność Start (1 podstrona)", "Accessibility Start (1 page)", 275, 55),
-  P("pkg_a11y_review", "a11y", 7, "Dostępność Pro (do 5 podstron)", "Accessibility Pro (up to 5 pages)", 1400, 280),
-  P("pkg_a11y_audit", "a11y", 8, "Dostępność Max (do 15 podstron)", "Accessibility Max (up to 15 pages)", 3995, 799),
-  P("pkg_webapp", "app", 9, "Aplikacja webowa", "Web application", 12500, 2500, true),
-  P("pkg_care_basic", "care", 10, "Opieka Start", "Care Start", 150, 29.99, false, true),
-  P("pkg_care_standard", "care", 11, "Opieka Pro", "Care Pro", 420, 84, false, true),
-  P("pkg_care_plus", "care", 12, "Opieka Max", "Care Max", 875, 175, false, true),
+  // Ceny netto: GBP wg cennika (usługi od £29.99); PLN ustawione osobno pod polski rynek (decyzja właściciela 15.11, usługi od 79 zł).
+  P("pkg_template", "web", 1, "Szablon (sam)", "Template (only)", 299, 149, true),
+  P("pkg_start", "web", 2, "Strona Start", "Website Start", 990, 349),
+  P("pkg_standard", "web", 3, "Strona Pro", "Website Pro", 2490, 1049),
+  P("pkg_extended", "web", 4, "Strona Max", "Website Max", 4190, 2099),
+  P("pkg_speed_sprint", "speed", 5, "Speed Sprint", "Speed Sprint", 990, 490),
+  P("pkg_a11y_start", "a11y", 6, "Dostępność Start (1 podstrona)", "Accessibility Start (1 page)", 99, 55),
+  P("pkg_a11y_review", "a11y", 7, "Dostępność Pro (do 5 podstron)", "Accessibility Pro (up to 5 pages)", 590, 280),
+  P("pkg_a11y_audit", "a11y", 8, "Dostępność Max (do 15 podstron)", "Accessibility Max (up to 15 pages)", 1790, 799),
+  P("pkg_webapp", "app", 9, "Aplikacja webowa", "Web application", 4990, 2500, true),
+  P("pkg_care_basic", "care", 10, "Opieka Start", "Care Start", 79, 29.99, false, true),
+  P("pkg_care_standard", "care", 11, "Opieka Pro", "Care Pro", 149, 84, false, true),
+  P("pkg_care_plus", "care", 12, "Opieka Max", "Care Max", 299, 175, false, true),
 ];
 
 // Stare ceny domyślne (do 14.11.2026): jeśli baza ma dokładnie je (właściciel ich nie zmieniał), podmieniamy na nowy cennik.
@@ -35,8 +35,13 @@ const OLD_DEFAULT_PRICES: Record<string, [number, number]> = {
   pkg_template: [590, 149], pkg_start: [2490, 590], pkg_standard: [5490, 1290], pkg_extended: [9990, 2490], pkg_speed_sprint: [1990, 490],
   pkg_a11y_review: [1590, 390], pkg_a11y_audit: [4990, 1200], pkg_webapp: [9990, 2500], pkg_care_basic: [199, 49], pkg_care_standard: [399, 99], pkg_care_plus: [799, 199],
 };
+const X5_DEFAULT_PRICES: Record<string, [number, number]> = {
+  pkg_template: [745, 149], pkg_start: [1745, 349], pkg_standard: [5245, 1049], pkg_extended: [10495, 2099], pkg_speed_sprint: [2450, 490], pkg_a11y_start: [275, 55],
+  pkg_a11y_review: [1400, 280], pkg_a11y_audit: [3995, 799], pkg_webapp: [12500, 2500], pkg_care_basic: [150, 29.99], pkg_care_standard: [420, 84], pkg_care_plus: [875, 175],
+};
 export function migratePackages(existing: ServicePackage[]): ServicePackage[] {
-  const untouched = existing.length > 0 && existing.every((p) => OLD_DEFAULT_PRICES[p.id] && OLD_DEFAULT_PRICES[p.id][0] === p.pricePln && OLD_DEFAULT_PRICES[p.id][1] === p.priceGbp);
+  const matches = (table: Record<string, [number, number]>) => existing.length > 0 && existing.every((p) => table[p.id] && table[p.id][0] === p.pricePln && table[p.id][1] === p.priceGbp);
+  const untouched = matches(OLD_DEFAULT_PRICES) || matches(X5_DEFAULT_PRICES);
   return untouched ? clonePackages() : existing;
 }
 

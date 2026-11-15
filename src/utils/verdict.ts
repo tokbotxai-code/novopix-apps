@@ -7,7 +7,7 @@ export type Audience = "company" | "institution";
 
 export const PRICES = {
   GBP: { sprint: 490, review: 280, audit: 799, start: 349, template: 149, care: 29.99 },
-  PLN: { sprint: 2450, review: 1400, audit: 3995, start: 1745, template: 745, care: 150 },
+  PLN: { sprint: 990, review: 590, audit: 1790, start: 990, template: 299, care: 79 },
 } as const;
 
 export type VerdictItem = { key: string; problem: string; service: string; price: string; why: string };
