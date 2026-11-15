@@ -207,7 +207,7 @@ export default function CrmTab({ app }: { app: AppState }) {
                           </td>
                           <td className="py-3.5 px-3 text-right font-mono tabular-nums">
                             <div className="font-extrabold text-slate-900">{client.contractValue} {currency}</div>
-                            <div className="text-[11px] text-slate-500">+{client.retainerFee || 300} {currency}/mc</div>
+                            <div className="text-[11px] text-slate-500">+{client.retainerFee || 79} {currency}/mc</div>
                           </td>
                           <td className="py-3.5 px-3 text-right">
                             <div className="inline-flex items-center gap-1.5">

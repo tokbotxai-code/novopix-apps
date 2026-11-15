@@ -1472,7 +1472,7 @@ export function useAppState() {
         : viewMode === "client"
         ? allWorkspaceTabs.filter((t) => !t.agencyOnly && t.id !== "roi-calculator")
         : agencyToken
-        ? allWorkspaceTabs.filter((t) => !["overview", "ai-advisor", "seo", "performance", "insights", "compare", "webscore", "diagnostics", "accessibility", "checklist", "reports", "packages", "fullreview", "bulk"].includes(t.id))
+        ? allWorkspaceTabs.filter((t) => !["overview", "ai-advisor", "seo", "performance", "insights", "compare", "webscore", "diagnostics", "accessibility", "checklist", "reports", "fullreview", "bulk"].includes(t.id))
         : allWorkspaceTabs.filter((t) => t.id !== "roi-calculator"),
     [viewMode, isPolish, isPublicMode, agencyToken, currentReport.demo?.scoreHistory?.length]
   );
@@ -1498,7 +1498,7 @@ export function useAppState() {
     const pipelineVal = crmClients.reduce((s, c) => s + (c.contractValue || 0), 0);
     const monthlyMrr = crmClients
       .filter((c) => c.status === "remediated" || c.status === "retainer" || c.status === "proposal_accepted")
-      .reduce((s, c) => s + (c.retainerFee || 300), 0);
+      .reduce((s, c) => s + (c.retainerFee || 79), 0);
     const scored = crmClients.filter((c) => typeof c.lastScore === "number" && c.lastScore > 0);
     const avgScore = scored.length ? Math.round(scored.reduce((s, c) => s + c.lastScore, 0) / scored.length) : null;
     return { pipelineVal, monthlyMrr, avgScore, count: crmClients.length };

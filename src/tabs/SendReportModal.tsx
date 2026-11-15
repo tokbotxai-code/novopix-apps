@@ -5,8 +5,8 @@ import { TEMPLATE_LABELS, TemplateId, buildTemplate } from "../utils/mailTemplat
 
 export type SendSeed = { template: TemplateId; offerLines?: string[] };
 
-export default function SendReportModal({ ctx, open, onClose, scanId, host, score, issues, seed, defaultEmail, htmlLang }: {
-  ctx: AgencyCtx; open: boolean; onClose: () => void; scanId?: string; host: string; score: number | null; issues: string[]; seed: SendSeed; defaultEmail?: string; htmlLang?: string | null;
+export default function SendReportModal({ ctx, open, onClose, scanId, host, score, issues, issuesLang, offerFor, seed, defaultEmail, htmlLang }: {
+  ctx: AgencyCtx; open: boolean; onClose: () => void; scanId?: string; host: string; score: number | null; issues: string[]; issuesLang?: "pl" | "en"; offerFor?: (l: "pl" | "en") => string[]; seed: SendSeed; defaultEmail?: string; htmlLang?: string | null;
 }) {
   const pl = ctx.isPolish;
   const L = (a: string, b: string) => (pl ? a : b);
@@ -30,7 +30,7 @@ export default function SendReportModal({ ctx, open, onClose, scanId, host, scor
   useEffect(() => { if (open) { setTpl(seed.template); setMsg(null); } }, [open, seed.template]);
   useEffect(() => {
     if (!open) return;
-    const t = buildTemplate(tpl, { host, score, issues, lang, offerLines: seed.offerLines });
+    const t = buildTemplate(tpl, { host, score, issues: issuesLang && issuesLang !== lang ? [] : issues, lang, offerLines: offerFor && seed.offerLines ? offerFor(lang) : seed.offerLines });
     setSubject(t.subject); setMessage(t.body);
   }, [open, tpl, lang, host, score, issues.join("|"), (seed.offerLines || []).join("|")]);
   useEffect(() => {

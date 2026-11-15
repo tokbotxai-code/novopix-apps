@@ -112,7 +112,7 @@ export function createReportLead(body: any): { status: number; data: any } {
       contractValue: 0,
       hourlyRate: 150,
       estimatedHours: 8,
-      retainerFee: 300,
+      retainerFee: 79,
       addedAt: now,
       lastScore: snap.overallScore ?? 0,
       source: "scanner-report",

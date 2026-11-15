@@ -11,7 +11,12 @@ const hostOf = (app: AppState) => (app.currentReport.finalUrl || app.currentRepo
 function useOffer(app: AppState) {
   const v = computeVerdict(app.currentReport, app.audience, app.isPolish, verdictExtras(app.contactCheck, app.domainHealth, app.isPolish));
   const lines = (v?.items || []).map((it) => `- ${it.service}: ${it.price}`);
-  return { v, lines };
+  // Oferta w języku maila: ceny i nazwy usług liczone osobno dla PL (zł) i EN (£).
+  const linesFor = (l: "pl" | "en") => {
+    const vv = computeVerdict(app.currentReport, app.audience, l === "pl", verdictExtras(app.contactCheck, app.domainHealth, l === "pl"));
+    return (vv?.items || []).map((it) => `- ${it.service}: ${it.price}`);
+  };
+  return { v, lines, linesFor };
 }
 
 // Przyciski nad raportem: wyślij klientowi, link do skanu, monitoring co tydzień.
@@ -21,7 +26,7 @@ export function ReportActions({ app, ctx }: { app: AppState; ctx: AgencyCtx }) {
   const host = hostOf(app);
   const [open, setOpen] = useState(false);
   const [seed, setSeed] = useState<SendSeed>({ template: "company" });
-  const { lines } = useOffer(app);
+  const { lines, linesFor } = useOffer(app);
   const issues = (app.currentReport.issues || []).map((i) => i.title);
   const defaultTpl = app.audience === "institution" ? "school" : "company";
   const scanId = (app.currentReport as any).scanId as string | undefined;
@@ -40,7 +45,7 @@ export function ReportActions({ app, ctx }: { app: AppState; ctx: AgencyCtx }) {
       <button type="button" className={btn} onClick={() => { setSeed({ template: "offer", offerLines: lines }); setOpen(true); }}>{L("Wyślij ofertę", "Send an offer")}</button>
       <button type="button" className={btn} onClick={copyLink}>{L("Kopiuj link do skanu", "Copy scan link")}</button>
       <button type="button" className={btn} onClick={addMonitor}>{L("Monitoring co tydzień", "Weekly monitoring")}</button>
-      <SendReportModal ctx={ctx} open={open} onClose={() => setOpen(false)} scanId={scanId} host={host} score={app.currentReport.overallScore ?? null} issues={issues} seed={seed} htmlLang={app.liveSeo?.htmlLang} />
+      <SendReportModal ctx={ctx} open={open} onClose={() => setOpen(false)} scanId={scanId} host={host} score={app.currentReport.overallScore ?? null} issues={issues} issuesLang={pl ? "pl" : "en"} offerFor={linesFor} seed={seed} htmlLang={app.liveSeo?.htmlLang} />
     </div>
   );
 }
@@ -49,7 +54,7 @@ export function ReportActions({ app, ctx }: { app: AppState; ctx: AgencyCtx }) {
 export function OfferBox({ app, ctx }: { app: AppState; ctx: AgencyCtx }) {
   const pl = app.isPolish;
   const L = (a: string, b: string) => (pl ? a : b);
-  const { v, lines } = useOffer(app);
+  const { v, lines, linesFor } = useOffer(app);
   const host = hostOf(app);
   const [open, setOpen] = useState(false);
   if (!v || !v.items.length) return null;
@@ -63,7 +68,7 @@ export function OfferBox({ app, ctx }: { app: AppState; ctx: AgencyCtx }) {
         <button type="button" className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold cursor-pointer" onClick={async () => ctx.showToast((await copyText(text)) ? L("Skopiowano ofertę.", "Offer copied.") : text)}>{L("Kopiuj", "Copy")}</button>
         <button type="button" className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold cursor-pointer" onClick={() => setOpen(true)}>{L("Wyślij mailem", "Send by e-mail")}</button>
       </div>
-      <SendReportModal ctx={ctx} open={open} onClose={() => setOpen(false)} scanId={(app.currentReport as any).scanId} host={host} score={app.currentReport.overallScore ?? null} issues={[]} seed={{ template: "offer", offerLines: lines }} htmlLang={app.liveSeo?.htmlLang} />
+      <SendReportModal ctx={ctx} open={open} onClose={() => setOpen(false)} scanId={(app.currentReport as any).scanId} host={host} score={app.currentReport.overallScore ?? null} issues={[]} offerFor={linesFor} seed={{ template: "offer", offerLines: lines }} htmlLang={app.liveSeo?.htmlLang} />
     </div>
   );
 }

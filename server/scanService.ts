@@ -1,6 +1,6 @@
 import { resolvePublicAddress, validateSafePublicUrl, safeFetchHtml } from "./security";
 import { extractVisual } from "./visualMarks";
-import { performDeepLiveSeoInspection } from "./seoCrawler";
+import { performDeepLiveSeoInspection, findTagAttr } from "./seoCrawler";
 
 // Skan strony: 3 uczciwe stany pomiaru (live_lighthouse / partial_html / failed). Zero wymyślonych wyników.
 const URL_ERRORS_EN: Record<string, string> = {
@@ -19,7 +19,7 @@ const URL_ERRORS_EN: Record<string, string> = {
 async function detectHtmlLang(targetUrl: string): Promise<string | null> {
   try {
     const f = await safeFetchHtml(targetUrl, 5000, 400_000);
-    const m = f.htmlText.match(/<html[^>]*\slang=["']([^"']*)["']/i);
+    const m = findTagAttr(f.htmlText, "html", null, null, "lang");
     return m && m[1].trim() ? m[1].trim() : null;
   } catch {
     return null;
@@ -208,7 +208,7 @@ export async function performScan(url: any, strategy: string = "mobile"): Promis
           estimatedHours: (a.score ?? 1) < 0.5 ? 3.0 : 1.5,
           businessImpact:
             (a.score ?? 1) < 0.5
-              ? T("Ten element najbardziej spowalnia stronę według testu Google Lighthouse", "This item slows the page down the most according to Google Lighthouse")
+              ? T("Ten element ma duży wpływ na wynik według testu Google Lighthouse", "This item has a large effect on the score according to Google Lighthouse")
               : T("Element wymagający optymalizacji w celu poprawy wskaźników Core Web Vitals", "Item that needs optimisation to improve Core Web Vitals"),
           developerFix:
             T("Optymalizacja zasobu zgodnie z wytycznymi raportu Google Lighthouse (kompresja, priorytetyzacja lub redukcja blokowania wątku głównego).", "Optimise the resource following the Google Lighthouse guidance (compression, prioritisation or reducing main-thread blocking)."),

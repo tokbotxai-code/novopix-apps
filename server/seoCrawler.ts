@@ -1,5 +1,27 @@
 import { safeFetchHtml, validateSafePublicUrl } from "./security";
 
+// Odczyt atrybutów tagów odporny na zapis bez cudzysłowów (<html lang=en>), pojedyncze cudzysłowy i dowolną kolejność.
+export function parseAttrs(tag: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  const re = /([^\s"'<>\/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+  const inner = tag.replace(/^<\s*[a-z0-9:-]+/i, "").replace(/\/?>$/, "");
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(inner))) {
+    const k = m[1].toLowerCase();
+    if (!(k in out)) out[k] = m[2] ?? m[3] ?? m[4] ?? "";
+  }
+  return out;
+}
+export function findTagAttr(html: string, tag: string, key: string | null, val: string | null, want: string): [string, string] | null {
+  const tags = html.match(new RegExp("<" + tag + "\\b[^>]*>", "gi")) || [];
+  for (const t of tags) {
+    const a = parseAttrs(t);
+    if (key && (a[key] ?? "").toLowerCase() !== (val || "").toLowerCase()) continue;
+    if (want in a) return [t, a[want]];
+  }
+  return null;
+}
+
 export interface SubpageCheckResult {
   url: string;
   status: number;
@@ -162,17 +184,15 @@ export async function performDeepLiveSeoInspection(targetUrl: string) {
 
   const titleMatch = htmlText.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
   const metaDescMatch =
-    htmlText.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i) ||
-    htmlText.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
+    findTagAttr(htmlText, "meta", "name", "description", "content");
   const canonicalMatch =
-    htmlText.match(/<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']*)["']/i) ||
-    htmlText.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']canonical["']/i);
-  const robotsMatch = htmlText.match(/<meta[^>]*name=["']robots["'][^>]*content=["']([^"']*)["']/i);
-  const viewportMatch = htmlText.match(/<meta[^>]*name=["']viewport["'][^>]*content=["']([^"']*)["']/i);
-  const langMatch = htmlText.match(/<html[^>]*lang=["']([^"']*)["']/i);
+    findTagAttr(htmlText, "link", "rel", "canonical", "href");
+  const robotsMatch = findTagAttr(htmlText, "meta", "name", "robots", "content");
+  const viewportMatch = findTagAttr(htmlText, "meta", "name", "viewport", "content");
+  const langMatch = findTagAttr(htmlText, "html", null, null, "lang");
 
-  const ogTitleMatch = htmlText.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']*)["']/i);
-  const ogDescMatch = htmlText.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']*)["']/i);
+  const ogTitleMatch = findTagAttr(htmlText, "meta", "property", "og:title", "content");
+  const ogDescMatch = findTagAttr(htmlText, "meta", "property", "og:description", "content");
   const ogImageMatch = htmlText.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']*)["']/i);
   const twitterCardMatch = htmlText.match(/<meta[^>]*name=["']twitter:card["'][^>]*content=["']([^"']*)["']/i);
   const jsonLdMatches = htmlText.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>/gi) || [];

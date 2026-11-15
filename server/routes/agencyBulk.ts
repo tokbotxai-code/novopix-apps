@@ -180,7 +180,7 @@ export function registerAgencyBulkRoutes(app: Express) {
       contractValue: 1200,
       hourlyRate: 150,
       estimatedHours: 8,
-      retainerFee: 300,
+      retainerFee: 79,
       addedAt: now,
       lastScore: typeof row.rankScore === "number" ? row.rankScore : 0,
       notes: "Dodano z listy leadów (skan masowy). Uzupełnij dane kontaktowe przed wysyłką oferty.",
