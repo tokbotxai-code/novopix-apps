@@ -83,7 +83,7 @@ test("pakiety: domyślne ceny netto PL (PLN) i EN (GBP) zgodne z ustaleniami", (
   assert.deepEqual(price("pkg_speed_sprint"), [990, 490]);
   assert.deepEqual(price("pkg_a11y_start"), [99, 55]);
   assert.deepEqual(price("pkg_a11y_audit"), [1790, 799]);
-  assert.deepEqual(price("pkg_webapp"), [999, 2500]);
+  assert.deepEqual(price("pkg_webapp"), [999, 500]);
   assert.deepEqual(price("pkg_care_plus"), [299, 175]);
   // usługi zaczynają się od £29.99 / 79 zł; ceny PLN są niższe niż GBP × 5 (polski rynek)
   assert.equal(Math.min(...DEFAULT_PACKAGES.map((p) => p.priceGbp)), 29.99);

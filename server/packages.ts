@@ -24,7 +24,7 @@ export const DEFAULT_PACKAGES: ServicePackage[] = [
   P("pkg_a11y_start", "a11y", 6, "Dostępność Start (1 podstrona)", "Accessibility Start (1 page)", 99, 55),
   P("pkg_a11y_review", "a11y", 7, "Dostępność Pro (do 5 podstron)", "Accessibility Pro (up to 5 pages)", 590, 280),
   P("pkg_a11y_audit", "a11y", 8, "Dostępność Max (do 15 podstron)", "Accessibility Max (up to 15 pages)", 1790, 799),
-  P("pkg_webapp", "app", 9, "Aplikacja webowa", "Web application", 999, 2500, true),
+  P("pkg_webapp", "app", 9, "Aplikacja webowa", "Web application", 999, 500, true),
   P("pkg_care_basic", "care", 10, "Opieka Start", "Care Start", 79, 29.99, false, true),
   P("pkg_care_standard", "care", 11, "Opieka Pro", "Care Pro", 149, 84, false, true),
   P("pkg_care_plus", "care", 12, "Opieka Max", "Care Max", 299, 175, false, true),
