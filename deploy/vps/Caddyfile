@@ -66,7 +66,13 @@ rentproof.novopix.uk {
 	encode gzip
 	import security_headers
 	header X-Robots-Tag "noindex, nofollow"
-	reverse_proxy rentproof:8766 {
-		flush_interval -1
+	# Prywatna aplikacja statyczna pod sekretnym adresem /k/<sekret>/ (sekret tylko na VPS).
+	handle /k/* {
+		reverse_proxy kamilka:8080
+	}
+	handle {
+		reverse_proxy rentproof:8766 {
+			flush_interval -1
+		}
 	}
 }

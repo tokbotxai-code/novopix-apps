@@ -49,3 +49,13 @@ curl -fsSL https://raw.githubusercontent.com/tokbotxai-code/novopix-apps/main/de
 - Aktualizator to `deploy/vps/rentproof-update.sh` (odświeżany z repo razem z novopix-update; ręczne uruchomienie `rentproof.sh` potrzebne tylko raz).
 - Token GitHub (tylko do odczytu `rentoroof`) zostaje w `/opt/rentproof/.gh-token` (chmod 600, tylko root). Co 5 minut `rentproof-update` (cron) pobiera `main` i przebudowuje kontener tylko przy nowych zmianach; log w `/var/log/rentproof-update.log`. Klucze i dane (wolumen `rentproof-data`) zostają.
 - Gdy token wygaśnie: `RENTPROOF_NEW_TOKEN=1` przed komendą powyżej.
+
+## Mów po angielsku (prywatna aplikacja, link tylko dla wybranej osoby)
+
+Statyczna aplikacja z prywatnego repo `tokbotxai-code/kamilka`, serwowana przez kontener `kamilka` (`kamilka-serve.mjs`) pod `https://rentproof.novopix.uk/k/<sekret>/`. Sekret generuje się na VPS (`/opt/kamilka/.env`, chmod 600) i nie jest w repo; każdy inny adres daje 404, a nagłówki ustawiają `noindex`. Instalacja jedną komendą (jako root), wypisuje gotowy link:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/tokbotxai-code/novopix-apps/main/deploy/vps/kamilka.sh | bash
+```
+
+Co 5 minut `kamilka-update` pobiera zmiany z repo (token tylko do odczytu; używa tokenu RentProof, jeśli ma dostęp do `kamilka`). Nowy link: usuń `/opt/kamilka/.env` i uruchom komendę ponownie.
