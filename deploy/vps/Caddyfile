@@ -66,8 +66,8 @@ rentproof.novopix.uk {
 	encode gzip
 	import security_headers
 	header X-Robots-Tag "noindex, nofollow"
-	# Prywatna aplikacja statyczna pod sekretnym adresem /k/<sekret>/ (sekret tylko na VPS).
-	handle /k/* {
+	# Prywatna aplikacja statyczna chroniona hasłem (hasło tylko na VPS).
+	handle /angielski* {
 		reverse_proxy kamilka:8080
 	}
 	handle {
