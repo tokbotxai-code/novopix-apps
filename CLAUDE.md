@@ -35,3 +35,8 @@ Właściciel (Polak, pracuje na telefonie) chce krótkich raportów po polsku: t
 - Każdy zauważony błąd, usterkę, niespójność języka albo drobiazg **naprawiasz od razu, w tej samej sesji**. Nie zostawiaj niczego „na osobną poprawkę”, nie odkładaj, nie pytaj. Wszystko ma być „tip top”.
 - Wynik audytu (własnego albo z innej sesji) obsługujesz do końca: naprawa, wdrożenie, kontrola na żywo. W raporcie nie ma sekcji „niezrobione”, chyba że wymaga konta, PIN-u lub kliknięcia właściciela.
 - Błąd znaleziony przy okazji innej pracy też naprawiasz automatycznie.
+
+## Social media NovoPix (decyzja właściciela 18.11)
+- Instagram (marka Metricool 8044531, nov_opix): **2 posty dziennie**: obraz 12:30 UK (POST, karta 1080×1350 z `instagram/`) i rolka 19:00 UK (to samo wideo co TikTok 18:30). Każdy opis ma link: „novopix.uk (link in bio)” i zaproszenie „Want a demo of your idea? See novopix.uk”. Tylko prawdziwe dane i ceny z novopix.uk/pricing/, skaner i przegląd dostępności z dopiskiem „nie certyfikat WCAG”.
+- Link w bio Instagrama ustawia właściciel w aplikacji: https://novopix.uk (API Metricool go nie zmienia).
+- Sesje i zadania cykliczne: model `claude-sonnet-5-5`, effort low (konkretny model, nie „domyślny”).
