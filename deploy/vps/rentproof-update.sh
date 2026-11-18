@@ -10,7 +10,7 @@ H="Authorization: Basic $(printf 'x-access-token:%s' "$(cat .gh-token)" | base64
 if [ -f /opt/novopix/.env ] && grep -q '^SMTP_HOST=.\+' /opt/novopix/.env; then
   umask 077
   grep -v '^SMTP_' .env > .env.new || true
-  grep '^SMTP_' /opt/novopix/.env | grep -v '^SMTP_[A-Z]*=$' >> .env.new || true
+  grep '^SMTP_' /opt/novopix/.env | tr -d '\r' | sed -E "s/^(SMTP_[A-Z_]+)=[[:space:]]*(['\"])(.*)\\2[[:space:]]*\$/\\1=\\3/" | grep -v '^SMTP_[A-Z_]*=$' >> .env.new || true
   if ! cmp -s .env .env.new; then mv .env.new .env; else rm -f .env.new; fi
   chmod 600 .env
 fi
