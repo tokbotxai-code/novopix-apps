@@ -35,3 +35,15 @@ Przykładowy wynik: `Kopia: …`, `Klienci: N`, `Leady: N`, `Oferty: N`, `Wynik:
 ## Monitoring usług
 
 Panel sprawdza co 5 min pięć adresów i publikuje `/status` (skaner i panel); szczegóły i zewnętrzny strażnik: `docs/monitoring.md`. Do alertów mailowych potrzebne jest SMTP (sekcja wyżej); zmienne SMTP są już przekazywane do kontenera panelu.
+
+## RentProof (wersja testowa)
+
+Osobny kontener `rentproof` w sieci `novopix_web`; Caddy kieruje na niego `rentproof.novopix.uk`. Kod aplikacji jest w prywatnym repo `rentoroof`, więc kontener buduje się z jednej komendy w konsoli VPS (jako root; pyta o token GitHub tylko do odczytu, sekrety powstają w `/opt/rentproof/.env`):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/tokbotxai-code/novopix-apps/main/deploy/vps/rentproof.sh | bash
+```
+
+- DNS (Spaceship): rekord A `rentproof` na adres IP VPS.
+- Wersja testowa nie wysyła maili: kody i zaproszenia pokazuje komenda `rentproof-codes`.
+- Ponowne uruchomienie skryptu aktualizuje aplikację do najnowszego `main` (klucze zostają).

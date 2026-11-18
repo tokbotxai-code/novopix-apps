@@ -61,3 +61,12 @@ pantrypal.novopix.uk {
 	try_files {path} /index.html
 	file_server
 }
+
+rentproof.novopix.uk {
+	encode gzip
+	import security_headers
+	header X-Robots-Tag "noindex, nofollow"
+	reverse_proxy rentproof:8766 {
+		flush_interval -1
+	}
+}
