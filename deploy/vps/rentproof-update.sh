@@ -14,6 +14,12 @@ if [ -f /opt/novopix/.env ] && grep -q '^SMTP_HOST=.\+' /opt/novopix/.env; then
   if ! cmp -s .env .env.new; then mv .env.new .env; else rm -f .env.new; fi
   chmod 600 .env
 fi
+# Po założeniu konta właściciela kod startowy nie jest już potrzebny: usuń go z .env (kontener wstaje ponownie poniżej).
+if grep -q '^RENTPROOF_BOOTSTRAP_TOKEN=' .env && [ "$(docker inspect -f '{{.State.Running}}' rentproof 2>/dev/null || echo false)" = true ] \
+   && docker exec rentproof node -e "fetch('http://127.0.0.1:8766/api/auth/status').then(r=>r.json()).then(j=>process.exit(j.ownerExists?0:1)).catch(()=>process.exit(2))" 2>/dev/null; then
+  umask 077; grep -v '^RENTPROOF_BOOTSTRAP_TOKEN=' .env > .env.new && mv .env.new .env; chmod 600 .env
+  echo "Usunięto RENTPROOF_BOOTSTRAP_TOKEN (konto właściciela istnieje)"
+fi
 if [ ! -d src/.git ]; then git -c http.extraheader="$H" clone -q https://github.com/tokbotxai-code/rentoroof src; fi
 git -C src -c http.extraheader="$H" fetch -q origin main
 NEW=$(git -C src rev-parse origin/main)
