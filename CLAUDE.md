@@ -40,3 +40,4 @@ Właściciel (Polak, pracuje na telefonie) chce krótkich raportów po polsku: t
 - Instagram (marka Metricool 8044531, nov_opix): **2 posty dziennie**: obraz 12:30 UK (POST, karta 1080×1350 z `instagram/`) i rolka 19:00 UK (to samo wideo co TikTok 18:30). Każdy opis ma link: „novopix.uk (link in bio)” i zaproszenie „Want a demo of your idea? See novopix.uk”. Tylko prawdziwe dane i ceny z novopix.uk/pricing/, skaner i przegląd dostępności z dopiskiem „nie certyfikat WCAG”.
 - Link w bio Instagrama ustawia właściciel w aplikacji: https://novopix.uk (API Metricool go nie zmienia).
 - Sesje i zadania cykliczne: model `claude-sonnet-5-5`, effort low (konkretny model, nie „domyślny”).
+- **TikTok też 2 posty dziennie (decyzja właściciela 18.11):** marka 8044531, TikTok novopix.studio: film 18:30 UK + obraz z `instagram/` (ten sam co IG) o 12:30 UK jako zdjęcie (`tiktokData` bez `isAigc`). Razem 2 posty dziennie na IG i 2 na TikToku.
