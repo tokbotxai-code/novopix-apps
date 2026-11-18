@@ -46,4 +46,5 @@ curl -fsSL https://raw.githubusercontent.com/tokbotxai-code/novopix-apps/main/de
 
 - DNS (Spaceship): rekord A `rentproof` na adres IP VPS.
 - Wersja testowa nie wysyła maili: kody i zaproszenia pokazuje komenda `rentproof-codes`.
-- Ponowne uruchomienie skryptu aktualizuje aplikację do najnowszego `main` (klucze zostają).
+- Token GitHub (tylko do odczytu `rentoroof`) zostaje w `/opt/rentproof/.gh-token` (chmod 600, tylko root). Co 5 minut `rentproof-update` (cron) pobiera `main` i przebudowuje kontener tylko przy nowych zmianach; log w `/var/log/rentproof-update.log`. Klucze i dane (wolumen `rentproof-data`) zostają.
+- Gdy token wygaśnie: `RENTPROOF_NEW_TOKEN=1` przed komendą powyżej.

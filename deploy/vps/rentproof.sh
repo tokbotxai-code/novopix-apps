@@ -1,20 +1,41 @@
 #!/usr/bin/env bash
 # RentProof na VPS NovoPix (wersja testowa, dane fikcyjne). Uruchom jako root w konsoli VPS:
 #   curl -fsSL https://raw.githubusercontent.com/tokbotxai-code/novopix-apps/main/deploy/vps/rentproof.sh | bash
-# Skrypt prosi o token GitHub (tylko do odczytu repo tokbotxai-code/rentoroof; nie jest zapisywany).
-# Sekrety powstają na serwerze w /opt/rentproof/.env (chmod 600), nic nie trafia do repo.
+# Skrypt prosi o token GitHub (tylko do odczytu repo tokbotxai-code/rentoroof). Token zapisuje w /opt/rentproof/.gh-token
+# (chmod 600, tylko root), żeby co 5 minut pobierać poprawki (rentproof-update). Nie trafia do repo ani do czatu.
+# Sekrety aplikacji powstają na serwerze w /opt/rentproof/.env (chmod 600).
 set -euo pipefail
 [ "$(id -u)" = 0 ] || { echo "Uruchom jako root."; exit 1; }
 D=/opt/rentproof; mkdir -p "$D"; cd "$D"
-if [ ! -d src/.git ]; then
+
+# Aktualizator: pobiera repo i przebudowuje kontener tylko, gdy są nowe zmiany.
+cat > /usr/local/bin/rentproof-update <<'EOS'
+#!/usr/bin/env bash
+set -euo pipefail
+D=/opt/rentproof; cd "$D"
+[ -f .gh-token ] || { echo "Brak /opt/rentproof/.gh-token"; exit 1; }
+H="Authorization: Basic $(printf 'x-access-token:%s' "$(cat .gh-token)" | base64 -w0)"
+exec 9>/var/lock/rentproof-update.lock; flock -n 9 || exit 0
+if [ ! -d src/.git ]; then git -c http.extraheader="$H" clone -q https://github.com/tokbotxai-code/rentoroof src; fi
+git -C src -c http.extraheader="$H" fetch -q origin main
+NEW=$(git -C src rev-parse origin/main); OLD=$(cat .deployed 2>/dev/null || echo none)
+RUNNING=$(docker inspect -f '{{.State.Running}}' rentproof 2>/dev/null || echo false)
+if [ "$NEW" = "$OLD" ] && [ "$RUNNING" = true ]; then exit 0; fi
+git -C src reset -q --hard origin/main
+docker build -q -t rentproof src >/dev/null
+docker volume create rentproof-data >/dev/null
+docker rm -f rentproof >/dev/null 2>&1 || true
+docker run -d --name rentproof --restart unless-stopped --memory 256m \
+  --network novopix_web --env-file .env -v rentproof-data:/data rentproof >/dev/null
+echo "$NEW" > .deployed
+echo "RentProof zaktualizowany do ${NEW:0:8}"
+EOS
+chmod 755 /usr/local/bin/rentproof-update
+
+if [ ! -f .gh-token ] || [ "${RENTPROOF_NEW_TOKEN:-0}" = 1 ]; then
   read -rsp "Token GitHub (read-only do rentoroof): " T </dev/tty; echo
-  git clone -q "https://x-access-token:${T}@github.com/tokbotxai-code/rentoroof" src
-  git -C src remote set-url origin https://github.com/tokbotxai-code/rentoroof
-else
-  read -rsp "Token GitHub (read-only do rentoroof): " T </dev/tty; echo
-  git -C src pull -q "https://x-access-token:${T}@github.com/tokbotxai-code/rentoroof" main
+  umask 077; printf '%s' "$T" > .gh-token; chmod 600 .gh-token; unset T
 fi
-unset T
 FIRST=0
 if [ ! -f .env ]; then
   FIRST=1
@@ -34,11 +55,10 @@ RENTPROOF_TEST_MAIL_FILE=/data/test-mail.jsonl
 ENV
   chmod 600 .env
 fi
-docker build -q -t rentproof src >/dev/null
-docker volume create rentproof-data >/dev/null
-docker rm -f rentproof >/dev/null 2>&1 || true
-docker run -d --name rentproof --restart unless-stopped --memory 256m \
-  --network novopix_web --env-file .env -v rentproof-data:/data rentproof >/dev/null
+rm -f .deployed   # wymusza przebudowę teraz
+rentproof-update
+echo '*/5 * * * * root /usr/local/bin/rentproof-update >> /var/log/rentproof-update.log 2>&1' > /etc/cron.d/rentproof
+chmod 644 /etc/cron.d/rentproof
 cat > /usr/local/bin/rentproof-codes <<'EOS'
 #!/usr/bin/env bash
 # Pokazuje ostatnie 5 "maili" testowej wersji RentProof (kody logowania i linki zaproszeń).
@@ -50,10 +70,8 @@ for i in $(seq 1 20); do
   [ "$s" = healthy ] && break; sleep 3
 done
 echo "Stan kontenera: $s"
-echo
-echo "Adres testowy: https://rentproof.novopix.uk (wymaga rekordu A rentproof -> adres IP VPS w Spaceship)."
-echo "Kody i zaproszenia (zamiast maili): rentproof-codes"
+echo "Adres: https://rentproof.novopix.uk | kody i zaproszenia: rentproof-codes | aktualizacje: co 5 min automatycznie"
 if [ "$FIRST" = 1 ]; then
-  echo "Jednorazowy kod założenia konta właściciela (zapisz teraz, nie będzie pokazany ponownie):"
+  echo "Jednorazowy kod założenia konta właściciela (zapisz teraz):"
   grep '^RENTPROOF_BOOTSTRAP_TOKEN=' .env | cut -d= -f2
 fi
