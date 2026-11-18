@@ -45,6 +45,7 @@ curl -fsSL https://raw.githubusercontent.com/tokbotxai-code/novopix-apps/main/de
 ```
 
 - DNS (Spaceship): rekord A `rentproof` na adres IP VPS.
-- Wersja testowa nie wysyła maili: kody i zaproszenia pokazuje komenda `rentproof-codes`.
+- Poczta: jeśli panel ma ustawione SMTP (`/opt/novopix/.env`), RentProof używa tych samych danych i wysyła kody oraz zaproszenia mailem (aktualizator kopiuje `SMTP_*` do `/opt/rentproof/.env`). Bez SMTP wiadomości są tylko w pliku: `rentproof-codes`.
+- Aktualizator to `deploy/vps/rentproof-update.sh` (odświeżany z repo razem z novopix-update; ręczne uruchomienie `rentproof.sh` potrzebne tylko raz).
 - Token GitHub (tylko do odczytu `rentoroof`) zostaje w `/opt/rentproof/.gh-token` (chmod 600, tylko root). Co 5 minut `rentproof-update` (cron) pobiera `main` i przebudowuje kontener tylko przy nowych zmianach; log w `/var/log/rentproof-update.log`. Klucze i dane (wolumen `rentproof-data`) zostają.
 - Gdy token wygaśnie: `RENTPROOF_NEW_TOKEN=1` przed komendą powyżej.

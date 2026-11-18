@@ -8,29 +8,15 @@ set -euo pipefail
 [ "$(id -u)" = 0 ] || { echo "Uruchom jako root."; exit 1; }
 D=/opt/rentproof; mkdir -p "$D"; cd "$D"
 
-# Aktualizator: pobiera repo i przebudowuje kontener tylko, gdy są nowe zmiany.
+# Aktualizator: cienki skrypt uruchamiający wersję z repo (/opt/novopix/deploy/vps/rentproof-update.sh, odświeżaną przez novopix-update).
 cat > /usr/local/bin/rentproof-update <<'EOS'
 #!/usr/bin/env bash
-set -euo pipefail
-D=/opt/rentproof; cd "$D"
-[ -f .gh-token ] || { echo "Brak /opt/rentproof/.gh-token"; exit 1; }
-H="Authorization: Basic $(printf 'x-access-token:%s' "$(cat .gh-token)" | base64 -w0)"
-exec 9>/var/lock/rentproof-update.lock; flock -n 9 || exit 0
-if [ ! -d src/.git ]; then git -c http.extraheader="$H" clone -q https://github.com/tokbotxai-code/rentoroof src; fi
-git -C src -c http.extraheader="$H" fetch -q origin main
-NEW=$(git -C src rev-parse origin/main); OLD=$(cat .deployed 2>/dev/null || echo none)
-RUNNING=$(docker inspect -f '{{.State.Running}}' rentproof 2>/dev/null || echo false)
-if [ "$NEW" = "$OLD" ] && [ "$RUNNING" = true ]; then exit 0; fi
-git -C src reset -q --hard origin/main
-docker build -q -t rentproof src >/dev/null
-docker volume create rentproof-data >/dev/null
-docker rm -f rentproof >/dev/null 2>&1 || true
-docker run -d --name rentproof --restart unless-stopped --memory 256m \
-  --network novopix_web --env-file .env -v rentproof-data:/data rentproof >/dev/null
-echo "$NEW" > .deployed
-echo "RentProof zaktualizowany do ${NEW:0:8}"
+U=/opt/novopix/deploy/vps/rentproof-update.sh
+[ -f "$U" ] || U=/opt/rentproof/rentproof-update.fallback.sh
+exec bash "$U" "$@"
 EOS
 chmod 755 /usr/local/bin/rentproof-update
+curl -fsSL https://raw.githubusercontent.com/tokbotxai-code/novopix-apps/main/deploy/vps/rentproof-update.sh -o /opt/rentproof/rentproof-update.fallback.sh
 
 if [ ! -f .gh-token ] || [ "${RENTPROOF_NEW_TOKEN:-0}" = 1 ]; then
   read -rsp "Token GitHub (read-only do rentoroof): " T </dev/tty; echo
