@@ -59,3 +59,7 @@ curl -fsSL https://raw.githubusercontent.com/tokbotxai-code/novopix-apps/main/de
 ```
 
 Co 5 minut `kamilka-update` pobiera zmiany z repo (token tylko do odczytu; używa tokenu RentProof, jeśli ma dostęp do `kamilka`). Zmiana hasła: `KAMILKA_NEW_PASSWORD=1` przed komendą powyżej.
+
+### RentProof: automatyczne przejście na produkcję
+
+`rentproof-update.sh` raz przełącza RentProof z NODE_ENV=test na production: kopia wolumenu (`/var/backups/rentproof-data-*.tgz`, chmod 600, zawiera klucz), kopia `.env` (`.env.bak-przed-produkcja`), klucz bazy z `.local-data-key` do `.env`, restart i kontrola `/healthz`. Przy braku odpowiedzi wraca poprzedni `.env` i zapisuje `.prod-failed` (bez ponawiania). Po sukcesie instaluje cron kopii (03:17, 14 ostatnich w `/var/backups/rentproof`) i wykonuje test przywracania. Wynik: `/var/log/rentproof-update.log`. Plik `.local-data-key` na wolumenie zostaje (rezerwa). Ponowna próba po porażce: usuń `/opt/rentproof/.prod-failed`.
