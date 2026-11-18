@@ -2,7 +2,7 @@
 # Aplikacja "Mów po angielsku" na VPS, chroniona hasłem (adres: https://rentproof.novopix.uk/angielski/).
 # Uruchom jako root w konsoli VPS:
 #   curl -fsSL https://raw.githubusercontent.com/tokbotxai-code/novopix-apps/main/deploy/vps/kamilka.sh | bash
-# Hasło wpisujesz na serwerze (/opt/kamilka/.env, chmod 600); nie trafia do repo ani do czatu.
+# Hasło podajesz w KAMILKA_PASSWORD=... przed komendą albo wpisujesz na serwerze (/opt/kamilka/.env, chmod 600); nie trafia do repo ani do czatu.
 set -euo pipefail
 [ "$(id -u)" = 0 ] || { echo "Uruchom jako root."; exit 1; }
 D=/opt/kamilka; mkdir -p "$D"; cd "$D"
@@ -24,7 +24,7 @@ else
   umask 077; printf '%s' "$T" > .gh-token; chmod 600 .gh-token; unset T
 fi
 if [ ! -f .env ] || [ "${KAMILKA_NEW_PASSWORD:-0}" = 1 ]; then
-  read -rsp "Ustaw hasło do aplikacji (min. 6 znaków): " P </dev/tty; echo
+  if [ -n "${KAMILKA_PASSWORD:-}" ]; then P="$KAMILKA_PASSWORD"; else read -rsp "Ustaw hasło do aplikacji (min. 6 znaków): " P </dev/tty; echo; fi
   [ "${#P}" -ge 6 ] || { echo "Hasło za krótkie."; exit 1; }
   case "$P" in *\'*|*\"*|*" "*|*"#"*) echo "Użyj hasła bez spacji, apostrofów, cudzysłowów i znaku #."; exit 1;; esac
   umask 077; printf 'KAMILKA_ROOT=/site\nKAMILKA_PASSWORD=%s\nKAMILKA_COOKIE_KEY=%s\n' "$P" "$(openssl rand -hex 24)" > .env; chmod 600 .env; unset P
