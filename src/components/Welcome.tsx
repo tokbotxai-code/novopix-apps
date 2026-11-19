@@ -16,7 +16,7 @@ export function Welcome({ isPolish, audience, setAudience }: { isPolish: boolean
         <h2 className="text-lg font-extrabold text-slate-900">{L("Co dostaniesz po skanie", "What you get after the scan")}</h2>
         <div role="group" aria-label={L("Dla kogo", "Who is it for")} className="flex bg-slate-100 rounded-xl p-0.5 text-xs font-bold">
           {(["company", "institution"] as Audience[]).map((a) => (
-            <button key={a} type="button" onClick={() => setAudience(a)} aria-pressed={audience === a} className={`px-3 py-1.5 rounded-lg cursor-pointer ${audience === a ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}`}>
+            <button key={a} type="button" onClick={() => setAudience(a)} aria-pressed={audience === a} className={`px-3 min-h-[44px] rounded-lg cursor-pointer ${audience === a ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}`}>
               {a === "company" ? L("Firma", "Business") : L("Szkoła lub urząd", "School or public body")}
             </button>
           ))}

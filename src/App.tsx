@@ -529,7 +529,7 @@ export default function App() {
                       ? "Adres strony (np. firma.pl)"
                       : "Website address (e.g. company.com)"
                   }
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-500 dark:placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all font-mono"
+                  className="w-full pl-10 pr-4 py-2.5 min-h-[44px] bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-500 dark:placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all font-mono"
                   required
                 />
               </div>
@@ -877,23 +877,23 @@ export default function App() {
             <span>{isPublicMode ? (isPolish ? "Bezpłatny skaner strony NovoPix" : "NovoPix free website scanner") : isPolish ? "Panel NovoPix" : "NovoPix panel"}</span>
           </div>
           <div className="flex flex-wrap items-center gap-4 text-xs">
-            <button onClick={() => setIsHowItWorksOpen(true)} className="hover:text-slate-900 transition-colors cursor-pointer">
+            <button onClick={() => setIsHowItWorksOpen(true)} className="inline-flex items-center min-h-[44px] hover:text-slate-900 transition-colors cursor-pointer">
               {isPolish ? "Jak to działa" : "How it works"}
             </button>
-            <button onClick={() => setIsPrivacyOpen(true)} className="hover:text-slate-900 transition-colors cursor-pointer">
+            <button onClick={() => setIsPrivacyOpen(true)} className="inline-flex items-center min-h-[44px] hover:text-slate-900 transition-colors cursor-pointer">
               {isPolish ? "Bezpieczeństwo i API" : "Privacy & API"}
             </button>
             {isPublicMode && (
-              <a href={isPolish ? "https://novopix.uk/pl/cennik/" : "https://novopix.uk/pricing/"} className="hover:text-slate-900">
+              <a href={isPolish ? "https://novopix.uk/pl/cennik/" : "https://novopix.uk/pricing/"} className="inline-flex items-center min-h-[44px] hover:text-slate-900">
                 {isPolish ? "Audyty i poprawki: cennik" : "Audits & fixes: pricing"}
               </a>
             )}
             {isPublicMode && (
-              <a href="https://panel.novopix.uk/" className="hover:text-slate-900">
+              <a href="https://panel.novopix.uk/" className="inline-flex items-center min-h-[44px] hover:text-slate-900">
                 {isPolish ? "Panel agencji (logowanie)" : "Agency panel (login)"}
               </a>
             )}
-            <a href="mailto:contact@novopix.uk" className="hover:text-slate-900 font-mono">
+            <a href="mailto:contact@novopix.uk" className="inline-flex items-center min-h-[44px] hover:text-slate-900 font-mono">
               contact@novopix.uk
             </a>
             <a href="https://novopix.uk/" target="_blank" rel="noopener noreferrer" className="text-emerald-700 hover:text-emerald-800 font-bold">

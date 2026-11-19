@@ -69,7 +69,7 @@ export function LoginScreen({
           </button>
         </form>
         <div className="text-xs text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-700 pt-4 space-y-1">
-          <a href={scannerHref} className="font-bold text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 underline">
+          <a href={scannerHref} className="inline-flex items-center min-h-[44px] font-bold text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 underline">
             {isPolish ? "Bezpłatny skaner" : "Free scanner"}
           </a>
           <div>contact@novopix.uk</div>
