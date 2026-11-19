@@ -1,0 +1,4 @@
+/* Touch targets 44px (WCAG 2.5.5) for links and inputs in the PantryPal app. */
+a:not(.brand-mark),input[type=search],input[type=text],input:not([type]){min-height:44px;display:inline-flex;align-items:center}
+input:not([type]),input[type=search],input[type=text]{width:100%;box-sizing:border-box;padding:10px 12px}
+.brand-mark{min-height:44px}
