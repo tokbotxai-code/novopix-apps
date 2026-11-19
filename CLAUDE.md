@@ -40,3 +40,8 @@ Właściciel (Polak, pracuje na telefonie) chce krótkich raportów po polsku: t
 - Link w bio Instagrama ustawia właściciel w aplikacji: https://novopix.uk (API Metricool go nie zmienia).
 - Sesje i zadania cykliczne: model `claude-sonnet-5-5`, effort low (konkretny model, nie „domyślny”).
 - **TikTok też 2 posty dziennie (decyzja właściciela 18.11):** marka 8044531, TikTok novopix.studio: film 18:30 UK + obraz z `instagram/` (ten sam co IG) o 12:30 UK jako zdjęcie (`tiktokData` bez `isAigc`). Razem 2 posty dziennie na IG i 2 na TikToku.
+
+## Jakość: nie publikuj czegoś, co sam wiesz, że jest słabe (decyzja właściciela)
+- Jeśli sam widzisz, że grafika, logo, tekst, układ albo dane są słabe, **nie publikujesz tego i nie zgłaszasz jako gotowe**. Poprawiasz od razu, zanim wdrożysz.
+- Makiety i grafiki produktów mają być prawdziwymi zrzutami ekranu aplikacji, a nie odręcznie rysowanymi imitacjami.
+- Zanim oddasz stronę, obejrzyj ją na zrzucie w telefonie i na komputerze. Nie pisz „wygląda dobrze”, jeśli nie widzisz wyniku.
