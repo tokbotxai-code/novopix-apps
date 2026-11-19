@@ -6,7 +6,7 @@ import net from "node:net";
 import { resolvePublicAddress, safeFetchHtml, validateSafePublicUrl } from "./security";
 import type { DomainHealth, Presence } from "../src/utils/domainHealthTypes";
 
-const DKIM_SELECTORS = ["google", "default", "selector1", "selector2", "k1", "k2", "mail", "s1", "s2", "dkim", "smtp", "mandrill"];
+const DKIM_SELECTORS = ["google", "default", "selector1", "selector2", "k1", "k2", "mail", "s1", "s2", "dkim", "smtp", "mandrill", "spacemail"];
 const withTimeout = <T,>(p: Promise<T>, ms: number, fallback: T): Promise<T> =>
   Promise.race([p.catch(() => fallback), new Promise<T>((r) => setTimeout(() => r(fallback), ms))]);
 

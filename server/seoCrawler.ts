@@ -223,7 +223,8 @@ export async function performDeepLiveSeoInspection(targetUrl: string) {
   let missingAlt = 0;
   let lazyLoadedImages = 0;
   for (const img of imgTags) {
-    if (!/\balt=["'][^"']+["']/i.test(img)) {
+    // alt="" is valid for decorative images; only a missing alt attribute counts.
+    if (!/\balt\s*=\s*(["'])[^]*?\1/i.test(img) && !/\brole\s*=\s*["'](presentation|none)["']/i.test(img)) {
       missingAlt++;
     }
     if (/\bloading=["']lazy["']/i.test(img)) {
