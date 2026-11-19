@@ -33,8 +33,8 @@ export function LoginScreen({
             <span className="font-heading font-extrabold text-base text-slate-900 dark:text-white">NovoPix</span>
           </div>
           <div className="flex gap-1 text-xs font-bold">
-            <button type="button" onClick={() => setIsPolish(true)} aria-pressed={isPolish} className={`px-2.5 py-1 rounded-lg cursor-pointer ${isPolish ? "bg-slate-900 text-white" : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100"}`}>PL</button>
-            <button type="button" onClick={() => setIsPolish(false)} aria-pressed={!isPolish} className={`px-2.5 py-1 rounded-lg cursor-pointer ${!isPolish ? "bg-slate-900 text-white" : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100"}`}>EN</button>
+            <button type="button" onClick={() => setIsPolish(true)} aria-pressed={isPolish} className={`px-3.5 min-h-[44px] rounded-lg cursor-pointer ${isPolish ? "bg-slate-900 text-white" : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100"}`}>PL</button>
+            <button type="button" onClick={() => setIsPolish(false)} aria-pressed={!isPolish} className={`px-3.5 min-h-[44px] rounded-lg cursor-pointer ${!isPolish ? "bg-slate-900 text-white" : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100"}`}>EN</button>
           </div>
         </div>
         <h1 className="text-lg font-heading font-extrabold text-slate-900 dark:text-white">
@@ -61,10 +61,10 @@ export function LoginScreen({
               setPinError(null);
             }}
             placeholder="••••"
-            className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 dark:text-white border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-mono tracking-widest text-center"
+            className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 dark:text-white border border-slate-300 dark:border-slate-400 placeholder:text-slate-500 dark:placeholder:text-slate-300 rounded-xl text-sm font-mono tracking-widest text-center min-h-[44px]"
           />
           {pinError && <div role="alert" className="text-xs font-bold text-rose-600 bg-rose-50 p-2.5 rounded-lg border border-rose-200">{pinError}</div>}
-          <button type="submit" className="w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold cursor-pointer">
+          <button type="submit" className="w-full px-4 py-2.5 min-h-[44px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold cursor-pointer">
             {isPolish ? "Zaloguj" : "Log in"}
           </button>
         </form>

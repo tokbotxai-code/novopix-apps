@@ -375,7 +375,7 @@ export default function App() {
             )}
             <button
               onClick={() => (viewMode === "client" && !isPublicMode ? setIsAcceptProposalOpen(true) : isPublicMode ? setIsQuoteOpen(true) : setActiveTab(hasScan ? "fullreport" : "crm"))}
-              className="px-4 py-2 novopix-gold-btn rounded-lg text-xs font-extrabold transition-transform hover:-translate-y-0.5 whitespace-nowrap shrink-0 cursor-pointer"
+              className="px-4 py-2 min-h-[44px] novopix-gold-btn rounded-lg text-xs font-extrabold transition-transform hover:-translate-y-0.5 whitespace-nowrap shrink-0 cursor-pointer"
             >
               {isPublicMode
                 ? isPolish
@@ -475,7 +475,7 @@ export default function App() {
               <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200">
                 <button
                   onClick={() => setIsPolish(true)}
-                  className={`px-2.5 py-1 text-xs font-bold rounded-md transition-colors cursor-pointer ${
+                  className={`px-3.5 min-h-[44px] text-xs font-bold rounded-md transition-colors cursor-pointer ${
                     isPolish ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
@@ -483,7 +483,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setIsPolish(false)}
-                  className={`px-2.5 py-1 text-xs font-bold rounded-md transition-colors cursor-pointer ${
+                  className={`px-3.5 min-h-[44px] text-xs font-bold rounded-md transition-colors cursor-pointer ${
                     !isPolish ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
@@ -526,10 +526,10 @@ export default function App() {
                   onChange={(e) => setUrlInput(e.target.value)}
                   placeholder={
                     isPolish
-                      ? "Wpisz adres strony do zeskanowania (np. firma.pl)"
-                      : "Enter the website address to scan (e.g. company.com)"
+                      ? "Adres strony (np. firma.pl)"
+                      : "Website address (e.g. company.com)"
                   }
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all font-mono"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-500 dark:placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all font-mono"
                   required
                 />
               </div>
@@ -556,7 +556,7 @@ export default function App() {
             {isPublicMode && (
               <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600" data-testid="trust-line">
                 <span>{isPolish ? "Za darmo, bez rejestracji, wynik po około 30 sekundach. Jeden test mierzy stronę na telefonie i na komputerze." : "Free, no sign-up, result in about 30 seconds. One test measures your site on phone and desktop."}</span>
-                <a href={`/example?lang=${isPolish ? "pl" : "en"}`} className="font-bold text-emerald-800 underline" data-testid="example-link">{isPolish ? "Zobacz przykład" : "See an example"}</a>
+                <a href={`/example?lang=${isPolish ? "pl" : "en"}`} className="inline-flex items-center min-h-[44px] font-bold text-emerald-800 underline" data-testid="example-link">{isPolish ? "Zobacz przykład" : "See an example"}</a>
               </div>
             )}
 
