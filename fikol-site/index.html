@@ -541,15 +541,7 @@ const A={ctx:null,mG:null,mT:0,mBar:0,mTimer:null,mw:-1,
  pause(){this.stopMusic();this.mw=-1;if(this.ctx&&this.ctx.state==='running')this.ctx.suspend().catch(()=>{})}
 };
 const sfx=n=>A.play(n);
-// iOS: przełącznik trybu cichego wycisza Web Audio, chyba że sesja audio jest 'playback'
-let silentEl=null;
-function unmuteIOS(){
-  try{if(navigator.audioSession&&navigator.audioSession.type!=='playback')navigator.audioSession.type='playback'}catch(e){}
-  if(silentEl)return;
-  try{const n=4000,b=new Uint8Array(44+n),v=new DataView(b.buffer),w=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i))};
-    w(0,'RIFF');v.setUint32(4,36+n,true);w(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,8000,true);v.setUint32(28,8000,true);v.setUint16(32,1,true);v.setUint16(34,8,true);w(36,'data');v.setUint32(40,n,true);for(let i=0;i<n;i++)b[44+i]=128;
-    const a=new Audio(URL.createObjectURL(new Blob([b],{type:'audio/wav'})));a.loop=true;a.setAttribute('playsinline','');a.volume=.01;silentEl=a;a.play().catch(()=>{silentEl=null})}catch(e){}
-}
+let silentEl=null; // tryb cichy iPhone'a jest respektowany (bez obejść)
 let typeTimer=null;
 function typeIn(el,text){clearInterval(typeTimer);el.textContent=text;if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
   let i=0;el.textContent='';typeTimer=setInterval(()=>{if(!el.isConnected||!over.classList.contains('show')){clearInterval(typeTimer);return}i+=2;el.textContent=text.slice(0,i);if(i>=text.length){el.textContent=text;clearInterval(typeTimer)}},26)}
@@ -887,14 +879,14 @@ document.getElementById('menuBtn').onclick=menu;
 const mb=document.getElementById('muteBtn');
 function syncMute(){const off=!set.music&&!set.sfx;mb.setAttribute('aria-pressed',off);mb.setAttribute('aria-label',off?'Włącz dźwięk':'Wycisz wszystko')}
 mb.onclick=()=>{const off=!set.music&&!set.sfx;if(off){set.music=true;set.sfx=true}else{set.music=set.sfx=false}saveSet();A.ensure();A.music(Math.floor(lvl/4));syncMute();sfx('ui')};syncMute();
-const firstGesture=()=>{unmuteIOS();if(A.ensure()){A.music(Math.floor(lvl/4));}};
+const firstGesture=()=>{if(A.ensure()){A.music(Math.floor(lvl/4));}};
 ['pointerdown','keydown','click','touchend'].forEach(ev=>addEventListener(ev,firstGesture,{passive:true}));
 document.addEventListener('visibilitychange',()=>{clearInterval(tick);tick=null;stopRep();if(document.hidden){A.pause();if(silentEl)silentEl.pause()}else{if(silentEl)silentEl.play().catch(()=>{});if(grid)tick=setInterval(step,stepMs());if(A.ctx){A.ensure();A.music(Math.floor(lvl/4))}}});
 const ro=new ResizeObserver(resize);ro.observe(cv);addEventListener('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,250));addEventListener('load',resize);
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
 const ro2=new ResizeObserver(()=>{clearTimeout(ro2.t);ro2.t=setTimeout(resize,30)});document.querySelectorAll('.top,.hint,.sub,.hud').forEach(e=>ro2.observe(e));
-const BUILD='v11';
+const BUILD='v12';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   const had=!!navigator.serviceWorker.controller;let reloaded=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
