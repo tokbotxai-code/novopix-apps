@@ -50,3 +50,9 @@ Właściciel (Polak, pracuje na telefonie) chce krótkich raportów po polsku: t
 - Każde usprawnienie, poprawkę, test, audyt, stronę albo narzędzie, które **nie wymaga pracy właściciela** (kont, haseł, płatności, kliknięć w panelach), **wdrażasz sam, bez pytania i bez czekania na zgodę**. Dotyczy też pomysłów, które sam zaproponujesz. Zasady jakości, bezpieczeństwa i marek obowiązują dalej.
 - Po wdrożeniu daj krótką informację: co zrobiono i co sprawdzono na żywo. Nie pytaj „czy robić”.
 - Pytaj tylko o to, czego sam nie zrobisz (dostęp do hostingu, hasła, płatności) albo gdy decyzja jest nieodwracalna.
+
+## Wdrożenie strony novopix.uk: jak działa i czego nie robić (ustalone 20.11)
+- Hosting Spaceship (cPanel, serwer64.shared) ma cron co 5 min: `cd /home/lrtwzfhleb/repositories/novopix-site && git pull -q origin main && rsync -a ... ./ /home/lrtwzfhleb/novopix.uk/` (bez `.git`, `.github`, `*.md`). Drugi cron to `watchdog.php` (monitoring, nie ruszać).
+- **Nigdy nie rób force-pusha ani przepisania historii `novopix-site`.** Zwykły `git pull` na hostingu nie przyjmie rozjechanej historii (błąd „Diverging branches can't be fast-forwarded”) i wdrożenia stają. Tak było 20.11 po przepisaniu autorów: strona stała kilkadziesiąt minut, aż właściciel uruchomił na hostingu `git fetch && git reset --hard origin/main`.
+- Gdy wdrożenie stoi (nowy commit nie pojawia się po ok. 10 min): sprawdź w cPanelu → Git Version Control, czy „Update from Remote” daje błąd rozjechania. Naprawa to jednorazowy cron z komendą `cd /home/lrtwzfhleb/repositories/novopix-site && G=/usr/local/cpanel/3rdparty/bin/git && $G fetch -q && $G reset --hard origin/main`, potem usunąć ten cron. Właściciel pracuje na telefonie: podaj krótko, jedno wklejenie w „Cron Jobs”.
+- Po każdej zmianie strony sprawdź na żywo (nowy adres albo treść), nie zakładaj, że się wdrożyło.
