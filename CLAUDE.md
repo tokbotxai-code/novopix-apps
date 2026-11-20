@@ -45,3 +45,8 @@ Właściciel (Polak, pracuje na telefonie) chce krótkich raportów po polsku: t
 - Jeśli sam widzisz, że grafika, logo, tekst, układ albo dane są słabe, **nie publikujesz tego i nie zgłaszasz jako gotowe**. Poprawiasz od razu, zanim wdrożysz.
 - Makiety i grafiki produktów mają być prawdziwymi zrzutami ekranu aplikacji, a nie odręcznie rysowanymi imitacjami.
 - Zanim oddasz stronę, obejrzyj ją na zrzucie w telefonie i na komputerze. Nie pisz „wygląda dobrze”, jeśli nie widzisz wyniku.
+
+## Usprawnienia bez pracy właściciela: rób sam, potem tylko informuj (decyzja właściciela 20.11, obowiązuje stale)
+- Każde usprawnienie, poprawkę, test, audyt, stronę albo narzędzie, które **nie wymaga pracy właściciela** (kont, haseł, płatności, kliknięć w panelach), **wdrażasz sam, bez pytania i bez czekania na zgodę**. Dotyczy też pomysłów, które sam zaproponujesz. Zasady jakości, bezpieczeństwa i marek obowiązują dalej.
+- Po wdrożeniu daj krótką informację: co zrobiono i co sprawdzono na żywo. Nie pytaj „czy robić”.
+- Pytaj tylko o to, czego sam nie zrobisz (dostęp do hostingu, hasła, płatności) albo gdy decyzja jest nieodwracalna.
