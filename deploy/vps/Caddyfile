@@ -62,6 +62,18 @@ pantrypal.novopix.uk {
 	file_server
 }
 
+fikol.novopix.uk {
+	encode gzip
+	import security_headers
+	header {
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		Cache-Control "no-cache"
+		defer
+	}
+	root * /srv/fikol
+	file_server
+}
+
 rentproof.novopix.uk {
 	encode gzip
 	import security_headers

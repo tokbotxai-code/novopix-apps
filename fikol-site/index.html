@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Fikol: gra logiczna o małym robocie, który rozbił się na obcej planecie. 16 poziomów, śrubki, skrzynie, strażnicy, portale i bomby.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fikol">
+<meta name="theme-color" content="#10161f">
+<title>Fikol</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: playful retro arcade, a little robot on a mission
+   IDEA: a handheld console — the board is the screen inside a moulded housing
+   PICTURE: the live game board itself, characterful vector sprites
+   COLOUR and TYPE: deep charcoal-blue metal, coral robot, bright brass screws; Press Start 2P + Inter
+   LAYOUT: title strip, board, HUD, d-pad; stacked on phones */
+:root{--cell:64px;color-scheme:dark;--bg:#10161f;--case:#1c2532;--edge:#2c3a4d;--ink:#e9eef5;--dim:#8da0b8;--coral:#ff6b4a;--brass:#ffcc3d;--cyan:#56d6e8}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+@supports(height:100dvh){html,body{height:100dvh}}
+body{margin:0;background:radial-gradient(120% 80% at 50% 0%,#1a2433,var(--bg));color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.app{height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;padding:10px 14px 14px;gap:10px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+h1{font:16px 'Press Start 2P',monospace;margin:0;color:var(--coral);letter-spacing:1px}
+.btn{white-space:nowrap;font:600 14px Inter,sans-serif;color:var(--ink);background:var(--case);border:1px solid var(--edge);border-radius:12px;min-height:44px;padding:0 14px;cursor:pointer}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.case{background:linear-gradient(#222d3c,#18202b);border:1px solid var(--edge);border-radius:22px;padding:10px;box-shadow:0 10px 30px #0008,inset 0 1px 0 #ffffff14}
+.screen{position:relative;border-radius:12px;overflow:hidden;background:#0a0f16;aspect-ratio:1;margin:0 auto}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud{display:flex;justify-content:space-between;align-items:center;gap:4px;flex-wrap:wrap;font:10px 'Press Start 2P',monospace;color:var(--ink);padding:10px 2px 2px}
+.it{display:flex;align-items:center;gap:3px;white-space:nowrap}
+.ico{position:static;inset:auto;width:18px;height:18px;display:block;flex:none;image-rendering:pixelated}
+.hud b{color:var(--brass);font-weight:400}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.6)}100%{transform:scale(1)}}
+.pulse{display:inline-block;animation:pop .3s ease-out}
+.hud .it:first-child b{color:var(--ink)}
+.pad{flex:1;display:grid;place-items:end center;min-height:0;padding-top:14px}
+.dpad{display:grid;grid-template-columns:repeat(3,var(--cell));grid-template-rows:repeat(3,var(--cell));gap:6px}
+.dpad button{border:0;border-radius:16px;background:var(--case);color:var(--ink);font-size:24px;box-shadow:0 4px 0 #0a0e14,inset 0 1px 0 #ffffff18;cursor:pointer}
+.dpad button:active{transform:translateY(3px);box-shadow:0 1px 0 #0a0e14}
+#fire{grid-column:2;grid-row:2;background:var(--coral);color:#10161f;font:700 14px Inter,sans-serif}
+.u{grid-column:2}.l{grid-column:1;grid-row:2}.r{grid-column:3;grid-row:2}.d{grid-column:2;grid-row:3}
+.over{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;background:#0a0f16e6;text-align:center;padding:14px;overflow-y:auto}
+.over>:first-child{margin-top:auto}.over>:last-child{margin-bottom:auto}
+.over .x{position:absolute;top:6px;right:6px;width:44px;padding:0;font-size:18px}
+.over.show{display:flex}
+.over h2{font:15px/1.6 'Press Start 2P',monospace;margin:0;color:var(--brass)}
+.over p{margin:0;color:var(--dim);font-size:15px;max-width:30ch}
+.levels{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;width:100%;max-width:290px}
+.levels button{width:100%;padding:0;height:42px;border-radius:12px;border:1px solid var(--edge);background:var(--case);color:var(--ink);font:12px 'Press Start 2P',monospace;cursor:pointer}
+.levels button:disabled{opacity:.35}
+.sub{display:flex;justify-content:space-between;align-items:center;gap:8px;font:12px Inter,sans-serif;color:var(--dim);padding:6px 2px 0}
+#undo{min-height:40px;padding:0 12px;font-size:13px}
+.sub b{color:var(--ink);font-weight:600}
+.sh{color:var(--cyan);font-weight:600}
+.opts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.opts .btn{min-height:44px;font-size:13px}
+.opts .btn[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan)}
+.opts .btn[aria-pressed="false"]{opacity:.6;text-decoration:line-through}
+.bip{color:var(--cyan)!important;font-size:14px!important;border-left:3px solid var(--cyan);padding-left:10px;text-align:left}
+.stars{color:var(--brass);letter-spacing:2px;font-size:22px}
+.levels button small{display:block;font:9px Inter,sans-serif;color:var(--brass);letter-spacing:0;margin-top:2px}
+.kb{display:none}
+@media(hover:hover) and (pointer:fine){.kb{display:inline}}
+.tight .hint{display:none}
+.tight{--cell:46px}
+.hint{font-size:13px;color:var(--dim);text-align:center}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.levels button.done{border-color:var(--coral);color:var(--brass)}
+.levels button.cur{outline:2px solid var(--cyan);outline-offset:2px}
+.dpad button:focus-visible,.levels button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+#muteBtn[aria-pressed="true"]{opacity:.55;text-decoration:line-through}
+@media(max-width:360px){.btn{padding:0 10px;font-size:13px}h1{font-size:13px}.hud{font-size:8px;letter-spacing:-.5px}.levels{gap:4px}.levels button{height:42px}.top>div{gap:6px!important}}
+@media(max-height:760px){:root{--cell:54px}.hint{display:none}}
+@media(max-height:620px){:root{--cell:46px}.app{gap:6px;padding-top:6px}.hud{padding-top:6px}}
+@media(orientation:landscape) and (max-height:520px){:root{--cell:50px}.app{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr);column-gap:16px;row-gap:6px;max-width:none;padding:6px 14px}.top{grid-column:1;grid-row:1}.case{grid-column:1;grid-row:2;align-self:start}.pad{grid-column:2;grid-row:1/3;align-self:center;padding-top:0}.hint{display:none}.sub{padding-top:2px}.hud{padding-top:6px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="top">
+    <h1>FIKOL</h1>
+    <div style="display:flex;gap:8px">
+      <button class="btn" id="muteBtn" aria-label="Wycisz wszystko" aria-pressed="false">♪</button>
+      <button class="btn" id="menuBtn">Poziomy</button>
+      <button class="btn" id="resetBtn">↺ Od nowa</button>
+    </div>
+  </div>
+  <div class="case">
+    <div class="screen" id="screen">
+      <canvas id="cv" role="img" aria-label="Plansza gry Fikol. Steruj strzałkami, WASD, padem lub przesunięciem palca."></canvas>
+      <div class="over" id="over" role="dialog" aria-label="Okno gry"></div>
+    </div>
+    <div class="hud" role="group" aria-label="Stan gry">
+      <span class="it"><b id="hScore">000000</b><span class="sr">Wynik</span></span>
+      <span class="it"><canvas class="ico" data-s="screw" width="16" height="16" aria-hidden="true"></canvas><b id="hScr">00</b><span class="sr">śrubek zostało</span></span>
+      <span class="it"><canvas class="ico" data-s="life" width="16" height="16" aria-hidden="true"></canvas><b id="hLife">05</b><span class="sr">żyć</span></span>
+      <span class="it"><canvas class="ico" data-s="key" width="16" height="16" aria-hidden="true"></canvas><b id="hKey">00</b><span class="sr">kluczy</span></span>
+      <span class="it"><canvas class="ico" data-s="ammo" width="16" height="16" aria-hidden="true"></canvas><b id="hAmmo">00</b><span class="sr">amunicji</span></span>
+      <span class="it"><canvas class="ico" data-s="level" width="16" height="16" aria-hidden="true"></canvas><b id="hLvl">01</b><span class="sr">poziom</span></span>
+    </div>
+    <div class="sub"><button class="btn" id="undo" aria-label="Cofnij ruch (Z)">↶ Cofnij</button><span>Ruchy <b id="hMv">0</b><span id="hSh" class="sh"></span></span><span id="hBest">Rekord: –</span></div>
+  </div>
+  <div class="pad">
+    <div class="dpad">
+      <button class="u" data-d="0,-1" aria-label="Góra">▲</button>
+      <button id="fire" aria-label="PIF, strzał">PIF</button>
+      <button class="l" data-d="-1,0" aria-label="Lewo">◀</button>
+      <button class="r" data-d="1,0" aria-label="Prawo">▶</button>
+      <button class="d" data-d="0,1" aria-label="Dół">▼</button>
+    </div>
+  </div>
+  <div class="sr" id="live" aria-live="polite"></div>
+  <p class="hint">Przesuń palcem albo użyj pada (można przytrzymać). PIF strzela w kierunku ostatniego ruchu.<span class="kb"> Klawiatura: strzałki lub WASD, spacja strzela, Z cofa ruch, R zaczyna od nowa, Esc to mapa poziomów.</span></p>
+</main>
+<script>
+{
+const LEVELS=[
+{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła się otworzy.",map:[
+"###########",
+"#P..S....S#",
+"#.###.###.#",
+"#.#S....#.#",
+"#.#.###.#.#",
+"#...#E#...#",
+"#.#.#.#.#.#",
+"#.#S....#.#",
+"#.###.###.#",
+"#S.......S#",
+"###########"]},
+{name:"Skrzynie",tip:"Skrzynie można pchać, ale tylko na wolne pole.",map:[
+"###########",
+"#P...#...S#",
+"#.B..#.B..#",
+"#..#...#..#",
+"#S.#.B.#.S#",
+"####...####",
+"#S..B.B..S#",
+"#...#.#...#",
+"#.#.....#.#",
+"#...#E#...#",
+"###########"]},
+{name:"Klucze",tip:"Klucz otwiera jedne drzwi.",map:[
+"###########",
+"#P.K#S...S#",
+"#...#.###.#",
+"#.###.#S#.#",
+"#.....#D#.#",
+"###D###.#.#",
+"#S..#.....#",
+"#.#.#.###.#",
+"#.#K#.#E#.#",
+"#S........#",
+"###########"]},
+{name:"Patrol",tip:"Nie daj się złapać strażnikom!",map:[
+"###########",
+"#P.......S#",
+"#.#######.#",
+"#X...A...S#",
+"#.#.###.#.#",
+"#S#.#E#.#.#",
+"#.#.....#.#",
+"#.###.###.#",
+"#.....Y...#",
+"#S.......S#",
+"###########"]},
+{name:"Teleport",tip:"Wejdź na portal, żeby przenieść się do drugiego.",map:[
+"###########",
+"#P..#T....#",
+"#...#.###.#",
+"#.S.#.#S#.#",
+"#.T.#.....#",
+"#####.#####",
+"#SA.#X...S#",
+"#.........#",
+"#.###.#.#.#",
+"#S...E#...#",
+"###########"]},
+{name:"Gruz i bomby",tip:"Zestrzel gruz. Bomba wybucha od strzału, więc trzymaj się z daleka!",map:[
+"###########",
+"#P.A.%..S.#",
+"#....%....#",
+"#%%%%%%%O%#",
+"#S........#",
+"#.##%%%##.#",
+"#.#S...S#.#",
+"#.#..E..#.#",
+"#.###.###.#",
+"#S...O...S#",
+"###########"]},
+{name:"Działka",tip:"Działka strzelają co chwilę. Przebiegnij między pociskami.",map:[
+"###########",
+"#P........#",
+"#.#######.#",
+"#>.......S#",
+"#.###.###.#",
+"#S..#.#..S#",
+"###.#.#.###",
+"#S..#E#...<",
+"#.###.###.#",
+"#S.......S#",
+"###########"]},
+{name:"Magnes i ptaki",tip:"Magnes przyciąga Fikola, gdy jest z nim w jednej linii. Ptaki zrzucają pociski.",map:[
+"###########",
+"#P...A...S#",
+"#.#######.#",
+"#S..F....S#",
+"#.........#",
+"#.##.#.##.#",
+"#M...#...S#",
+"#.##.#.##.#",
+"#S...E....#",
+"#.........#",
+"###########"]},
+{name:"Labirynt",tip:"Strażnik pilnuje dolnego korytarza.",map:[
+"###########",
+"#P#S..#..S#",
+"#.#.#.#.#.#",
+"#...#...#.#",
+"###.#####.#",
+"#S..#E....#",
+"#.#.#.###.#",
+"#.#...#S#.#",
+"#.#####.#.#",
+"#S......X.#",
+"###########"]},
+{name:"Skrzynki i klucz",tip:"Pomyśl, zanim pchniesz skrzynię.",map:[
+"###########",
+"#P..B..K..#",
+"#.#####.#.#",
+"#.#S..#.#.#",
+"#.#.B.#.#S#",
+"#...#.D.#.#",
+"###.#.###.#",
+"#S..B...#.#",
+"#.#####.#.#",
+"#S...E....#",
+"###########"]},
+{name:"Ogień krzyżowy",tip:"Cztery działka, jeden Fikol.",map:[
+"#####v#####",
+"#P.......S#",
+"#.###.###.#",
+">.#S...S#.#",
+"#.#.###.#.#",
+"#...#E#...#",
+"#.#.#.#.#.#",
+"#.#S...S#.<",
+"#.###.###.#",
+"#SA.......#",
+"#####^#####"]},
+{name:"Wybuchowa",tip:"Gruz zamyka skarbiec. Amunicji jest mało.",map:[
+"###########",
+"#P.A.....S#",
+"#.%%%%%%%.#",
+"#.%S.O.S%.#",
+"#.%%%%%%%.#",
+"#.........#",
+"###%###%###",
+"#S.O.#.O.S#",
+"#....E....#",
+"#S.......S#",
+"###########"]},
+{name:"Ptasie gniazdo",tip:"Dwa ptaki i otwarte niebo.",map:[
+"###########",
+"#P...F...S#",
+"#.........#",
+"#S.#.A.#.S#",
+"#..#...#..#",
+"#.##.#.##.#",
+"#....F....#",
+"#S.......S#",
+"#.###E###.#",
+"#.........#",
+"###########"]},
+{name:"Przyciąganie",tip:"Skrzynia osłania przed magnesem. Uważaj na strażnika w pionowym korytarzu.",map:[
+"###########",
+"#P....#..S#",
+"#.###.#.###",
+"#.#S..#Y..#",
+"#.#.###.#.#",
+"#S#.....#.#",
+"#######.#.#",
+"M.B.S...#S#",
+"#.#####.#.#",
+"#....E....#",
+"###########"]},
+{name:"Portale",tip:"Każdy portal prowadzi do następnego.",map:[
+"###########",
+"#P.T#S...S#",
+"#...#.###.#",
+"#####.#S#.#",
+"#S..#.....#",
+"#.T.#####.#",
+"#...#S..T.#",
+"#####.###.#",
+"#S........#",
+"#.##..E.S.#",
+"###########"]},
+{name:"Finał",tip:"Wszystko naraz. Powodzenia, Fikolu!",map:[
+"###v#######",
+"#P..A.%..S#",
+"#.###.%.#.#",
+"#.#S#.O.#.#",
+"#.#.#...#S<",
+"#...###.#.#",
+"#X.....F..#",
+"#.##%##.#.#",
+"#S.#K#S.#D#",
+"#..#.#..#E#",
+"###########"]},
+{name:"Przycisk",tip:"Różowy przycisk przełącza wszystkie różowe bramy.",map:[
+"###########",
+"#P...S...S#",
+"#.#######.#",
+"#.#.....#.#",
+"#.#.###.#.#",
+"#Q......#.#",
+"####G######",
+"#S.......S#",
+"#.#######.#",
+"#..E......#",
+"###########"]},
+{name:"Dwie strony",tip:"Zbierz to, co otwarte, przełącz bramy i zbierz resztę.",map:[
+"###########",
+"#S#.....#S#",
+"#.#.###.#.#",
+"#g#.#E#.#G#",
+"#.#.#.#.#.#",
+"#.P..Q..X.#",
+"#.#.#.#.#.#",
+"#G#.#.#.#g#",
+"#.#.###.#.#",
+"#S#.....#S#",
+"###########"]},
+{name:"Ścigacz",tip:"Fioletowy goni cię z bliska. Zestrzel go albo uciekaj.",map:[
+"###########",
+"#P..S....S#",
+"#.##.#.##.#",
+"#..#...#..#",
+"#S.#.C.#.S#",
+"#.........#",
+"#.##.#.##.#",
+"#..A.E....#",
+"#S.#...#.S#",
+"#.........#",
+"###########"]},
+{name:"Paliwo",tip:"Tarcza pochłonie jedno uderzenie. Wykorzystaj ją mądrze.",map:[
+"###########",
+"#S#..X..#S#",
+"#.#.###.#.#",
+"#g#.#E#.#G#",
+"#.#.#.#.#.#",
+"#.P.HQ.C..#",
+"#.#.#.#.#.#",
+"#G#.#A#.#g#",
+"#.#.###.#.#",
+"#S#.....#S#",
+"###########"]},
+{name:"Port: wejście",tip:"Plansza większa niż ekran: kamera podąża za Fikolem. Zestrzel gruz.",map:[
+"###################",
+"#P....#S....#.....#",
+"#.....#.#...#.#...#",
+"#...........%.....#",
+"#.....#...#.#.#...#",
+"#A....#A....#....S#",
+"###.###########.###",
+"#.....#....S#....S#",
+"#.....#.X...#.#.#.#",
+"#.................#",
+"#.#...#.....#...#.#",
+"#S...S#....E#.....#",
+"###################"]},
+{name:"Port: magazyn",tip:"Klucze otwierają drzwi. Zbierz je, zanim ruszysz dalej.",map:[
+"#########################",
+"#P...K#S....#....S#.....#",
+"#.....#...#.#.....<.#...#",
+"#.....D.................#",
+"#.....#.....#...#.#.....#",
+"#K....#S....#.....#....S#",
+"#########.#####.#########",
+"#....S#S....#.....#....S#",
+"#.....#...#.#.....#...#.#",
+"#...........D...........#",
+"#.X...#.....#.....#.#...#",
+"#.....#.....#S....#....E#",
+"#########################"]},
+{name:"Port: wieża",tip:"Przycisk otwiera bramę, a ścigacz nie śpi.",map:[
+"###################",
+"#P....#.....#S....#",
+"#.....#.....#.....#",
+"#...........#.....#",
+"#.....#...#.#.#...#",
+"#.....#....S#.....#",
+"###.###########.###",
+"#Q...S#....H#.....#",
+"#...#.#...#.#.#.#.#",
+"#.....#...........#",
+"#.#...#.#...#.....#",
+"#.....#S....#....S#",
+"###G#####D#####.###",
+"#....K#S....#S....#",
+"#.#...#.X...#.....#",
+"#..C..............#",
+"#.#...#.....#.....#",
+"#....S#S....#....E#",
+"###################"]},
+{name:"Port: hangar",tip:"Wszystko, czego się nauczyłeś, na jednej wielkiej planszy.",map:[
+"#########################",
+"#P...K#S....#S....#H...A#",
+"#.....#.X...#.....#.....#",
+"#...........D...........#",
+"#.....#.....#.....#.#...#",
+"#....A#Q....#.....#S....#",
+"###.#################%###",
+"#.....#.....#S....#....S#",
+"#.....#.#.#.#...#.#...#.#",
+"#.....#.....#..C........#",
+"#...#.#...#.#.#...#...#.#",
+"#.....#S...E#.....#.....#",
+"###.#####.#####.#####.###",
+"#.....#.....#.....#.....#",
+"#...#.#.....#...#.#.....#",
+"#.................G.....#",
+"#.#.#.#...#.#.....#.....#",
+"#....S#....S#....S#....S#",
+"#########################"]}
+];
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),over=document.getElementById('over');
+let ammo=0,fdx=1,fdy=0,shots=[],L,grid,W,H,px,py,keys,screws,total,enemies,state,lvl=0,tick=null,anim=0,face=1;
+let done=[];try{done=JSON.parse(localStorage.getItem('fikol')||'[]')}catch(e){}
+function save(){try{localStorage.setItem('fikol',JSON.stringify(done))}catch(e){}}
+let run={lives:5,score:0,hi:0};try{Object.assign(run,JSON.parse(localStorage.getItem('fikolRun')||'{}'))}catch(e){}
+function saveRun(){try{localStorage.setItem('fikolRun',JSON.stringify(run))}catch(e){}}
+let scoreBase=0;
+function addScore(n){const before=Math.floor(run.score/1500);run.score+=n;if(Math.floor(run.score/1500)>before&&!set.calm){run.lives++;say('Dodatkowe życie!');sfx('shield')}if(run.score>run.hi)run.hi=run.score;saveRun();hud()}
+const pad=(n,l)=>String(Math.max(0,Math.min(n,l===6?999999:99))).padStart(l||2,'0');
+let fdir='d',cheerT=0,floats=[];
+let T=null,moves=0,hist=[],parts=[],shield=false,inv=0,now=0,pa=null;const EA=new WeakMap(),SA=new WeakMap();const stepMs=()=>set.calm?620:420;
+
+const WORLDS=[
+ {n:"Złomowisko",f:['#121a25','#0f1620'],w:['#34465e','#4a6382','#22303f'],end:"Złomowisko za nami. Kapsuła zaskoczyła, ale to dopiero rozgrzewka.",m:{tempo:112,root:48,sc:[0,3,5,7,10],prog:[0,8,3,10]}},
+ {n:"Obca pustynia",f:['#241a12','#1d150e'],w:['#7a5a3a','#9a7650','#4e3a24'],end:"Pustynia za nami. Piasek w stawach, ale kapsuła leci dalej.",m:{tempo:100,root:50,sc:[0,2,5,7,9],prog:[0,5,3,7]}},
+ {n:"Kopalnia",f:['#1b1522','#150f1a'],w:['#5e4e74','#7e6c96','#3a2f4a'],end:"Kopalnia za nami. Jeszcze jedna planeta i do domu!",m:{tempo:124,root:45,sc:[0,3,5,7,10],prog:[0,0,8,7]}},
+ {n:"Stacja magnesów",f:['#0e1c1c','#0a1717'],w:['#2f6b6b','#44909a','#1d4545'],end:"Stacja za nami. Bipek złapał sygnał z laboratorium: tam jest paliwo na drogę do domu.",m:{tempo:118,root:52,sc:[0,2,4,7,9],prog:[0,2,7,5]}},
+ {n:"Laboratorium",f:['#102019','#0b1812'],w:['#3f7a5a','#5ea67f','#264735'],end:"Laboratorium za nami. Fikol ma paliwo, ale w porcie kosmicznym czekają hale większe niż ekran.",m:{tempo:108,root:55,sc:[0,2,4,7,9],prog:[0,5,7,3]}},
+ {n:"Port kosmiczny",f:['#1a1a30','#141428'],w:['#a0602d','#d08a4f','#6b3a1a'],end:"",m:{tempo:126,root:43,sc:[0,3,5,7,10],prog:[0,3,8,5]}}
+];
+const BIP=[
+ "Bip! Tu Bipek, komputer pokładowy. Skanuję okolicę: sześć śrubek leży na ziemi. Zbierz je, a kapsuła ożyje.",
+ "Skrzynie można pchać, ale nie ciągnąć. Jak ugrzęźniesz, wciśnij R albo cofnij ruch klawiszem Z.",
+ "Klucze otwierają drzwi. Jeden klucz, jedne drzwi. Nie marnuj ich!",
+ "Uwaga, patrol! Strażnicy chodzą w kółko i mają kiepski wzrok. Za to dużo cierpliwości.",
+ "Obca pustynia. Te portale wciągają wszystko. Wchodzisz do jednego, wychodzisz w drugim.",
+ "Kto zostawia bomby na środku drogi? Strzel w gruz, ale nie w bombę, gdy stoisz obok.",
+ "Działka strzelają w równym rytmie. Poczekaj na dobry moment i przebiegnij.",
+ "Magnes! Skrzynia osłoni cię przed przyciąganiem. A ptaki zrzucają pociski, więc nie stój pod nimi.",
+ "Kopalnia. Strażnik pilnuje dolnego korytarza. Zawsze jest jakiś strażnik.",
+ "Skrzynie i klucz. Pomyśl, zanim pchniesz. Pchnięcie ma swoje konsekwencje.",
+ "Cztery działka i jeden Fikol. Statystyka jest po stronie działek, ale umiejętności po twojej.",
+ "Gruz zamyka skarbiec. Amunicji mało, więc każdy strzał musi trafić.",
+ "Stacja magnesów. Dwa ptaki i otwarte niebo. Nie podnoś głowy.",
+ "Znowu magnes. Skrzynia jest twoim przyjacielem. Strażnik w korytarzu nie jest.",
+ "Portale prowadzą do następnego, w kółko. Zgubić się łatwo, wrócić trudniej.",
+ "Wszystko naraz! A potem laboratorium, gdzie czeka paliwo na drogę do domu. Wierzę w ciebie, Fikolu. Bip.",
+ "Laboratorium. Różowy przycisk przełącza wszystkie różowe bramy: jedne się otwierają, inne zamykają. Nadepnij, a zobaczysz.",
+ "Przycisk przełącza wszystkie bramy naraz. Zbierz, co otwarte, przełącz i zbierz resztę. Brama zamknięta na strażniku to koniec strażnika.",
+ "Ścigacz! Ten fioletowy goni cię, gdy jesteś blisko. Ucieczka jest możliwa, ale amunicja jest lepsza.",
+ "Ostatnie laboratorium. Tarcza pochłonie jedno uderzenie, więc zachowaj ją na gorszą chwilę. Paliwo czeka za bramą.",
+ "Port kosmiczny! Hale są większe niż ekran, więc kamera podąża za tobą. Gruz zamyka drogę, ale amunicja leży niedaleko.",
+ "Magazyn z drzwiami. Klucze leżą w ślepych zaułkach przed drzwiami. Strażnik chodzi po hali, więc pilnuj rytmu.",
+ "Wieża. Przycisk gdzieś w dole otwiera bramę, a ścigacz węszy. Tarcza leży w jakimś zaułku.",
+ "Ostatni hangar! Drzwi, gruz, brama i trzy rodzaje wrogów. Nie spiesz się: tu nie ma limitu czasu."
+];
+const PAR=[44,56,59,50,39,63,52,49,63,50,56,48,35,62,63,56,49,75,38,75,74,97,142,185];
+const starsFor=(i,m)=>m<=PAR[i]*1.3+6?3:m<=PAR[i]*2+10?2:1;
+const starStr=n=>'★'.repeat(n)+'☆'.repeat(3-n);
+let best={};try{best=JSON.parse(localStorage.getItem('fikolBest')||'{}')}catch(e){}
+let set={music:true,sfx:true,calm:false};try{Object.assign(set,JSON.parse(localStorage.getItem('fikolSet')||'{}'));if(localStorage.getItem('fikolMute')==='1'&&!localStorage.getItem('fikolSet')){set.music=false;set.sfx=false}delete set['voice'];}catch(e){}
+function saveSet(){try{localStorage.setItem('fikolSet',JSON.stringify(set))}catch(e){}}
+
+// ===== AUDIO (wszystko generowane na żywo, bez plików) =====
+const mhz=m=>440*Math.pow(2,(m-69)/12);
+const NB=new WeakMap();
+function noiseBuf(c){let b=NB.get(c);if(!b){b=c.createBuffer(1,c.sampleRate,c.sampleRate);const d=b.getChannelData(0);let q=1;for(let i=0;i<d.length;i++){q=(q*1664525+1013904223)>>>0;d[i]=q/2147483648-1}NB.set(c,b)}return b}
+function tone(c,o,t,f,f2,d,type,g,atk){const os=c.createOscillator(),gn=c.createGain();os.type=type||'square';os.frequency.setValueAtTime(f,t);if(f2)os.frequency.exponentialRampToValueAtTime(Math.max(20,f2),t+d);gn.gain.setValueAtTime(.0001,t);gn.gain.exponentialRampToValueAtTime(g,t+(atk||.005));gn.gain.exponentialRampToValueAtTime(.0001,t+d);os.connect(gn);gn.connect(o);os.start(t);os.stop(t+d+.03)}
+function noise(c,o,t,d,g,type,f,f2){const s=c.createBufferSource(),fl=c.createBiquadFilter(),gn=c.createGain();s.buffer=noiseBuf(c);fl.type=type||'lowpass';fl.frequency.setValueAtTime(f||1000,t);if(f2)fl.frequency.exponentialRampToValueAtTime(f2,t+d);gn.gain.setValueAtTime(g,t);gn.gain.exponentialRampToValueAtTime(.0001,t+d);s.connect(fl);fl.connect(gn);gn.connect(o);s.start(t);s.stop(t+d+.03)}
+const SFX={
+ step:(c,o,t)=>tone(c,o,t,200,140,.05,'triangle',.05),
+ screw:(c,o,t)=>{tone(c,o,t,988,988,.08,'square',.09);tone(c,o,t+.07,1319,1319,.16,'square',.09)},
+ key:(c,o,t)=>[523,659,784].forEach((f,i)=>tone(c,o,t+i*.06,f,f,.14,'triangle',.13)),
+ door:(c,o,t)=>{noise(c,o,t,.25,.25,'lowpass',1200,200);tone(c,o,t,220,110,.25,'sawtooth',.08)},
+ push:(c,o,t)=>{tone(c,o,t,110,60,.14,'sine',.28);noise(c,o,t,.08,.08,'lowpass',500)},
+ ammo:(c,o,t)=>{tone(c,o,t,400,700,.1,'square',.08);tone(c,o,t+.08,700,900,.1,'square',.08)},
+ tele:(c,o,t)=>{tone(c,o,t,250,1400,.22,'sine',.14);tone(c,o,t+.18,1400,500,.2,'sine',.1)},
+ fire:(c,o,t)=>{tone(c,o,t,1300,260,.13,'square',.09);noise(c,o,t,.05,.05,'highpass',3000)},
+ hit:(c,o,t)=>{noise(c,o,t,.18,.2,'bandpass',1800,300);tone(c,o,t,420,90,.18,'square',.1)},
+ boom:(c,o,t)=>{noise(c,o,t,.6,.32,'lowpass',2500,80);tone(c,o,t,90,30,.5,'sine',.32)},
+ die:(c,o,t)=>{tone(c,o,t,440,55,.55,'sawtooth',.14);noise(c,o,t,.3,.12,'lowpass',900,150)},
+ win:(c,o,t)=>{[523,659,784,1046,1319].forEach((f,i)=>tone(c,o,t+i*.1,f,f,.26,'square',.09));tone(c,o,t+.5,1568,1568,.5,'triangle',.1)},
+ cannon:(c,o,t)=>{noise(c,o,t,.14,.18,'lowpass',700,150);tone(c,o,t,130,60,.12,'sine',.18)},
+ bird:(c,o,t)=>tone(c,o,t,900,500,.07,'triangle',.05),
+ magnet:(c,o,t)=>tone(c,o,t,120,90,.15,'sawtooth',.06),
+ plate:(c,o,t)=>{tone(c,o,t,160,110,.12,'square',.12);tone(c,o,t+.09,320,480,.14,'triangle',.1)},
+ shield:(c,o,t)=>[659,880,1319].forEach((f,i)=>tone(c,o,t+i*.07,f,f*1.01,.2,'sine',.13)),
+ shbreak:(c,o,t)=>{noise(c,o,t,.25,.25,'bandpass',2500,500);tone(c,o,t,900,200,.22,'triangle',.12)},
+ ui:(c,o,t)=>tone(c,o,t,700,900,.05,'square',.05),
+ undo:(c,o,t)=>tone(c,o,t,600,300,.1,'triangle',.07)
+};
+function lcg(q){return()=>(q=(q*1664525+1013904223)>>>0)/4294967296}
+// jeden takt = 16 szesnastek; zwraca czas trwania taktu
+function musicBar(c,o,t,th,bar){
+  const sp=60/th.tempo/4,ch=th.prog[bar%4],sec=Math.floor(bar/4)%2,rnd=lcg(th.root*131+sec*977+(bar%4)*31+1);
+  const sc=th.sc,note=p=>th.root+12+Math.floor(p/5)*12+sc[p%5];
+  let pos=4;
+  for(let i=0;i<16;i++){const at=t+i*sp;
+    if(i===0||i===8||(sec&&i===14))tone(c,o,at,mhz(th.root+ch)*.5,mhz(th.root+ch)*.35,.14,'sine',.5);
+    if(i===4||i===12)noise(c,o,at,.1,.1,'bandpass',1800,900);
+    if(i%2===0)noise(c,o,at,.03,.035,'highpass',6000);
+    if(i%2===0)tone(c,o,at,mhz(th.root+ch+12+[0,7,12,7][(i/2)%4]),null,sp*1.6,'square',.05);
+    if([0,6,8,sec?11:14].includes(i))tone(c,o,at,mhz(th.root+ch-12),null,sp*2.2,'triangle',.3);
+    if([0,3,6,8,10,12,14].includes(i)&&rnd()<.7){pos=Math.max(0,Math.min(9,pos+(rnd()<.5?1:-1)*(1+(rnd()<.3?1:0))));tone(c,o,at,mhz(note(pos)),null,sp*(rnd()<.4?2.4:1.5),'square',.07)}
+  }
+  return 16*sp;
+}
+const A={ctx:null,mG:null,mT:0,mBar:0,mTimer:null,mw:-1,
+ ensure(){if(!this.ctx){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;this.ctx=new C();this.out=this.ctx.createGain();this.out.gain.value=.9;this.out.connect(this.ctx.destination);this.sfxG=this.ctx.createGain();this.sfxG.gain.value=1.6;this.sfxG.connect(this.out);this.musG=this.ctx.createGain();this.musG.gain.value=.2;this.musG.connect(this.out)}catch(e){this.ctx=null;return null}}
+  if(this.ctx.state==='suspended')this.ctx.resume().catch(()=>{});return this.ctx},
+ play(n){if(!set.sfx)return;const c=this.ensure();if(c&&SFX[n])try{SFX[n](c,this.sfxG,c.currentTime+.005)}catch(e){}},
+ music(w){ // start/stop zgodnie z ustawieniami
+  const c=this.ctx;if(!c)return;
+  if(!set.music){this.stopMusic();this.mw=-1;return}
+  if(this.mw===w&&this.mTimer)return;
+  this.stopMusic();this.mw=w;const th=WORLDS[w].m,g=c.createGain();g.gain.setValueAtTime(0,c.currentTime);g.gain.linearRampToValueAtTime(1,c.currentTime+.6);g.connect(this.musG);this.mG=g;this.mT=c.currentTime+.08;this.mBar=0;
+  const pump=()=>{if(!this.ctx||this.mG!==g)return;while(this.mT<c.currentTime+.8){this.mT+=musicBar(c,g,this.mT,th,this.mBar++)}};pump();this.mTimer=setInterval(pump,150)},
+ stopMusic(){clearInterval(this.mTimer);this.mTimer=null;const g=this.mG;this.mG=null;if(g&&this.ctx){try{g.gain.cancelScheduledValues(this.ctx.currentTime);g.gain.setValueAtTime(g.gain.value,this.ctx.currentTime);g.gain.linearRampToValueAtTime(0,this.ctx.currentTime+.3)}catch(e){}setTimeout(()=>{try{g.disconnect()}catch(e){}},500)}},
+ pause(){this.stopMusic();this.mw=-1;if(this.ctx&&this.ctx.state==='running')this.ctx.suspend().catch(()=>{})}
+};
+const sfx=n=>A.play(n);
+// iOS: przełącznik trybu cichego wycisza Web Audio, chyba że sesja audio jest 'playback'
+let silentEl=null;
+function unmuteIOS(){
+  try{if(navigator.audioSession&&navigator.audioSession.type!=='playback')navigator.audioSession.type='playback'}catch(e){}
+  if(silentEl)return;
+  try{const n=4000,b=new Uint8Array(44+n),v=new DataView(b.buffer),w=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i))};
+    w(0,'RIFF');v.setUint32(4,36+n,true);w(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,8000,true);v.setUint32(28,8000,true);v.setUint16(32,1,true);v.setUint16(34,8,true);w(36,'data');v.setUint32(40,n,true);for(let i=0;i<n;i++)b[44+i]=128;
+    const a=new Audio(URL.createObjectURL(new Blob([b],{type:'audio/wav'})));a.loop=true;a.setAttribute('playsinline','');a.volume=.01;silentEl=a;a.play().catch(()=>{silentEl=null})}catch(e){}
+}
+let typeTimer=null;
+function typeIn(el,text){clearInterval(typeTimer);el.textContent=text;if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  let i=0;el.textContent='';typeTimer=setInterval(()=>{if(!el.isConnected||!over.classList.contains('show')){clearInterval(typeTimer);return}i+=2;el.textContent=text.slice(0,i);if(i>=text.length){el.textContent=text;clearInterval(typeTimer)}},26)}
+
+function load(i,keep){
+  lvl=i;L=LEVELS[i];H=L.map.length;W=L.map[0].length;grid=[];enemies=[];keys=0;screws=0;total=0;ammo=0;shots=[];shield=false;inv=0;pa=null;
+  L.map.forEach((row,y)=>{grid.push([...row].map((c,x)=>{
+    if(c==='P'){px=x;py=y;return '.'}
+    if(c==='X'||c==='Y'||c==='F'){enemies.push({x,y,dx:c==='Y'?0:1,dy:c==='Y'?1:0,bird:c==='F'});return '.'}
+    if(c==='C'){enemies.push({x,y,dx:0,dy:0,chase:true,lx:0,ly:0});return '.'}
+    if(c==='S')total++;return c}))});
+  if(keep)run.score=scoreBase;else scoreBase=run.score;
+  T=WORLDS[Math.floor(i/4)];moves=0;hist=[];parts=[];tn=0;camInit=false;fdir='d';cheerT=0;floats=[];
+  state='play';hud();lvl===0&&!story0?story(0):showTip();A.music(Math.floor(i/4));
+  clearInterval(tick);tick=setInterval(step,stepMs());resize();
+}
+const live=document.getElementById('live');const say=t=>{live.textContent='';setTimeout(()=>live.textContent=t,30)};
+function focusGo(){const g=document.getElementById('go');g&&g.focus({preventScroll:true})}
+function showTip(){say('Poziom '+(lvl+1)+', '+L.name+'. '+L.tip+' Bipek: '+BIP[lvl]);over.innerHTML=`<h2>Poziom ${lvl+1}<br>${L.name}</h2><p>${L.tip}</p><p class="bip" aria-hidden="true"><b>BIPEK:</b> <span id="bt"></span></p><button class="btn" id="go">Start</button>`;over.classList.add('show');state='tip';focusGo();typeIn(document.getElementById('bt'),BIP[lvl]);document.getElementById('go').onclick=()=>{sfx('ui');over.classList.remove('show');state='play'}}
+function hud(){hAmmo.textContent=pad(ammo);hLvl.textContent=pad(lvl+1);hScr.textContent=pad(total-screws);hKey.textContent=pad(keys);hLife.textContent=set.calm?'--':pad(run.lives);hScore.textContent=pad(run.score,6);hSh.textContent=shield?' ◈ TARCZA':'';hMv.textContent=moves;const b=best[lvl];hBest.textContent=b?'Rekord: '+b.moves+' '+starStr(b.stars):'Rekord: –'}
+const solid=c=>'#DBO%><^vMG'.includes(c);let tn=0;
+function enemyAt(x,y){return enemies.some(e=>e.x===x&&e.y===y)}
+const snapState=()=>JSON.stringify({grid,px,py,keys,screws,ammo,shots,enemies,fdx,fdy,face,tn,moves,shield,inv,score:run.score});
+function restoreState(j){const o=JSON.parse(j);({grid,px,py,keys,screws,ammo,shots,enemies,fdx,fdy,face,tn,moves,shield,inv}=o);run.score=o.score===undefined?run.score:o.score;pa=null}
+function spark(x,y,col,n){for(let i=0;i<n;i++){const a=Math.random()*6.28,v=.04+Math.random()*.08;parts.push({x:x+.5,y:y+.5,vx:Math.cos(a)*v,vy:Math.sin(a)*v-.03,l:26+Math.random()*14,c:col})}}
+function move(dx,dy){
+  if(state!=='play')return;
+  const pre=snapState();
+  if(move0(dx,dy)){hist.push(pre);if(hist.length>300)hist.shift()}
+}
+function undo(){
+  if(!hist.length||state!=='play')return;
+  restoreState(hist.pop());over.classList.remove('show');state='play';parts=[];hud();sfx('undo');say('Cofnięto ruch');
+}
+function toggleGates(){for(let y=0;y<H;y++)for(let x=0;x<W;x++){const c=grid[y][x];if(c==='G')grid[y][x]='g';else if(c==='g'){if(enemyAt(x,y)){enemies=enemies.filter(e=>!(e.x===x&&e.y===y));sfx('hit');spark(x,y,'#d2364f',12)}grid[y][x]='G'}}}
+function move0(dx,dy){
+  if(dx)face=dx;fdx=dx;fdy=dy;fdir=dx>0?'r':dx<0?'l':dy<0?'u':'d';
+  const nx=px+dx,ny=py+dy,c=grid[ny][nx];
+  if('#%><^vMG'.includes(c))return false;
+  if(c==='D'){if(!keys)return false;keys--;grid[ny][nx]='.';sfx('door');spark(nx,ny,'#56d6e8',8)}
+  if(c==='B'||c==='O'){const bx=nx+dx,by=ny+dy,b=grid[by][bx];if(b!=='.'||enemyAt(bx,by))return false;grid[by][bx]=c;grid[ny][nx]='.';sfx('push');spark(bx,by,'#a8683a',4)}
+  if(c==='E'&&screws<total)return false;
+  pa={x:px,y:py,t:performance.now()};px=nx;py=ny;moves++;
+  const t=grid[py][px];
+  if(t==='.')sfx('step');
+  if(t==='S'){addScore(50);cheerT=performance.now()+520;floats.push({x:px,y:py,t:performance.now(),s:'+50',pop:true});const hs=document.getElementById('hScr');hs.classList.remove('pulse');void hs.offsetWidth;hs.classList.add('pulse');sfx('screw');spark(px,py,'#ffcc3d',10);screws++;grid[py][px]='.';say('Śrubki '+screws+' z '+total+(screws===total?'. Kapsuła otwarta.':''));if(screws===total){cheerT=performance.now()+900;for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(grid[y][x]==='E'){flash={x,y,t:16};spark(x,y,'#ffe2a8',14)}}}
+  if(t==='K'){addScore(25);floats.push({x:px,y:py,t:performance.now(),s:'+25'});sfx('key');spark(px,py,'#56d6e8',8);keys++;grid[py][px]='.'}
+  if(t==='A'){addScore(25);floats.push({x:px,y:py,t:performance.now(),s:'+25'});sfx('ammo');spark(px,py,'#ff6b4a',8);ammo+=3;grid[py][px]='.'}
+  if(t==='Q'){sfx('plate');toggleGates();spark(px,py,'#ff5fa2',10);say('Bramy się przełączyły.')}
+  if(t==='H'){addScore(50);sfx('shield');spark(px,py,'#56d6e8',12);shield=true;grid[py][px]='.';say('Tarcza włączona. Pochłonie jedno uderzenie.')}
+  if(t==='T'){pa=null;const ts=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(grid[y][x]==='T')ts.push([x,y]);const k=ts.findIndex(q=>q[0]===px&&q[1]===py);spark(px,py,'#c77dff',12);[px,py]=ts[(k+1)%ts.length];sfx('tele');spark(px,py,'#c77dff',12)}
+  if(t==='E'){win();return true}
+  if(enemyAt(px,py)){die();return true}
+  if(shots.some(q=>q.o==='e'&&q.x===px&&q.y===py)){die('Fikol oberwał pociskiem.');return true}
+  hud();return true;
+}
+function fire(){if(state!=='play'||!ammo)return;const pre=snapState();hist.push(pre);sfx('fire');ammo--;moves++;shots.push({x:px,y:py,dx:fdx,dy:fdy,o:'p'});hud();moveShots()}
+function boom(x,y){grid[y][x]='.';for(let yy=y-1;yy<=y+1;yy++)for(let xx=x-1;xx<=x+1;xx++){const c=grid[yy]&&grid[yy][xx];if(c==='O'){boom(xx,yy);continue}if(c==='%'||c==='B')grid[yy][xx]='.';enemies=enemies.filter(e=>!(e.x===xx&&e.y===yy));if(px===xx&&py===yy&&state==='play')die('Bum! Fikol był za blisko bomby.')}flash={x,y,t:12};sfx('boom');spark(x,y,'#ffb43c',24)}
+let flash=null;
+function moveShots(){shots=shots.filter(s=>{SA.set(s,{x:s.x,y:s.y,t:performance.now()});s.x+=s.dx;s.y+=s.dy;const c=grid[s.y]&&grid[s.y][s.x];if(c===undefined)return false;if(s.x===px&&s.y===py&&s.o==='e'){die('Fikol oberwał pociskiem.');return false}const i=enemies.findIndex(e=>e.x===s.x&&e.y===s.y);if(i>=0){if(s.o==='p'){addScore(100);floats.push({x:s.x,y:s.y,t:performance.now(),s:'+100'});sfx('hit');spark(s.x,s.y,'#d2364f',10);enemies.splice(i,1)}return s.o!=='p'}if(c==='%'){grid[s.y][s.x]='.';sfx('push');spark(s.x,s.y,'#7a6652',6);return false}if(c==='O'){boom(s.x,s.y);return false}return '.SKATgQH'.includes(c)})}
+setInterval(()=>{if(state==='play'&&!document.hidden)moveShots()},90);
+let story0=false;
+const STORY=[
+ {h:'FIKOL',t:'Mały robot Fikol leciał na zwykłą misję serwisową. Zwykłą, dopóki nie zabrakło mu paliwa. Rozbił się na obcej planecie, a z kapsuły ratunkowej wypadły wszystkie śrubki.',b:'Dalej'},
+ {h:'BIPEK',t:'Na szczęście komputer pokładowy przeżył. Nazywa się Bipek i uwielbia gadać. Sześć światów, dwadzieścia cztery kapsuły. Zbierz śrubki, naprawiaj, odlatuj. I uważaj na strażników!',b:'Lecimy'}
+];
+function story(p){p=p||0;story0=true;state='tip';const g=STORY[p];over.innerHTML=`<h2 style="${p?'color:#56d6e8;':'font-size:28px;color:#ff6b4a'}">${g.h}</h2><p id="stt"></p><button class="btn" id="go">${g.b}</button>`;over.classList.add('show');focusGo();say(g.h+'. '+g.t);typeIn(document.getElementById('stt'),g.t);document.getElementById('go').onclick=()=>{sfx('ui');p+1<STORY.length?story(p+1):showTip()}}
+function step(){
+  if(state!=='play')return;tn++;if(inv>0)inv--;
+  const dirs={'>':[1,0],'<':[-1,0],'^':[0,-1],'v':[0,1]};let cn=false;
+  if(tn%4===0)for(let y=0;y<H;y++)for(let x=0;x<W;x++){const d=dirs[grid[y][x]];if(d){shots.push({x,y,dx:d[0],dy:d[1],o:'e'});if(!cn&&Math.abs(x-px)+Math.abs(y-py)<9){cn=true;sfx('cannon')}}}
+  for(const e of enemies)if(e.bird&&tn%5===0){shots.push({x:e.x,y:e.y,dx:0,dy:1,o:'e'});if(Math.abs(e.x-px)+Math.abs(e.y-py)<9)sfx('bird')}
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(grid[y][x]==='M'&&y===py){const d=Math.sign(x-px);let clear=true;for(let k=px+d;k!==x;k+=d)if(grid[y][k]!=='.')clear=false;if(clear){sfx('magnet');pa={x:px,y:py,t:performance.now()};px+=d;if(Math.abs(x-px)<=1){die('Magnes przyciągnął Fikola.');return}}}
+  for(const e of enemies){
+    if(e.chase){
+      if(tn%2||Math.abs(px-e.x)+Math.abs(py-e.y)>9)continue;
+      const c=[[1,0],[-1,0],[0,1],[0,-1]].map(([ax,ay])=>({ax,ay,x:e.x+ax,y:e.y+ay})).filter(m=>{const g=grid[m.y]&&grid[m.y][m.x];return g!==undefined&&!solid(g)&&g!=='E'&&g!=='T'&&!enemyAt(m.x,m.y)&&!(m.ax===-e.lx&&m.ay===-e.ly&&(e.lx||e.ly))});
+      if(!c.length)continue;
+      c.sort((a,b)=>(Math.abs(px-a.x)+Math.abs(py-a.y))-(Math.abs(px-b.x)+Math.abs(py-b.y)));
+      const m=c[0];EA.set(e,{x:e.x,y:e.y,t:performance.now()});e.x=m.x;e.y=m.y;e.lx=m.ax;e.ly=m.ay;continue}
+    let nx=e.x+e.dx,ny=e.y+e.dy;
+    if(solid(grid[ny][nx])||grid[ny][nx]==='E'||grid[ny][nx]==='T'){e.dx*=-1;e.dy*=-1;nx=e.x+e.dx;ny=e.y+e.dy;if(solid(grid[ny][nx]))continue}
+    EA.set(e,{x:e.x,y:e.y,t:performance.now()});e.x=nx;e.y=ny;
+  }
+  if(enemyAt(px,py))die();
+}
+function die(m){if(state!=='play'||inv>0)return;if(shield){shield=false;inv=3;sfx('shbreak');shake=8;spark(px,py,'#56d6e8',18);say('Tarcza pochłonęła uderzenie.');hud();return}state='dead';sfx('die');shake=14;if(!set.calm){run.lives--;saveRun()}hud();const msg=m||'Strażnik złapał Fikola.',over0=!set.calm&&run.lives<=0;say('Auć! '+msg+(over0?' Koniec gry.':set.calm?'':' Zostało żyć: '+run.lives));
+  if(over0){over.innerHTML=`<h2>Koniec gry</h2><p>${msg}</p><p>Wynik: <b>${run.score}</b><br>Rekord: <b>${run.hi}</b></p><button class="btn" id="go">Zagraj od nowa</button><button class="btn" id="m2">Mapa poziomów</button>`;over.classList.add('show');focusGo();document.getElementById('go').onclick=()=>{run.lives=5;run.score=0;scoreBase=0;saveRun();load(lvl,true)};document.getElementById('m2').onclick=()=>{run.lives=5;run.score=0;scoreBase=0;saveRun();state='dead';menu()};return}
+  over.innerHTML=`<h2>Auć!</h2><p>${msg}</p>${set.calm?'':`<p>Zostało żyć: <b>${run.lives}</b></p>`}<button class="btn" id="go">Spróbuj jeszcze raz</button>`;over.classList.add('show');focusGo();document.getElementById('go').onclick=()=>load(lvl,true)}
+function win(){
+  state='win';sfx('win');const pts=500+Math.max(0,PAR[lvl]*2-moves)*3;addScore(pts);const last=lvl===LEVELS.length-1,st=starsFor(lvl,moves),w=Math.floor(lvl/4),endW=lvl%4===3&&!last;
+  const old=best[lvl],rec=!old||moves<old.moves;if(rec){best[lvl]={moves,stars:Math.max(st,old?old.stars:0)};try{localStorage.setItem('fikolBest',JSON.stringify(best))}catch(e){}}
+  if(!done.includes(lvl)){done.push(lvl);save()}
+  const tot=Object.values(best).reduce((a,b)=>a+b.stars,0);
+  const extra=last?'Fikol zatankował, przebił się przez port kosmiczny i wrócił do domu. Bipek twierdzi, że to on wszystko zaplanował. Gwiazdki: '+tot+' z '+LEVELS.length*3+'.':endW?WORLDS[w].end:'';
+  const head=last?'Brawo!':endW?'Świat ukończony!':'Kapsuła startuje!';
+  say(head+' Poziom '+(lvl+1)+', '+moves+' ruchów, '+st+' z 3 gwiazdek.'+(rec&&old?' Nowy rekord.':'')+' '+extra);
+  over.innerHTML=`<h2>${head}</h2><div class="stars" aria-hidden="true">${starStr(st)}</div><p>Poziom ${lvl+1}: ${moves} ruchów${rec&&old?' (nowy rekord!)':old?' (rekord '+old.moves+')':''}</p><p>Punkty: <b>+${pts}</b> (razem ${run.score})</p>${extra?`<p class="bip"><b>BIPEK:</b> ${extra}</p>`:''}<button class="btn" id="go">${last?'Wybierz poziom':'Dalej'}</button><button class="btn" id="again">Jeszcze raz (lepszy wynik)</button>`;
+  over.classList.add('show');focusGo();
+  document.getElementById('go').onclick=()=>{last?menu():load(lvl+1)};document.getElementById('again').onclick=()=>load(lvl,true);
+}
+let before='play';
+function closeMenu(){over.classList.remove('show');if(before==='play')state='play';else if(before==='tip')showTip();else if(before==='dead')load(lvl,true);else load(lvl<LEVELS.length-1?lvl+1:lvl)}
+const OPT=[['music','Muzyka'],['sfx','Efekty'],['calm','Spokojny']];
+function optsHTML(){return OPT.map(([k,n])=>`<button class="btn" data-o="${k}" aria-pressed="${set[k]}">${n}</button>`).join('')}
+function menu(){
+  if(state==='menu'){closeMenu();return}
+  before=state==='tip'||state==='dead'||state==='win'?state:'play';
+  state='menu';
+  const tot=Object.values(best).reduce((a,b)=>a+b.stars,0);
+  over.innerHTML=`<h2>Poziomy</h2><div class="levels">${LEVELS.map((l,i)=>{const b=best[i],ok=i===0||done.includes(i-1)||done.includes(i);return `<button data-i="${i}" class="${done.includes(i)?'done':''} ${i===lvl?'cur':''}" aria-label="Poziom ${i+1}, ${l.name}${done.includes(i)?', zaliczony'+(b?', '+b.stars+' z 3 gwiazdek':''):''}" ${ok?'':'disabled'}>${i+1}${b?`<small aria-hidden="true">${starStr(b.stars)}</small>`:''}</button>`}).join('')}</div><div class="hint" style="font-size:12px">★ ${tot} / ${LEVELS.length*3} · Rekord punktów: ${run.hi}</div><div class="opts">${optsHTML()}</div>${/iPhone|iPad/.test(navigator.userAgent)?'<div class="hint" style="font-size:11px">Brak dźwięku? Sprawdź, czy telefon nie jest w trybie cichym.</div>':''}<button class="btn x" id="go" aria-label="Zamknij">✕</button>`;
+  over.classList.add('show');
+  const cur=over.querySelector('.cur');(cur&&!cur.disabled?cur:document.getElementById('go')).focus({preventScroll:true});
+  over.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{sfx('ui');load(+b.dataset.i)});
+  over.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{set[b.dataset.o]=!set[b.dataset.o];b.setAttribute('aria-pressed',set[b.dataset.o]);saveSet();A.ensure();A.music(Math.floor(lvl/4));if(b.dataset.o==='calm'){clearInterval(tick);tick=setInterval(step,stepMs())}sfx('ui');syncMute()});
+  document.getElementById('go').onclick=closeMenu;
+}
+// drawing
+let S=32,shake=0;
+function fit(){const app=document.querySelector('.app'),sc=document.getElementById('screen');
+  const calc=()=>{const cs=getComputedStyle(app),gap=parseFloat(cs.rowGap)||0,kids=[...app.children].filter(k=>getComputedStyle(k).display!=='none'&&!k.classList.contains('sr'));
+    const caseEx=app.querySelector('.case').offsetHeight-sc.offsetHeight;
+    let used=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom)+gap*(kids.length-1)+caseEx;
+    for(const k of kids){if(k.classList.contains('case'))continue;used+=k.classList.contains('pad')?app.querySelector('.dpad').offsetHeight+14:k.offsetHeight}
+    return Math.min(app.querySelector('.case').clientWidth-22,app.clientHeight-used)};
+  const land=matchMedia('(orientation:landscape) and (max-height:520px)').matches;
+  if(land){const cs=getComputedStyle(app),cse=app.querySelector('.case').offsetHeight-sc.offsetHeight,h=app.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-app.querySelector('.top').offsetHeight-(parseFloat(cs.rowGap)||0)-cse;
+    sc.style.width=Math.max(150,Math.floor(Math.min(app.querySelector('.case').clientWidth-22,h)))+'px';return}
+  document.body.classList.remove('tight');let w=calc();
+  if(w<250){document.body.classList.add('tight');w=calc()}
+  sc.style.width=Math.max(150,Math.floor(w))+'px';
+  // zabezpieczenie: jeśli cokolwiek się nakłada albo wychodzi poza ekran, zmniejsz planszę
+  for(let i=0;i<14;i++){const d=app.querySelector('.dpad').getBoundingClientRect(),h=app.querySelector('.hint'),hv=h&&getComputedStyle(h).display!=='none',lim=hv?h.getBoundingClientRect().top-2:innerHeight;
+    if(d.bottom<=lim&&app.scrollHeight<=app.clientHeight+1)break;
+    const cur=parseFloat(sc.style.width);if(cur<=150)break;sc.style.width=Math.max(150,cur-5)+'px'}}
+const VIEW=11,TS=16,LW=VIEW*TS;
+const low=document.createElement('canvas');low.width=low.height=LW;const lx=low.getContext('2d');
+let camX=0,camY=0,camInit=false,SP=null,spT=null;
+function resize(){fit();const r=cv.getBoundingClientRect(),d=Math.max(1,devicePixelRatio||1),k=Math.max(2,Math.round(r.width*d/LW));cv.width=cv.height=LW*k;S=cv.width/VIEW}
+// ===== grafika pikselowa 16x16 =====
+function mk(fn){const c=document.createElement('canvas');c.width=c.height=16;const g=c.getContext('2d');fn((col,x,y,w,h)=>{g.fillStyle=col;g.fillRect(x,y,w||1,h||1)},g);return c}
+function ring(R,col,x,y,w,h){R(col,x,y,w,1);R(col,x,y+h-1,w,1);R(col,x,y,1,h);R(col,x+w-1,y,1,h)}
+function rot(c,a){return mk((R,g)=>{g.translate(8,8);g.rotate(a);g.drawImage(c,-8,-8)})}
+function buildSprites(){
+  const w0=T.w[0],w1=T.w[1],w2=T.w[2];SP={};
+  SP.floor=[0,1].map(i=>mk(R=>{R(T.f[i],0,0,16,16);R('#ffffff0a',3,4,1,1);R('#ffffff0a',11,10,1,1);R('#00000022',7,13,1,1)}));
+  SP.wall=mk(R=>{R(w0,0,0,16,16);R(w1,0,0,16,1);R(w1,0,0,1,16);R(w2,0,15,16,1);R(w2,15,0,1,16);R(w2,3,3,10,10);R(w0,4,4,8,8);R(w1,4,4,8,1);R(w1,4,4,1,8);R('#0000002a',5,12,7,1)});
+  const hex=(f)=>mk(R=>{
+    const O='#5a3f08',H='#fff6c0',G='#ffcc3d',M='#e0a82e',D='#9a6f12';
+    // łeb: sześciokątny, widok z boku (trzy ściany)
+    R(O,4,0,8,1);R(O,3,1,1,4);R(O,12,1,1,4);R(O,4,5,8,1);
+    R(G,4,1,8,4);R(H,4,1,8,1);R(M,4,4,8,1);
+    R(D,6,1,1,4);R(D,9,1,1,4);R(H,5,2,1,2);R(H,10,2,1,2);
+    // podkładka
+    R(O,5,6,6,1);R(M,5,6,6,1);R(D,5,6,6,1);R(O,4,6,1,1);R(O,11,6,1,1);
+    // trzonek z gwintem (rotuje: gwint przesunięty o klatkę)
+    R(O,5,7,1,7);R(O,10,7,1,7);
+    R(G,6,7,4,7);R(H,6,7,1,7);R(D,9,7,1,7);
+    for(let i=0;i<4;i++){const y=7+i*2+(f?1:0);if(y<=13){R(D,6,y,4,1);R(H,6,y+1,1,1)}}
+    // ostrze
+    R(O,6,14,4,1);R(G,7,14,2,1);R(O,7,15,2,1);
+  });
+  SP.screw=[hex(0),hex(1)];
+  SP.box=mk(R=>{R('#a8683a',1,1,14,14);R('#6e3f1f',1,1,14,1);R('#6e3f1f',1,14,14,1);R('#6e3f1f',1,1,1,14);R('#6e3f1f',14,1,1,14);for(let i=2;i<14;i++){R('#6e3f1f',i,i);R('#6e3f1f',15-i,i)}R('#c98a55',2,2,12,1)});
+  SP.ammo=mk(R=>{R('#ff6b4a',3,6,10,8);R('#e04e30',3,12,10,2);R('#fff3',4,7,8,1);[4,7,10].forEach(x=>{R('#ffcc3d',x,2,2,5);R('#fff6c0',x,2,1,1)})});
+  SP.rubble=mk(R=>{R('#5a4a3c',2,6,6,6);R('#5a4a3c',8,4,6,7);R('#5a4a3c',5,9,7,5);R('#7a6652',3,6,2,1);R('#7a6652',9,4,3,1);R('#7a6652',6,9,2,1);R('#3a2f26',3,11,5,1)});
+  const bomb=(f)=>mk(R=>{const ws=[4,6,8,10,10,10,10,8,6,4],xs=[6,5,4,3,3,3,3,4,5,6];ws.forEach((wd,i)=>R('#222',xs[i],5+i,wd,1));R('#666',5,7,2,1);R('#666',5,8,1,1);R('#c9a27a',9,3,2,2);R('#c9a27a',10,2,2,1);R(f?'#ffcc3d':'#ff6b4a',11,0,2,2)});
+  SP.bomb=[bomb(0),bomb(1)];
+  const cn=mk(R=>{R(w2,1,1,14,14);R(w0,2,2,12,12);R('#8a99ad',4,4,8,8);R('#4a5566',4,10,8,2);R('#8a99ad',8,6,8,4);R('#4a5566',8,9,8,1);R('#d2364f',13,6,3,4)});
+  SP.cannon={'>':cn,'v':rot(cn,Math.PI/2),'<':rot(cn,Math.PI),'^':rot(cn,-Math.PI/2)};
+  SP.magnet=mk(R=>{R('#d2364f',2,3,4,9);R('#d2364f',10,3,4,9);R('#d2364f',2,3,12,4);R('#ff7088',3,4,10,1);R('#e9eef5',2,11,4,3);R('#e9eef5',10,11,4,3);R('#8a99ad',2,13,4,1);R('#8a99ad',10,13,4,1)});
+  SP.key=mk(R=>{R('#56d6e8',2,4,7,7);R('#1f6f7c',2,10,7,1);R('#56d6e8',4,6,3,3);R('#000',4,6,1,1);const g=0;R('#56d6e8',8,7,7,2);R('#56d6e8',12,9,2,3);R('#56d6e8',10,9,1,2);R('#fff',3,5,2,1)});
+  // klucz: wyczyść otwór
+  SP.key=mk((R,g)=>{R('#56d6e8',2,4,7,7);R('#1f6f7c',2,10,7,1);g.clearRect(4,6,3,3);R('#56d6e8',8,7,7,2);R('#56d6e8',12,9,2,3);R('#56d6e8',10,9,1,2);R('#e9ffff',3,5,2,1)});
+  SP.door=mk(R=>{R('#1f6f7c',2,0,12,16);R('#56d6e8',3,1,10,14);R('#1f6f7c',4,2,8,12);R('#2d8d9c',5,3,6,10);R('#56d6e8',7,6,2,2);R('#56d6e8',7,8,2,3)});
+  const tp=(f)=>mk(R=>{ring(R,'#c77dff',6-f,6-f,4+2*f,4+2*f);ring(R,'#a64dff',4-f,5-f,8+2*f,6+2*f);ring(R,'#6a3ea0',2-f,4-f,12+2*f,8+2*f);R('#e8d0ff',7,7,2,2)});
+  SP.tele=[tp(0),tp(1)];
+  const rocket=(open,f)=>mk(R=>{const body=open?'#ff6b4a':'#52627a',dk=open?'#e04e30':'#374456',win=open?'#ffe2a8':'#1b232e';R(body,7,1,2,1);R(body,6,2,4,1);R(body,5,3,6,2);R(body,4,5,8,7);R(dk,4,10,8,2);R(win,6,6,4,3);R(dk,2,9,3,5);R(dk,11,9,3,5);R(dk,5,12,6,1);if(open){R('#ffcc3d',6,13,4,2+f);R('#ff6b4a',7,14+f,2,1)}});
+  SP.exitC=rocket(0,0);SP.exitO=[rocket(1,0),rocket(1,1)];
+  SP.gateC=mk(R=>{R('#3a1630',1,1,14,14);[3,6,9,12].forEach(x=>R('#ff5fa2',x,2,2,12));R('#ff5fa2',1,1,14,2);R('#ff5fa2',1,13,14,2)});
+  SP.gateO=mk(R=>{for(let i=2;i<14;i+=3){R('#ff5fa255',i,2,1,1);R('#ff5fa255',i,13,1,1);R('#ff5fa255',2,i,1,1);R('#ff5fa255',13,i,1,1)}R('#ff5fa2',1,1,2,4);R('#ff5fa2',13,1,2,4)});
+  const plate=(f)=>mk(R=>{R('#2a1a30',3,3,10,10);ring(R,'#ff5fa2',3,3,10,10);R('#ff5fa2',6-f,6-f,4+2*f,4+2*f)});
+  SP.plate=[plate(0),plate(1)];
+  SP.shieldP=mk(R=>{R('#56d6e8',4,2,8,1);R('#56d6e8',3,3,10,6);R('#56d6e8',4,9,8,2);R('#56d6e8',5,11,6,1);R('#56d6e8',6,12,4,1);R('#10161f',6,5,4,4);R('#10161f',7,9,2,1);R('#e9ffff',4,3,2,1)});
+  // ikony paska
+  SP.icoFikol=drawFikolTo(1,0);paintIcons()
+}
+function paintIcons(){const m={screw:SP.screw[0],life:SP.icoFikol,key:SP.key,ammo:SP.ammo,level:SP.exitO[0]};document.querySelectorAll('canvas.ico').forEach(c=>{const g=c.getContext('2d');g.clearRect(0,0,16,16);g.drawImage(m[c.dataset.s],0,0)})}
+function drawFikolTo(face,fr){return mk(R=>fikolPx(R,0,0,'d',0,false,false,false))}
+function fikolPx(R,x,y,dir,fr,cheer,blink,ant){
+  const r='#ff6b4a',rd='#d9482c',rl='#ff9a80',k='#9aa8bc',kd='#3b4558',kl='#d3dcea',a='#10161f',c='#56d6e8',yl='#ffcc3d';
+  const L=(col,lx,ly,w,h)=>R(col,x+lx,y+ly,w,h),M=(col,lx,ly,w,h)=>R(col,x+16-lx-w,y+ly,w,h);
+  const tr=(Dm,x0,w)=>{Dm(kd,x0,13,w,3);Dm(kl,x0,13,w,1);for(let i=0;i<w;i+=2)Dm(k,x0+((i+(fr===1?1:0))%w),15,1,1);for(let i=1;i<w-1;i+=4)Dm(k,x0+i,14,2,1)};
+  const ball=(Dm,bx)=>{Dm(ant?'#ff4d4d':yl,bx,0,4,2);Dm(ant?'#ff9a9a':'#fff3b0',bx+1,0,1,1);Dm(k,bx+1,2,2,1)};
+  const step=fr===1?1:0,step2=fr===2?1:0;
+  if(dir==='l'||dir==='r'){
+    const D=dir==='r'?L:M;
+    ball(D,6);
+    D(r,4,3,9,6);D(rl,4,3,9,1);D(rd,4,8,9,1);
+    D(k,6,4,3,4);D(kd,7,5,1,2);              // ucho
+    D(a,9,4,4,3);
+    if(cheer){D(c,10,6,1,1);D(c,11,5,1,1);D(c,12,6,1,1)}else if(blink)D(c,10,6,2,1);else D(c,10,5,2,2);
+    D(kd,9,7,4,1);D(kl,10,7,1,1);D(kl,12,7,1,1);
+    D(kd,7,9,2,1);
+    D(r,5,10,7,3);D(rl,5,10,7,1);D(rd,5,12,7,1);D(yl,6,11,1,1);D(c,8,11,1,1);
+    if(cheer){D(k,11,5,2,5);D(kd,11,3,3,2);D(a,12,4,1,1)}else{D(k,10,10+step,2,2);D(kd,10,12+step,3,2);D(a,11,13+step,1,1)}
+    tr(D,3,11);
+    return}
+  if(dir==='u'){
+    ball(L,6);
+    L(r,3,3,10,6);L(rl,3,3,10,1);L(rd,3,8,10,1);
+    L(k,1,5,2,3);L(kd,1,6,1,1);L(k,13,5,2,3);L(kd,14,6,1,1);
+    L(rd,5,4,6,4);L(kd,6,5,4,1);L(kd,6,6,4,1);L(kd,6,7,4,1);
+    L(kd,7,9,2,1);
+    L(r,3,10,10,3);L(rl,3,10,10,1);L(rd,3,12,10,1);L(kd,5,10,6,2);L(k,6,11,4,1);
+    if(cheer){L(k,1,6,2,4);L(kd,0,4,3,2);L(k,13,6,2,4);L(kd,13,4,3,2)}
+    else{L(k,1,10+step,2,2);L(kd,0,12+step,3,2);L(k,13,10+step2,2,2);L(kd,13,12+step2,3,2)}
+    tr(L,2,12);
+    return}
+  // przód
+  ball(L,6);
+  L(r,3,3,10,6);L(rl,3,3,10,1);L(rd,3,8,10,1);
+  L(k,1,5,2,3);L(kd,1,6,1,1);L(k,13,5,2,3);L(kd,14,6,1,1);   // uszy
+  L(a,4,4,8,3);
+  if(cheer){[[5,6],[6,5],[7,6],[9,6],[10,5],[11,6]].forEach(([ex,ey])=>L(c,ex,ey,1,1))}
+  else if(blink){L(c,5,6,2,1);L(c,9,6,2,1)}else{L(c,5,5,2,2);L(c,9,5,2,2)}
+  L(kd,5,7,6,1);L(kl,6,7,1,1);L(kl,8,7,1,1);L(kl,10,7,1,1);  // kratka
+  L(kd,7,9,2,1);
+  L(r,3,10,10,3);L(rl,3,10,10,1);L(rd,3,12,10,1);L(a,5,11,6,1);L(yl,6,11,1,1);L(c,9,11,1,1);L(r,7,11,1,1);
+  if(cheer){L(k,1,6,2,4);L(kd,0,4,3,2);L(a,1,5,1,1);L(k,13,6,2,4);L(kd,13,4,3,2);L(a,14,5,1,1)}
+  else{L(k,1,10+step,2,2);L(kd,0,12+step,3,2);L(a,1,13+step,1,1);L(k,13,10+step2,2,2);L(kd,13,12+step2,3,2);L(a,14,13+step2,1,1)}
+  tr(L,2,12);
+}
+const FONT={'0':'111101101101111','1':'010110010010111','2':'111001111100111','3':'111001111001111','4':'101101111001001','5':'111100111001111','6':'111100111101111','7':'111001001001001','8':'111101111101111','9':'111101111001111','+':'000010111010000'};
+function pxText(R,t,x,y,col){[...t].forEach((ch,i)=>{const g=FONT[ch];if(!g)return;for(let q=0;q<15;q++)if(g[q]==='1')R(col,x+i*4+(q%3),y+((q/3)|0),1,1)})}
+function ghostPx(R,x,y,col,dk,lx_,ly_,ch,fr){
+  R(col,x+4,y+2,8,1);R(col,x+3,y+3,10,9);
+  for(let i=0;i<4;i++)R(col,x+3+i*3,y+12,2,2+(((i+fr)&1)?1:0));
+  R(dk,x+3,y+11,10,1);
+  R('#fff',x+4,y+5,3,4);R('#fff',x+9,y+5,3,4);
+  const ox=Math.max(-1,Math.min(1,lx_)),oy=Math.max(-1,Math.min(1,ly_));
+  R(ch?'#b0102a':'#10161f',x+5+ox,y+6+oy,2,2);R(ch?'#b0102a':'#10161f',x+10+ox,y+6+oy,2,2);
+  if(ch){R('#10161f',x+4,y+4,4,1);R('#10161f',x+9,y+4,4,1)}
+}
+function birdPx(R,x,y,fr){
+  R('#7ad06a',x+5,y+6,6,4);R('#7ad06a',x+4,y+7,8,2);R('#3d8a3a',x+5,y+9,6,1);
+  if(fr){R('#7ad06a',x+1,y+3,4,3);R('#7ad06a',x+11,y+3,4,3);R('#7ad06a',x+4,y+5,2,1);R('#7ad06a',x+10,y+5,2,1)}
+  else{R('#7ad06a',x+1,y+8,4,3);R('#7ad06a',x+11,y+8,4,3);R('#7ad06a',x+4,y+8,2,1);R('#7ad06a',x+10,y+8,2,1)}
+  R('#ffcc3d',x+7,y+10,2,1);R('#10161f',x+6,y+7,1,1);R('#10161f',x+9,y+7,1,1);
+}
+function tilePx(c,X,Y){
+  switch(c){
+   case '#':lx.drawImage(SP.wall,X,Y);break;
+   case 'S':lx.drawImage(SP.screw[(anim>>4)&1],X,Y);break;
+   case 'B':lx.drawImage(SP.box,X,Y);break;
+   case 'A':lx.drawImage(SP.ammo,X,Y);break;
+   case '%':lx.drawImage(SP.rubble,X,Y);break;
+   case 'O':lx.drawImage(SP.bomb[(anim>>3)&1],X,Y);break;
+   case '>':case '<':case '^':case 'v':lx.drawImage(SP.cannon[c],X,Y);break;
+   case 'M':lx.drawImage(SP.magnet,X,Y);break;
+   case 'K':lx.drawImage(SP.key,X,Y);break;
+   case 'D':lx.drawImage(SP.door,X,Y);break;
+   case 'T':lx.drawImage(SP.tele[(anim>>3)&1],X,Y);break;
+   case 'E':lx.drawImage(screws>=total?SP.exitO[(anim>>3)&1]:SP.exitC,X,Y);break;
+   case 'G':lx.drawImage(SP.gateC,X,Y);break;
+   case 'g':lx.drawImage(SP.gateO,X,Y);break;
+   case 'Q':lx.drawImage(SP.plate[(anim>>4)&1],X,Y);break;
+   case 'H':lx.drawImage(SP.shieldP,X,Y+(((anim>>4)&1)?-1:0));break;
+  }
+}
+function draw(){
+  anim+=1;now=performance.now();
+  if(!grid||!T){requestAnimationFrame(draw);return}
+  if(spT!==T){buildSprites();spT=T}
+  let rx=px,ry=py;if(pa){const k=Math.min(1,(now-pa.t)/110),e=1-(1-k)*(1-k);rx=pa.x+(px-pa.x)*e;ry=pa.y+(py-pa.y)*e}
+  const tx=Math.max(0,Math.min(W-VIEW,rx-(VIEW-1)/2)),ty=Math.max(0,Math.min(H-VIEW,ry-(VIEW-1)/2));
+  if(!camInit){camX=tx;camY=ty;camInit=true}else{camX+=(tx-camX)*.18;camY+=(ty-camY)*.18}
+  const cx=Math.round(camX*TS),cy=Math.round(camY*TS),x0=Math.floor(cx/TS),y0=Math.floor(cy/TS);
+  lx.clearRect(0,0,LW,LW);
+  for(let y=y0;y<=y0+VIEW&&y<H;y++)for(let x=x0;x<=x0+VIEW&&x<W;x++){const X=x*TS-cx,Y=y*TS-cy;lx.drawImage(SP.floor[(x+y)&1],X,Y);tilePx(grid[y][x],X,Y)}
+  const R=(col,x,y,w,h)=>{lx.fillStyle=col;lx.fillRect(x,y,w||1,h||1)};
+  const P=(tx_,ty_)=>[Math.round(tx_*TS-cx),Math.round(ty_*TS-cy)];
+  if(flash&&flash.t-->0){const[a,b]=P(flash.x-1,flash.y-1);lx.globalAlpha=flash.t/12;R('#ffb43c',a,b,TS*3,TS*3);lx.globalAlpha=1}
+  for(const e of enemies){
+    let ex=e.x,ey=e.y;const a=EA.get(e);if(a){const k=Math.min(1,(now-a.t)/stepMs());ex=a.x+(e.x-a.x)*k;ey=a.y+(e.y-a.y)*k}
+    const[X,Y]=P(ex,ey);if(X<-TS||Y<-TS||X>LW||Y>LW)continue;
+    R('#0005',X+4,Y+14,8,1);
+    if(e.bird){birdPx(R,X,Y+Math.round(Math.sin(anim*.07+e.x)),(anim>>3)&1);continue}
+    const ch=!!e.chase,lxx=ch?Math.sign(px-ex):e.dx,lyy=ch?Math.sign(py-ey):e.dy;
+    ghostPx(R,X,Y+(((anim>>4)&1)?0:-1),ch?'#a64dff':'#d2364f',ch?'#5a2a99':'#8a1f33',lxx,lyy,ch,(anim>>3)&1);
+  }
+  for(const s of shots){let x=s.x,y=s.y;const a=SA.get(s);if(a){const k=Math.min(1,(now-a.t)/90);x=a.x+(s.x-a.x)*k;y=a.y+(s.y-a.y)*k}const[X,Y]=P(x,y);const c=s.o==='p'?'#ffe066':'#ff4d6d';R(c,X+7,Y+6,2,4);R(c,X+6,Y+7,4,2);R('#fff',X+7,Y+7,2,2)}
+  for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.004;p.l--;if(p.l<=0){parts.splice(i,1);continue}const[X,Y]=P(p.x-.5+.5,p.y-.5+.5);lx.globalAlpha=Math.min(1,p.l/14);R(p.c,X,Y,2,2);lx.globalAlpha=1}
+  const[X,Y]=P(rx,ry);
+  const walking=pa&&now-pa.t<150,cheer=now<cheerT,fr=walking?(((anim>>2)&1)?1:2):0,blink=(anim%190)<7,ant=((anim>>5)&1)===1;
+  let by=0;if(cheer){const k=(cheerT-now)/520;by=-Math.round(Math.abs(Math.sin(k*Math.PI*2))*3)}else if(!walking)by=((anim>>4)&1)?0:0;
+  R('#0006',X+3,Y+14,10,2);
+  if(shield||inv>0){lx.globalAlpha=inv>0?(anim%6<3?.95:.3):.85;for(let i=0;i<20;i++){const a=i*Math.PI/10+anim*.06;R('#56d6e8',Math.round(X+8+Math.cos(a)*9),Math.round(Y+8+Math.sin(a)*9),1,1)}lx.globalAlpha=1}
+  fikolPx(R,X,Y+by,fdir,fr,cheer,blink,ant);
+  for(let i=floats.length-1;i>=0;i--){const f=floats[i],age=now-f.t;if(age>800){floats.splice(i,1);continue}
+    const[fx,fy]=P(f.x,f.y),rise=Math.round(age/800*12);lx.globalAlpha=Math.min(1,(800-age)/300);
+    if(f.pop&&age<420){lx.drawImage(SP.screw[0],fx,fy-4-Math.round(age/420*9))}
+    const w=f.s.length*4-1,tx=Math.max(0,Math.min(LW-w,fx+8-(w>>1))),ty=fy-6-rise;pxText(R,f.s,tx+1,ty+1,'#000');pxText(R,f.s,tx,ty,'#ffe066');lx.globalAlpha=1}
+  ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,cv.width,cv.height);
+  let shx=0,shy=0;if(shake>0){const k=shake--*.7*(cv.width/LW);shx=(Math.random()-.5)*k;shy=(Math.random()-.5)*k}
+  ctx.drawImage(low,shx,shy,cv.width,cv.height);
+  requestAnimationFrame(draw);
+}
+// input
+let rep=null;const stopRep=()=>{clearInterval(rep);rep=null};
+document.querySelectorAll('.dpad button[data-d]').forEach(b=>{const d=b.dataset.d.split(',').map(Number);
+  b.addEventListener('pointerdown',e=>{e.preventDefault();stopRep();move(d[0],d[1]);rep=setInterval(()=>move(d[0],d[1]),170)});
+  ['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,stopRep));
+  b.addEventListener('click',e=>{if(e.detail===0)move(d[0],d[1])})});
+addEventListener('blur',stopRep);
+addEventListener('keydown',e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  const k=e.key.length===1?e.key.toLowerCase():e.key;
+  const m={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0]}[k];
+  if(m){if(state==='play'||state==='menu'||state==='tip'){e.preventDefault()}move(...m);return}
+  if(k===' '&&state==='play'){e.preventDefault();fire();return}
+  if(k==='r'&&(state==='play'||state==='dead')){load(lvl,true);return}
+  if((k==='z'||k==='Backspace')&&state==='play'){e.preventDefault();undo();return}
+  if(k==='Escape'){menu()}
+});
+let sx=0,sy=0,moved=false;const scr=document.getElementById('screen');
+scr.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;moved=false},{passive:true});
+scr.addEventListener('touchmove',e=>{const t=e.touches[0],dx=t.clientX-sx,dy=t.clientY-sy,cell=scr.clientWidth/VIEW,th=Math.max(26,cell*.8);if(Math.max(Math.abs(dx),Math.abs(dy))<th)return;
+  Math.abs(dx)>Math.abs(dy)?move(Math.sign(dx),0):move(0,Math.sign(dy));sx=t.clientX;sy=t.clientY;moved=true},{passive:true});
+scr.addEventListener('touchend',e=>{if(moved)return;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.max(Math.abs(dx),Math.abs(dy))<24)return;Math.abs(dx)>Math.abs(dy)?move(Math.sign(dx),0):move(0,Math.sign(dy))});
+document.getElementById('undo').addEventListener('click',undo);
+const fb=document.getElementById('fire');fb.addEventListener('pointerdown',e=>{e.preventDefault();fire()});fb.addEventListener('click',e=>{if(e.detail===0)fire()});
+document.getElementById('resetBtn').onclick=()=>load(lvl,true);
+document.getElementById('menuBtn').onclick=menu;
+const mb=document.getElementById('muteBtn');
+function syncMute(){const off=!set.music&&!set.sfx;mb.setAttribute('aria-pressed',off);mb.setAttribute('aria-label',off?'Włącz dźwięk':'Wycisz wszystko')}
+mb.onclick=()=>{const off=!set.music&&!set.sfx;if(off){set.music=true;set.sfx=true}else{set.music=set.sfx=false}saveSet();A.ensure();A.music(Math.floor(lvl/4));syncMute();sfx('ui')};syncMute();
+const firstGesture=()=>{unmuteIOS();if(A.ensure()){A.music(Math.floor(lvl/4));}};
+['pointerdown','keydown','click','touchend'].forEach(ev=>addEventListener(ev,firstGesture,{passive:true}));
+document.addEventListener('visibilitychange',()=>{clearInterval(tick);tick=null;stopRep();if(document.hidden){A.pause();if(silentEl)silentEl.pause()}else{if(silentEl)silentEl.play().catch(()=>{});if(grid)tick=setInterval(step,stepMs());if(A.ctx){A.ensure();A.music(Math.floor(lvl/4))}}});
+const ro=new ResizeObserver(resize);ro.observe(cv);addEventListener('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,250));addEventListener('load',resize);
+if(window.visualViewport)visualViewport.addEventListener('resize',resize);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
+const ro2=new ResizeObserver(()=>{clearTimeout(ro2.t);ro2.t=setTimeout(resize,30)});document.querySelectorAll('.top,.hint,.sub,.hud').forEach(e=>ro2.observe(e));
+const BUILD='v11';
+if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
+  const had=!!navigator.serviceWorker.controller;let reloaded=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
+  navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update().catch(()=>{})).catch(()=>{});
+  // sprawdzenie wersji: jeśli serwer ma nowszą, wyczyść pamięć podręczną i przeładuj (raz)
+  fetch('version.json?'+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(async j=>{
+    if(!j||j.v===BUILD)return;
+    let g='';try{g=sessionStorage.getItem('fikolRel')||''}catch(e){}
+    if(g===j.v)return;try{sessionStorage.setItem('fikolRel',j.v)}catch(e){}
+    try{for(const r of await navigator.serviceWorker.getRegistrations())await r.unregister();for(const c of await caches.keys())await caches.delete(c)}catch(e){}
+    location.reload()}).catch(()=>{});
+}
+load(0);requestAnimationFrame(draw);
+}
+</script>
+<noscript><p style="padding:20px">Fikol wymaga włączonego JavaScriptu.</p></noscript>
+</body>
+</html>
