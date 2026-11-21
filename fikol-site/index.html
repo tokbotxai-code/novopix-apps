@@ -79,20 +79,38 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 @media(max-width:360px){.btn{padding:0 10px;font-size:13px}h1{font-size:13px}.hud{font-size:8px;letter-spacing:-.5px}.levels{gap:4px}.levels button{height:42px}.top>div{gap:6px!important}}
 @media(max-height:760px){:root{--cell:54px}.hint{display:none}}
 @media(max-height:620px){:root{--cell:46px}.app{gap:6px;padding-top:6px}.hud{padding-top:6px}}
-@media(orientation:landscape) and (max-height:520px){:root{--cell:50px}.app{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr);column-gap:16px;row-gap:6px;max-width:none;padding:6px 14px}.top{grid-column:1;grid-row:1}.case{grid-column:1;grid-row:2;align-self:start}.pad{grid-column:2;grid-row:1/3;align-self:center;padding-top:0}.hint{display:none}.sub{padding-top:2px}.hud{padding-top:6px}}
 .joy,.act{display:none}
-@media(orientation:landscape) and (max-height:520px){
- .app{grid-template-columns:auto minmax(0,1fr) auto!important;column-gap:12px!important;max-width:none}
- .top{grid-column:2!important;grid-row:1!important}.case{grid-column:2!important;grid-row:2!important;justify-self:center}
- .pad{display:none!important}
- .joy{display:grid;grid-column:1;grid-row:1/3;align-self:center;justify-self:start;touch-action:none}
- .act{display:grid;grid-column:3;grid-row:1/3;align-self:center;justify-self:end}
-}
 .jbase{width:128px;height:128px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#2a3748,#18202b);border:2px solid var(--edge);box-shadow:inset 0 4px 14px #0008,0 6px 16px #0006;display:grid;place-items:center;touch-action:none}
 .jknob{width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff9a80,#e04e30);box-shadow:0 4px 0 #8a2a18,0 6px 12px #0008;will-change:transform}
 .fire2{width:92px;height:92px;border-radius:50%;border:0;background:radial-gradient(circle at 35% 30%,#ff9a80,var(--coral));color:#10161f;font:700 16px Inter,sans-serif;box-shadow:0 5px 0 #8a2a18,0 8px 14px #0008;touch-action:none}
 .fire2:active{transform:translateY(3px);box-shadow:0 2px 0 #8a2a18}
 #fsBtn[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan)}
+@media(orientation:landscape) and (max-height:520px){
+ :root{--cell:50px}
+ .app{display:grid;max-width:none;grid-template-columns:minmax(134px,1fr) auto minmax(134px,1fr);grid-template-rows:auto 1fr auto;column-gap:10px;row-gap:6px;padding:6px 10px}
+ .case{display:contents}
+ .screen{grid-column:2;grid-row:1/4;align-self:center;border:2px solid var(--edge);border-radius:14px;box-shadow:0 8px 24px #0008}
+ .hud{grid-column:1;grid-row:1/3;flex-direction:column;flex-wrap:nowrap;align-items:flex-start;justify-content:flex-start;gap:7px;padding:2px 4px;font-size:10px;align-self:start}
+ .hud .it:first-child{margin-bottom:2px;font-size:11px}
+ .joy{display:grid;grid-column:1;grid-row:3;justify-self:start;align-self:end;touch-action:none}
+ .top{grid-column:3;grid-row:1;flex-wrap:wrap;justify-content:flex-end;gap:6px;align-self:start}
+ .top h1{width:100%;text-align:right;font-size:14px}
+ .top>div{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
+ .btn{min-height:40px;padding:0 10px;font-size:13px}
+ .sub{grid-column:3;grid-row:2;flex-direction:column;align-items:flex-end;justify-content:flex-start;gap:6px;padding:2px 2px 0}
+ .act{display:grid;grid-column:3;grid-row:3;justify-self:end;align-self:end}
+ .pad,.hint{display:none!important}
+}
+@media(orientation:landscape) and (max-height:400px){
+ .jbase{width:100px;height:100px}.jknob{width:44px;height:44px}.fire2{width:74px;height:74px;font-size:14px}
+ .btn{min-height:34px;padding:0 8px;font-size:12px}.top h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+ .sub{gap:3px;font-size:11px;padding-top:0}#undo{min-height:34px;font-size:12px}
+ .hud{gap:5px}.app{row-gap:4px}
+}
+@media(orientation:landscape) and (max-height:340px){
+ .jbase{width:84px;height:84px}.jknob{width:38px;height:38px}.fire2{width:64px;height:64px}
+ .hud{font-size:9px;gap:3px}.sub #hBest{display:none}
+}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -686,8 +704,8 @@ function fit(){const app=document.querySelector('.app'),sc=document.getElementBy
     for(const k of kids){if(k.classList.contains('case'))continue;used+=k.classList.contains('pad')?app.querySelector('.dpad').offsetHeight+14:k.offsetHeight}
     return Math.min(app.querySelector('.case').clientWidth-22,app.clientHeight-used)};
   const land=matchMedia('(orientation:landscape) and (max-height:520px)').matches;
-  if(land){const cs=getComputedStyle(app),cse=app.querySelector('.case').offsetHeight-sc.offsetHeight,h=app.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-app.querySelector('.top').offsetHeight-(parseFloat(cs.rowGap)||0)-cse;
-    sc.style.width=Math.max(150,Math.floor(Math.min(app.querySelector('.case').clientWidth-22,h)))+'px';return}
+  if(land){const cs=getComputedStyle(app),h=app.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-4,w=app.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)-2*134-2*(parseFloat(cs.columnGap)||0);
+    sc.style.width=Math.max(150,Math.floor(Math.min(h,w)))+'px';return}
   document.body.classList.remove('tight');let w=calc();
   if(w<250){document.body.classList.add('tight');w=calc()}
   sc.style.width=Math.max(150,Math.floor(w))+'px';
@@ -924,7 +942,7 @@ const ro=new ResizeObserver(resize);ro.observe(cv);addEventListener('resize',res
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
 const ro2=new ResizeObserver(()=>{clearTimeout(ro2.t);ro2.t=setTimeout(resize,30)});document.querySelectorAll('.top,.hint,.sub,.hud').forEach(e=>ro2.observe(e));
-const BUILD='v13';
+const BUILD='v14';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   const had=!!navigator.serviceWorker.controller;let reloaded=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
