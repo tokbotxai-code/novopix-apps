@@ -158,6 +158,8 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 </main>
 <script>
 {
+let LANG='en';try{const sv=JSON.parse(localStorage.getItem('fikolSet')||'{}'),nav=String((navigator.languages&&navigator.languages[0])||navigator.language||'en').toLowerCase();LANG=sv.lang==='pl'||sv.lang==='en'?sv.lang:(nav.startsWith('pl')?'pl':'en')}catch(e){}
+const _=(pl,en)=>LANG==='pl'?pl:en;
 const LEVELS=[
 {name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła się otworzy.",map:[
 "###########",
@@ -468,6 +470,7 @@ const LEVELS=[
 "#....S#....S#....S#....S#",
 "#########################"]}
 ];
+if(LANG==='en'){const _N=["First screws", "Crates", "Keys", "Patrol", "Teleport", "Rubble and bombs", "Cannons", "Magnet and birds", "Maze", "Crates and key", "Crossfire", "Explosive", "Bird's nest", "Attraction", "Portals", "Finale", "Button", "Two sides", "Chaser", "Fuel", "Port: entrance", "Port: warehouse", "Port: tower", "Port: hangar"],_T=["Collect all the screws and the capsule will open.", "You can push crates, but only onto an empty square.", "One key opens one door.", "Don't get caught by the guards!", "Step on a portal to jump to the other one.", "Shoot the rubble. A bomb explodes when shot, so keep your distance!", "The cannons fire all the time. Run between the shots.", "The magnet pulls Fikol when they are in a line. Birds drop projectiles.", "A guard watches the lower corridor.", "Think before you push the crate.", "Four cannons, one Fikol.", "Rubble seals the vault. Ammo is scarce.", "Two birds and an open sky.", "A crate shields you from the magnet. Watch the guard in the vertical corridor.", "Every portal leads to the next one.", "Everything at once. Good luck, Fikol!", "The pink button switches all the pink gates.", "Collect what is open, switch the gates, then collect the rest.", "The purple one chases you when close. Shoot it or run.", "The shield absorbs one hit. Use it wisely.", "The map is bigger than the screen: the camera follows Fikol. Shoot the rubble.", "Keys open doors. Collect them before you go on.", "The button opens the gate, and the chaser never sleeps.", "Everything you have learned, on one huge map."];LEVELS.forEach((l,i)=>{l.name=_N[i];l.tip=_T[i]})}
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),over=document.getElementById('over');
 let ammo=0,fdx=1,fdy=0,shots=[],L,grid,W,H,px,py,keys,screws,total,enemies,state,lvl=0,tick=null,anim=0,face=1;
 let done=[];try{done=JSON.parse(localStorage.getItem('fikol')||'[]')}catch(e){}
@@ -476,14 +479,14 @@ let run={lives:5,score:0,hi:0};try{Object.assign(run,JSON.parse(localStorage.get
 const lastSaved=run.last|0;
 function saveRun(){try{localStorage.setItem('fikolRun',JSON.stringify(run))}catch(e){}}
 let scoreBase=0;
-function addScore(n){const before=Math.floor(run.score/1500);run.score+=n;if(Math.floor(run.score/1500)>before&&!set.calm){run.lives++;say('Dodatkowe życie!');sfx('shield')}if(run.score>run.hi)run.hi=run.score;saveRun();hud()}
+function addScore(n){const before=Math.floor(run.score/1500);run.score+=n;if(Math.floor(run.score/1500)>before&&!set.calm){run.lives++;say(_('Dodatkowe życie!','Extra life!'));sfx('shield')}if(run.score>run.hi)run.hi=run.score;saveRun();hud()}
 const pad=(n,l)=>String(Math.max(0,Math.min(n,l===6?999999:99))).padStart(l||2,'0');
 let fdir='d',cheerT=0,floats=[],aimT=0;
 let T=null,moves=0,hist=[],parts=[],shield=false,inv=0,now=0,pa=null;const EA=new WeakMap(),SA=new WeakMap();const stepMs=()=>set.calm?620:420;
 
 const WORLDS=[
  {n:"Złomowisko",f:['#121a25','#0f1620'],w:['#34465e','#4a6382','#22303f'],end:"Złomowisko za nami. Kapsuła zaskoczyła, ale to dopiero rozgrzewka.",m:{tempo:112,root:48,sc:[0,3,5,7,10],prog:[0,8,3,10]}},
- {n:"Obca pustynia",f:['#241a12','#1d150e'],w:['#7a5a3a','#9a7650','#4e3a24'],end:"Pustynia za nami. Piasek w stawach, ale kapsuła leci dalej.",m:{tempo:100,root:50,sc:[0,2,5,7,9],prog:[0,5,3,7]}},
+ {n:"Obca pustynia",f:['#241a12','#1d150e'],w:['#7a5a3a','#9a7650','#4e3a24'],end:"Pustynia za nami. Piasek w trybach, ale kapsuła leci dalej.",m:{tempo:100,root:50,sc:[0,2,5,7,9],prog:[0,5,3,7]}},
  {n:"Kopalnia",f:['#1b1522','#150f1a'],w:['#5e4e74','#7e6c96','#3a2f4a'],end:"Kopalnia za nami. Jeszcze jedna planeta i do domu!",m:{tempo:124,root:45,sc:[0,3,5,7,10],prog:[0,0,8,7]}},
  {n:"Stacja magnesów",f:['#0e1c1c','#0a1717'],w:['#2f6b6b','#44909a','#1d4545'],end:"Stacja za nami. Bipek złapał sygnał z laboratorium: tam jest paliwo na drogę do domu.",m:{tempo:118,root:52,sc:[0,2,4,7,9],prog:[0,2,7,5]}},
  {n:"Laboratorium",f:['#102019','#0b1812'],w:['#3f7a5a','#5ea67f','#264735'],end:"Laboratorium za nami. Fikol ma paliwo, ale w porcie kosmicznym czekają hale większe niż ekran.",m:{tempo:108,root:55,sc:[0,2,4,7,9],prog:[0,5,7,3]}},
@@ -515,6 +518,7 @@ const BIP=[
  "Wieża. Przycisk gdzieś w dole otwiera bramę, a ścigacz węszy. Tarcza leży w jakimś zaułku.",
  "Ostatni hangar! Drzwi, gruz, brama i trzy rodzaje wrogów. Nie spiesz się: tu nie ma limitu czasu."
 ];
+if(LANG==='en'){const _B=["Beep! Bipek here, the on-board computer. Scanning the area: six screws are lying on the ground. Collect them and the capsule will come to life.", "You can push crates but not pull them. If you get stuck, press R or undo a move with Z.", "Keys open doors. One key, one door. Don't waste them!", "Watch out, patrol! The guards walk in circles and have poor eyesight. But plenty of patience.", "Alien desert. These portals suck in everything. You step into one and come out of the other.", "Who leaves bombs in the middle of the road? Shoot the rubble, but not the bomb when you stand next to it.", "The cannons fire at a steady rhythm. Wait for the right moment and run.", "Magnet! A crate will shield you from the pull. And the birds drop projectiles, so don't stand under them.", "The mine. A guard watches the lower corridor. There is always a guard.", "Crates and a key. Think before you push. A push has consequences.", "Four cannons and one Fikol. The odds favour the cannons, but the skill is yours.", "Rubble seals the vault. Ammo is scarce, so every shot has to count.", "Magnet station. Two birds and an open sky. Don't look up.", "Another magnet. The crate is your friend. The guard in the corridor is not.", "Portals lead to the next one, round and round. Getting lost is easy, getting back is harder.", "Everything at once! And then the laboratory, where fuel for the way home is waiting. I believe in you, Fikol. Beep.", "The laboratory. The pink button switches all the pink gates: some open, others close. Step on it and you'll see.", "The button switches all gates at once. Collect what's open, switch, and collect the rest. A gate closed on a guard is the end of the guard.", "Chaser! The purple one hunts you when you're close. Escaping is possible, but ammo is better.", "The last laboratory. The shield absorbs one hit, so save it for a worse moment. The fuel is waiting behind the gate.", "Space port! The halls are bigger than the screen, so the camera follows you. Rubble blocks the way, but ammo is lying nearby.", "A warehouse with doors. The keys lie in dead ends before the doors. A guard patrols the hall, so mind the rhythm.", "The tower. A button somewhere below opens the gate, and the chaser is sniffing around. A shield lies in some dead end.", "The last hangar! Doors, rubble, a gate and three kinds of enemies. Take your time: there is no time limit here."],_W=[["Scrapyard", "Scrapyard behind us. The capsule started, but that was only a warm-up."], ["Alien desert", "Desert behind us. Sand in the gears, but the capsule flies on."], ["Mine", "Mine behind us. One more planet and we're home!"], ["Magnet station", "Station behind us. Bipek picked up a signal from the laboratory: there is fuel for the way home."], ["Laboratory", "Laboratory behind us. Fikol has fuel, but the space port has halls bigger than the screen."], ["Space port", ""]];_B.forEach((t,i)=>BIP[i]=t);_W.forEach((w,i)=>{WORLDS[i].n=w[0];WORLDS[i].end=w[1]})}
 const PAR=[44,56,59,50,39,63,52,49,63,50,56,48,35,62,63,56,49,75,38,75,74,97,142,185];
 const starsFor=(i,m)=>m<=PAR[i]*1.3+6?3:m<=PAR[i]*2+10?2:1;
 const starStr=n=>'★'.repeat(n)+'☆'.repeat(3-n);
@@ -599,8 +603,8 @@ function load(i,keep){run.last=i;saveRun();
 }
 const live=document.getElementById('live');const say=t=>{live.textContent='';setTimeout(()=>live.textContent=t,30)};
 function focusGo(){const g=document.getElementById('go');g&&g.focus({preventScroll:true})}
-function showTip(){say('Poziom '+(lvl+1)+', '+L.name+'. '+L.tip+' Bipek: '+BIP[lvl]);over.innerHTML=`<h2>Poziom ${lvl+1}<br>${L.name}</h2><p>${L.tip}</p><p class="bip" aria-hidden="true"><b>BIPEK:</b> <span id="bt"></span></p><button class="btn" id="go">Start</button>`;over.classList.add('show');state='tip';focusGo();typeIn(document.getElementById('bt'),BIP[lvl]);document.getElementById('go').onclick=()=>{sfx('ui');over.classList.remove('show');state='play'}}
-function hud(){hAmmo.textContent=pad(ammo);hLvl.textContent=pad(lvl+1);hScr.textContent=pad(total-screws);hKey.textContent=pad(keys);hLife.textContent=set.calm?'--':pad(run.lives);hScore.textContent=pad(run.score,6);hSh.textContent=shield?' ◈ TARCZA':'';hMv.textContent=moves;const b=best[lvl];hBest.textContent=b?'Rekord: '+b.moves+' '+starStr(b.stars):'Rekord: –'}
+function showTip(){say(_('Poziom ','Level ')+(lvl+1)+', '+L.name+'. '+L.tip+' Bipek: '+BIP[lvl]);over.innerHTML=`<h2>${_('Poziom ','Level ')}${lvl+1}<br>${L.name}</h2><p>${L.tip}</p><p class="bip" aria-hidden="true"><b>BIPEK:</b> <span id="bt"></span></p><button class="btn" id="go">${_('Start','Start')}</button>`;over.classList.add('show');state='tip';focusGo();typeIn(document.getElementById('bt'),BIP[lvl]);document.getElementById('go').onclick=()=>{sfx('ui');over.classList.remove('show');state='play'}}
+function hud(){hAmmo.textContent=pad(ammo);hLvl.textContent=pad(lvl+1);hScr.textContent=pad(total-screws);hKey.textContent=pad(keys);hLife.textContent=set.calm?'--':pad(run.lives);hScore.textContent=pad(run.score,6);hSh.textContent=shield?_(' ◈ TARCZA',' ◈ SHIELD'):'';hMv.textContent=moves;const b=best[lvl];hBest.textContent=b?_('Rekord: ','Best: ')+b.moves+' '+starStr(b.stars):_('Rekord: –','Best: –')}
 const solid=c=>'#DBO%><^vMG'.includes(c);let tn=0;
 function enemyAt(x,y){return enemies.some(e=>e.x===x&&e.y===y)}
 const snapState=()=>JSON.stringify({grid,px,py,keys,screws,ammo,shots,enemies,fdx,fdy,face,tn,moves,shield,inv,score:run.score});
@@ -613,7 +617,7 @@ function move(dx,dy){
 }
 function undo(){
   if(!hist.length||state!=='play')return;
-  restoreState(hist.pop());over.classList.remove('show');state='play';parts=[];hud();sfx('undo');say('Cofnięto ruch');
+  restoreState(hist.pop());over.classList.remove('show');state='play';parts=[];hud();sfx('undo');say(_('Cofnięto ruch','Move undone'));
 }
 function toggleGates(){for(let y=0;y<H;y++)for(let x=0;x<W;x++){const c=grid[y][x];if(c==='G')grid[y][x]='g';else if(c==='g'){if(enemyAt(x,y)){enemies=enemies.filter(e=>!(e.x===x&&e.y===y));sfx('hit');spark(x,y,'#d2364f',12)}grid[y][x]='G'}}}
 function move0(dx,dy){
@@ -626,34 +630,35 @@ function move0(dx,dy){
   pa={x:px,y:py,t:performance.now()};px=nx;py=ny;moves++;
   const t=grid[py][px];
   if(t==='.')sfx('step');
-  if(t==='S'){addScore(50);cheerT=performance.now()+520;floats.push({x:px,y:py,t:performance.now(),s:'+50',pop:true});const hs=document.getElementById('hScr');hs.classList.remove('pulse');void hs.offsetWidth;hs.classList.add('pulse');sfx('screw');spark(px,py,'#ffcc3d',10);screws++;grid[py][px]='.';say('Śrubki '+screws+' z '+total+(screws===total?'. Kapsuła otwarta.':''));if(screws===total){cheerT=performance.now()+900;for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(grid[y][x]==='E'){flash={x,y,t:16};spark(x,y,'#ffe2a8',14)}}}
+  if(t==='S'){addScore(50);cheerT=performance.now()+520;floats.push({x:px,y:py,t:performance.now(),s:'+50',pop:true});const hs=document.getElementById('hScr');hs.classList.remove('pulse');void hs.offsetWidth;hs.classList.add('pulse');sfx('screw');spark(px,py,'#ffcc3d',10);screws++;grid[py][px]='.';say(_('Śrubki ','Screws ')+screws+_(' z ',' of ')+total+(screws===total?_('. Kapsuła otwarta.','. Capsule open.'):''));if(screws===total){cheerT=performance.now()+900;for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(grid[y][x]==='E'){flash={x,y,t:16};spark(x,y,'#ffe2a8',14)}}}
   if(t==='K'){addScore(25);floats.push({x:px,y:py,t:performance.now(),s:'+25'});sfx('key');spark(px,py,'#56d6e8',8);keys++;grid[py][px]='.'}
   if(t==='A'){addScore(25);floats.push({x:px,y:py,t:performance.now(),s:'+25'});sfx('ammo');spark(px,py,'#ff6b4a',8);ammo+=3;grid[py][px]='.'}
-  if(t==='Q'){sfx('plate');toggleGates();spark(px,py,'#ff5fa2',10);say('Bramy się przełączyły.')}
-  if(t==='H'){addScore(50);sfx('shield');spark(px,py,'#56d6e8',12);shield=true;grid[py][px]='.';say('Tarcza włączona. Pochłonie jedno uderzenie.')}
+  if(t==='Q'){sfx('plate');toggleGates();spark(px,py,'#ff5fa2',10);say(_('Bramy się przełączyły.','Gates switched.'))}
+  if(t==='H'){addScore(50);sfx('shield');spark(px,py,'#56d6e8',12);shield=true;grid[py][px]='.';say(_('Tarcza włączona. Pochłonie jedno uderzenie.','Shield on. It absorbs one hit.'))}
   if(t==='T'){pa=null;const ts=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(grid[y][x]==='T')ts.push([x,y]);const k=ts.findIndex(q=>q[0]===px&&q[1]===py);spark(px,py,'#c77dff',12);[px,py]=ts[(k+1)%ts.length];sfx('tele');spark(px,py,'#c77dff',12)}
   if(t==='E'){win();return true}
   if(enemyAt(px,py)){die();return true}
-  if(shots.some(q=>q.o==='e'&&q.x===px&&q.y===py)){die('Fikol oberwał pociskiem.');return true}
+  if(shots.some(q=>q.o==='e'&&q.x===px&&q.y===py)){die(_('Fikol oberwał pociskiem.','Fikol was hit by a projectile.'));return true}
   hud();return true;
 }
 function fire(){if(state!=='play'||!ammo)return;const pre=snapState();hist.push(pre);sfx('fire');ammo--;moves++;shots.push({x:px,y:py,dx:fdx,dy:fdy,o:'p'});hud();moveShots()}
-function boom(x,y){grid[y][x]='.';for(let yy=y-1;yy<=y+1;yy++)for(let xx=x-1;xx<=x+1;xx++){const c=grid[yy]&&grid[yy][xx];if(c==='O'){boom(xx,yy);continue}if(c==='%'||c==='B')grid[yy][xx]='.';enemies=enemies.filter(e=>!(e.x===xx&&e.y===yy));if(px===xx&&py===yy&&state==='play')die('Bum! Fikol był za blisko bomby.')}flash={x,y,t:12};sfx('boom');spark(x,y,'#ffb43c',24)}
+function boom(x,y){grid[y][x]='.';for(let yy=y-1;yy<=y+1;yy++)for(let xx=x-1;xx<=x+1;xx++){const c=grid[yy]&&grid[yy][xx];if(c==='O'){boom(xx,yy);continue}if(c==='%'||c==='B')grid[yy][xx]='.';enemies=enemies.filter(e=>!(e.x===xx&&e.y===yy));if(px===xx&&py===yy&&state==='play')die(_('Bum! Fikol był za blisko bomby.','Boom! Fikol was too close to the bomb.'))}flash={x,y,t:12};sfx('boom');spark(x,y,'#ffb43c',24)}
 let flash=null;
-function moveShots(){shots=shots.filter(s=>{SA.set(s,{x:s.x,y:s.y,t:performance.now()});s.x+=s.dx;s.y+=s.dy;const c=grid[s.y]&&grid[s.y][s.x];if(c===undefined)return false;if(s.x===px&&s.y===py&&s.o==='e'){die('Fikol oberwał pociskiem.');return false}const i=enemies.findIndex(e=>e.x===s.x&&e.y===s.y);if(i>=0){if(s.o==='p'){addScore(100);floats.push({x:s.x,y:s.y,t:performance.now(),s:'+100'});sfx('hit');spark(s.x,s.y,'#d2364f',10);enemies.splice(i,1)}return s.o!=='p'}if(c==='%'){grid[s.y][s.x]='.';sfx('push');spark(s.x,s.y,'#7a6652',6);return false}if(c==='O'){boom(s.x,s.y);return false}return '.SKATgQH'.includes(c)})}
+function moveShots(){shots=shots.filter(s=>{SA.set(s,{x:s.x,y:s.y,t:performance.now()});s.x+=s.dx;s.y+=s.dy;const c=grid[s.y]&&grid[s.y][s.x];if(c===undefined)return false;if(s.x===px&&s.y===py&&s.o==='e'){die(_('Fikol oberwał pociskiem.','Fikol was hit by a projectile.'));return false}const i=enemies.findIndex(e=>e.x===s.x&&e.y===s.y);if(i>=0){if(s.o==='p'){addScore(100);floats.push({x:s.x,y:s.y,t:performance.now(),s:'+100'});sfx('hit');spark(s.x,s.y,'#d2364f',10);enemies.splice(i,1)}return s.o!=='p'}if(c==='%'){grid[s.y][s.x]='.';sfx('push');spark(s.x,s.y,'#7a6652',6);return false}if(c==='O'){boom(s.x,s.y);return false}return '.SKATgQH'.includes(c)})}
 setInterval(()=>{if(state==='play'&&!document.hidden)moveShots()},90);
 let story0=false;
 const STORY=[
  {h:'FIKOL',t:'Mały robot Fikol leciał na zwykłą misję serwisową. Zwykłą, dopóki nie zabrakło mu paliwa. Rozbił się na obcej planecie, a z kapsuły ratunkowej wypadły wszystkie śrubki.',b:'Dalej'},
  {h:'BIPEK',t:'Na szczęście komputer pokładowy przeżył. Nazywa się Bipek i uwielbia gadać. Sześć światów, dwadzieścia cztery kapsuły. Zbierz śrubki, naprawiaj, odlatuj. I uważaj na strażników!',b:'Lecimy'}
 ];
+if(LANG==='en'){const _S=[["Little robot Fikol was on an ordinary service mission. Ordinary, until he ran out of fuel. He crashed on an alien planet, and all the screws fell out of the escape capsule.", "Next"], ["Luckily the on-board computer survived. His name is Bipek and he loves to talk. Six worlds, twenty-four capsules. Collect screws, repair, take off. And watch out for the guards!", "Let's go"]];_S.forEach((x,i)=>{STORY[i].t=x[0];STORY[i].b=x[1]})}
 function story(p){p=p||0;story0=true;state='tip';const g=STORY[p];over.innerHTML=`<h2 style="${p?'color:#56d6e8;':'font-size:28px;color:#ff6b4a'}">${g.h}</h2><p id="stt"></p><button class="btn" id="go">${g.b}</button>`;over.classList.add('show');focusGo();say(g.h+'. '+g.t);typeIn(document.getElementById('stt'),g.t);document.getElementById('go').onclick=()=>{sfx('ui');p+1<STORY.length?story(p+1):showTip()}}
 function step(){
   if(state!=='play')return;tn++;if(inv>0)inv--;
   const dirs={'>':[1,0],'<':[-1,0],'^':[0,-1],'v':[0,1]};let cn=false;
   if(tn%4===0)for(let y=0;y<H;y++)for(let x=0;x<W;x++){const d=dirs[grid[y][x]];if(d){shots.push({x,y,dx:d[0],dy:d[1],o:'e'});if(!cn&&Math.abs(x-px)+Math.abs(y-py)<9){cn=true;sfx('cannon')}}}
   for(const e of enemies)if(e.bird&&tn%5===0){shots.push({x:e.x,y:e.y,dx:0,dy:1,o:'e'});if(Math.abs(e.x-px)+Math.abs(e.y-py)<9)sfx('bird')}
-  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(grid[y][x]==='M'&&y===py){const d=Math.sign(x-px);let clear=true;for(let k=px+d;k!==x;k+=d)if(grid[y][k]!=='.')clear=false;if(clear){sfx('magnet');pa={x:px,y:py,t:performance.now()};px+=d;if(Math.abs(x-px)<=1){die('Magnes przyciągnął Fikola.');return}}}
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(grid[y][x]==='M'&&y===py){const d=Math.sign(x-px);let clear=true;for(let k=px+d;k!==x;k+=d)if(grid[y][k]!=='.')clear=false;if(clear){sfx('magnet');pa={x:px,y:py,t:performance.now()};px+=d;if(Math.abs(x-px)<=1){die(_('Magnes przyciągnął Fikola.','The magnet pulled Fikol in.'));return}}}
   for(const e of enemies){
     if(e.chase){
       if(tn%2||Math.abs(px-e.x)+Math.abs(py-e.y)>9)continue;
@@ -667,36 +672,37 @@ function step(){
   }
   if(enemyAt(px,py))die();
 }
-function die(m){if(state!=='play'||inv>0)return;if(shield){shield=false;inv=3;sfx('shbreak');shake=8;spark(px,py,'#56d6e8',18);say('Tarcza pochłonęła uderzenie.');hud();return}state='dead';sfx('die');shake=14;if(!set.calm){run.lives--;saveRun()}hud();const msg=m||'Strażnik złapał Fikola.',over0=!set.calm&&run.lives<=0;say('Auć! '+msg+(over0?' Koniec gry.':set.calm?'':' Zostało żyć: '+run.lives));
-  if(over0){over.innerHTML=`<h2>Koniec gry</h2><p>${msg}</p><p>Wynik: <b>${run.score}</b><br>Rekord: <b>${run.hi}</b></p><button class="btn" id="go">Zagraj od nowa</button><button class="btn" id="m2">Mapa poziomów</button>`;over.classList.add('show');focusGo();document.getElementById('go').onclick=()=>{run.lives=5;run.score=0;scoreBase=0;saveRun();load(lvl,true)};document.getElementById('m2').onclick=()=>{run.lives=5;run.score=0;scoreBase=0;saveRun();state='dead';menu()};return}
-  over.innerHTML=`<h2>Auć!</h2><p>${msg}</p>${set.calm?'':`<p>Zostało żyć: <b>${run.lives}</b></p>`}<button class="btn" id="go">Spróbuj jeszcze raz</button>`;over.classList.add('show');focusGo();document.getElementById('go').onclick=()=>load(lvl,true)}
+function die(m){if(state!=='play'||inv>0)return;if(shield){shield=false;inv=3;sfx('shbreak');shake=8;spark(px,py,'#56d6e8',18);say(_('Tarcza pochłonęła uderzenie.','The shield absorbed the hit.'));hud();return}state='dead';sfx('die');shake=14;if(!set.calm){run.lives--;saveRun()}hud();const msg=m||_('Strażnik złapał Fikola.','A guard caught Fikol.'),over0=!set.calm&&run.lives<=0;say(_('Auć! ','Ouch! ')+msg+(over0?_(' Koniec gry.',' Game over.'):set.calm?'':_(' Zostało żyć: ',' Lives left: ')+run.lives));
+  if(over0){over.innerHTML=`<h2>${_('Koniec gry','Game over')}</h2><p>${msg}</p><p>${_('Wynik: ','Score: ')}<b>${run.score}</b><br>${_('Rekord: ','Best: ')}<b>${run.hi}</b></p><button class="btn" id="go">${_('Zagraj od nowa','Play again')}</button><button class="btn" id="m2">${_('Mapa poziomów','Level map')}</button>`;over.classList.add('show');focusGo();document.getElementById('go').onclick=()=>{run.lives=5;run.score=0;scoreBase=0;saveRun();load(lvl,true)};document.getElementById('m2').onclick=()=>{run.lives=5;run.score=0;scoreBase=0;saveRun();state='dead';menu()};return}
+  over.innerHTML=`<h2>${_('Auć!','Ouch!')}</h2><p>${msg}</p>${set.calm?'':`<p>${_('Zostało żyć: ','Lives left: ')}<b>${run.lives}</b></p>`}<button class="btn" id="go">${_('Spróbuj jeszcze raz','Try again')}</button>`;over.classList.add('show');focusGo();document.getElementById('go').onclick=()=>load(lvl,true)}
 function win(){
   state='win';sfx('win');const pts=500+Math.max(0,PAR[lvl]*2-moves)*3;addScore(pts);const last=lvl===LEVELS.length-1,st=starsFor(lvl,moves),w=Math.floor(lvl/4),endW=lvl%4===3&&!last;
   const old=best[lvl],rec=!old||moves<old.moves;if(rec){best[lvl]={moves,stars:Math.max(st,old?old.stars:0)};try{localStorage.setItem('fikolBest',JSON.stringify(best))}catch(e){}}
   if(!done.includes(lvl)){done.push(lvl);save()}
   const tot=Object.values(best).reduce((a,b)=>a+b.stars,0);
-  const extra=last?'Fikol zatankował, przebił się przez port kosmiczny i wrócił do domu. Bipek twierdzi, że to on wszystko zaplanował. Gwiazdki: '+tot+' z '+LEVELS.length*3+'.':endW?WORLDS[w].end:'';
-  const head=last?'Brawo!':endW?'Świat ukończony!':'Kapsuła startuje!';
-  say(head+' Poziom '+(lvl+1)+', '+moves+' ruchów, '+st+' z 3 gwiazdek.'+(rec&&old?' Nowy rekord.':'')+' '+extra);
-  over.innerHTML=`<h2>${head}</h2><div class="stars" aria-hidden="true">${starStr(st)}</div><p>Poziom ${lvl+1}: ${moves} ruchów${rec&&old?' (nowy rekord!)':old?' (rekord '+old.moves+')':''}</p><p>Punkty: <b>+${pts}</b> (razem ${run.score})</p>${extra?`<p class="bip"><b>BIPEK:</b> ${extra}</p>`:''}<button class="btn" id="go">${last?'Wybierz poziom':'Dalej'}</button><button class="btn" id="again">Jeszcze raz (lepszy wynik)</button>`;
+  const extra=last?_('Fikol zatankował, przebił się przez port kosmiczny i wrócił do domu. Bipek twierdzi, że to on wszystko zaplanował. Gwiazdki: ','Fikol refuelled, fought through the space port and flew home. Bipek claims he planned it all. Stars: ')+tot+_(' z ',' of ')+LEVELS.length*3+'.':endW?WORLDS[w].end:'';
+  const head=last?_('Brawo!','Well done!'):endW?_('Świat ukończony!','World complete!'):_('Kapsuła startuje!','Capsule launching!');
+  say(head+_(' Poziom ',' Level ')+(lvl+1)+', '+moves+_(' ruchów, ',' moves, ')+st+_(' z 3 gwiazdek.',' of 3 stars.')+(rec&&old?_(' Nowy rekord.',' New record.'):'')+' '+extra);
+  over.innerHTML=`<h2>${head}</h2><div class="stars" aria-hidden="true">${starStr(st)}</div><p>${_('Poziom ','Level ')}${lvl+1}: ${moves} ${_('ruchów','moves')}${rec&&old?_(' (nowy rekord!)',' (new record!)'):old?_(' (rekord ',' (best ')+old.moves+')':''}</p><p>${_('Punkty: ','Points: ')}<b>+${pts}</b> (${_('razem ','total ')}${run.score})</p>${extra?`<p class="bip"><b>BIPEK:</b> ${extra}</p>`:''}<button class="btn" id="go">${last?_('Wybierz poziom','Choose level'):_('Dalej','Next')}</button><button class="btn" id="again">${_('Jeszcze raz (lepszy wynik)','Again (better score)')}</button>`;
   over.classList.add('show');focusGo();
   document.getElementById('go').onclick=()=>{last?menu():load(lvl+1)};document.getElementById('again').onclick=()=>load(lvl,true);
 }
 let before='play';
 function closeMenu(){over.classList.remove('show');if(before==='play')state='play';else if(before==='tip')showTip();else if(before==='dead')load(lvl,true);else load(lvl<LEVELS.length-1?lvl+1:lvl)}
-const OPT=[['music','Muzyka'],['sfx','Efekty'],['calm','Spokojny'],['zoom','Duży widok'],['unlock','Wszystkie poziomy']];
+const OPT=[['music',_('Muzyka','Music')],['sfx',_('Efekty','Effects')],['calm',_('Spokojny','Calm')],['zoom',_('Duży widok','Large view')],['unlock',_('Wszystkie poziomy','All levels')]];
 const lvlOk=i=>set.unlock||i===0||done.includes(i-1)||done.includes(i);
-function optsHTML(){return OPT.map(([k,n])=>`<button class="btn" data-o="${k}" aria-pressed="${set[k]}">${n}</button>`).join('')}
+function optsHTML(){return OPT.map(([k,n])=>`<button class="btn" data-o="${k}" aria-pressed="${set[k]}">${n}</button>`).join('')+`<button class="btn" id="langBtn" lang="${LANG==='pl'?'en':'pl'}" aria-label="${LANG==='pl'?'English (przełącz na angielski)':'Polski (switch to Polish)'}">${LANG==='pl'?'English':'Polski'}</button>`}
 function menu(){
   if(state==='menu'){closeMenu();return}
   before=state==='tip'||state==='dead'||state==='win'?state:'play';
   state='menu';
   const tot=Object.values(best).reduce((a,b)=>a+b.stars,0);
-  over.innerHTML=`<h2>Poziomy</h2><div class="levels">${LEVELS.map((l,i)=>{const b=best[i],ok=lvlOk(i);return `<button data-i="${i}" class="${done.includes(i)?'done':''} ${i===lvl?'cur':''}" aria-label="Poziom ${i+1}, ${l.name}${done.includes(i)?', zaliczony'+(b?', '+b.stars+' z 3 gwiazdek':''):''}" ${ok?'':'disabled'}>${i+1}${b?`<small aria-hidden="true">${starStr(b.stars)}</small>`:''}</button>`}).join('')}</div><div class="hint" style="font-size:12px">★ ${tot} / ${LEVELS.length*3} · Rekord punktów: ${run.hi}</div><div class="opts">${optsHTML()}</div>${/iPhone|iPad/.test(navigator.userAgent)?'<div class="hint" style="font-size:11px">Brak dźwięku? Sprawdź, czy telefon nie jest w trybie cichym.</div>':''}<button class="btn x" id="go" aria-label="Zamknij">✕</button>`;
+  over.innerHTML=`<h2>${_('Poziomy','Levels')}</h2><div class="levels">${LEVELS.map((l,i)=>{const b=best[i],ok=lvlOk(i);return `<button data-i="${i}" class="${done.includes(i)?'done':''} ${i===lvl?'cur':''}" aria-label="${_('Poziom ','Level ')}${i+1}, ${l.name}${done.includes(i)?_(', zaliczony',', completed')+(b?', '+b.stars+_(' z 3 gwiazdek',' of 3 stars'):''):''}" ${ok?'':'disabled'}>${i+1}${b?`<small aria-hidden="true">${starStr(b.stars)}</small>`:''}</button>`}).join('')}</div><div class="hint" style="font-size:12px">★ ${tot} / ${LEVELS.length*3} · ${_('Rekord punktów: ','Best score: ')}${run.hi}</div><div class="opts">${optsHTML()}</div>${/iPhone|iPad/.test(navigator.userAgent)?'<div class="hint" style="font-size:11px">'+_('Brak dźwięku? Sprawdź, czy telefon nie jest w trybie cichym.','No sound? Check that your phone is not in silent mode.')+'</div>':''}<button class="btn x" id="go" aria-label="${_('Zamknij','Close')}">✕</button>`;
   over.classList.add('show');
   const cur=over.querySelector('.cur');(cur&&!cur.disabled?cur:document.getElementById('go')).focus({preventScroll:true});
   over.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{sfx('ui');load(+b.dataset.i)});
   over.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{set[b.dataset.o]=!set[b.dataset.o];b.setAttribute('aria-pressed',set[b.dataset.o]);saveSet();A.ensure();A.music(Math.floor(lvl/4));if(b.dataset.o==='calm'){clearInterval(tick);tick=setInterval(step,stepMs())}if(b.dataset.o==='zoom'){camInit=false;resize()}if(b.dataset.o==='unlock')over.querySelectorAll('[data-i]').forEach(x=>{x.disabled=!lvlOk(+x.dataset.i)});sfx('ui');syncMute()});
+  const lb=document.getElementById('langBtn');if(lb)lb.onclick=()=>{set.lang=LANG==='pl'?'en':'pl';saveSet();location.reload()};
   document.getElementById('go').onclick=closeMenu;
 }
 // drawing
@@ -900,7 +906,7 @@ function draw(){
 function showInfo(html){before=state==='tip'||state==='dead'||state==='win'?state:'play';if(state==='menu')return;state='menu';over.innerHTML=html+'<button class="btn" id="go">OK</button>';over.classList.add('show');focusGo();document.getElementById('go').onclick=closeMenu}
 const fsBtn=document.getElementById('fsBtn'),FSok=!!(document.fullscreenEnabled||document.webkitFullscreenEnabled),fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement;
 fsBtn.onclick=async()=>{
-  if(!FSok){showInfo('<h2>Pełny ekran</h2><p>Na iPhonie: Udostępnij → Do ekranu początkowego. Wtedy gra działa na pełnym ekranie, także w poziomie.</p>');return}
+  if(!FSok){showInfo('<h2>'+_('Pełny ekran','Fullscreen')+'</h2><p>'+_('Na iPhonie: Udostępnij → Do ekranu początkowego. Wtedy gra działa na pełnym ekranie, także w poziomie.','On iPhone: Share → Add to Home Screen. Then the game runs fullscreen, also in landscape.')+'</p>');return}
   try{if(fsEl()){(document.exitFullscreen||document.webkitExitFullscreen).call(document);try{screen.orientation.unlock()}catch(e){}}
     else{const el=document.documentElement;await (el.requestFullscreen||el.webkitRequestFullscreen).call(el,{navigationUI:'hide'});try{await screen.orientation.lock('landscape')}catch(e){}}}catch(e){}
 };
@@ -939,6 +945,20 @@ const fend=e=>{if(e.pointerId!==fid)return;fid=null;faim=null;clearInterval(ft);
 f2.addEventListener('click',e=>{if(e.detail===0)fire()});
 new MutationObserver(()=>document.body.classList.toggle('modal',over.classList.contains('show'))).observe(over,{attributes:true,attributeFilter:['class']});
 addEventListener('orientationchange',()=>setTimeout(()=>{camInit=false;resize()},300));
+function applyLang(){
+  document.documentElement.lang=LANG;if(LANG==='pl')return;
+  const T=(sel,txt)=>{const e=document.querySelector(sel);if(e)e.textContent=txt},A=(sel,txt)=>{const e=document.querySelector(sel);if(e)e.setAttribute('aria-label',txt)};
+  document.title='Fikol';document.querySelector('meta[name=description]').content='Fikol: a puzzle game about a little robot that crashed on an alien planet. 24 levels, screws, crates, guards, portals and bombs.';
+  A('#fsBtn','Fullscreen');A('#menuBtn','Levels');T('#menuBtn .t','Levels');A('#resetBtn','Restart');T('#resetBtn .t',' Restart');A('#undo','Undo move (Z)');T('#undo .t',' Undo');
+  A('#cv','Fikol game board. Steer with the arrow keys, WASD, the pad or the joystick.');A('.over','Game window');A('.hud','Game status');
+  [['#hScore','Score'],['#hScr','screws left'],['#hLife','lives'],['#hKey','keys'],['#hAmmo','ammo'],['#hLvl','level']].forEach(([b,t])=>{const e=document.querySelector(b);if(e&&e.nextElementSibling)e.nextElementSibling.textContent=t});
+  A('.dpad .u','Up');A('.dpad .d','Down');A('.dpad .l','Left');A('.dpad .r','Right');A('#fire','PIF, fire');A('#fire2','PIF, fire');
+  A('#joy','Joystick: drag to move');A('#act','Fire: tap PIF to shoot ahead, drag sideways, up or down to aim and shoot');
+  const sub=document.querySelector('.sub>span');if(sub&&sub.firstChild)sub.firstChild.textContent='Moves ';
+  const h=document.querySelector('.hint');if(h){h.firstChild.textContent='Swipe or use the pad (hold to repeat). PIF fires in the direction of the last move.';const k=h.querySelector('.kb');if(k)k.textContent=' Keyboard: arrows or WASD, space fires, Z undoes, R restarts, Esc opens the level map.'}
+  const ns=document.querySelector('noscript p');if(ns)ns.textContent='Fikol needs JavaScript.';
+}
+applyLang();
 // input
 let rep=null;const stopRep=()=>{clearInterval(rep);rep=null};
 document.querySelectorAll('.dpad button[data-d]').forEach(b=>{const d=b.dataset.d.split(',').map(Number);
@@ -966,7 +986,7 @@ const fb=document.getElementById('fire');fb.addEventListener('pointerdown',e=>{e
 document.getElementById('resetBtn').onclick=()=>load(lvl,true);
 document.getElementById('menuBtn').onclick=menu;
 const mb=document.getElementById('muteBtn');
-function syncMute(){const off=!set.music&&!set.sfx;mb.setAttribute('aria-pressed',off);mb.setAttribute('aria-label',off?'Włącz dźwięk':'Wycisz wszystko')}
+function syncMute(){const off=!set.music&&!set.sfx;mb.setAttribute('aria-pressed',off);mb.setAttribute('aria-label',off?_('Włącz dźwięk','Unmute'):_('Wycisz wszystko','Mute all'))}
 mb.onclick=()=>{const off=!set.music&&!set.sfx;if(off){set.music=true;set.sfx=true}else{set.music=set.sfx=false}saveSet();A.ensure();A.music(Math.floor(lvl/4));syncMute();sfx('ui')};syncMute();
 const firstGesture=()=>{if(A.ensure()){A.music(Math.floor(lvl/4));}};
 ['pointerdown','keydown','click','touchend'].forEach(ev=>addEventListener(ev,firstGesture,{passive:true}));
@@ -975,7 +995,7 @@ const ro=new ResizeObserver(resize);ro.observe(cv);addEventListener('resize',res
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
 const ro2=new ResizeObserver(()=>{clearTimeout(ro2.t);ro2.t=setTimeout(resize,30)});document.querySelectorAll('.top,.hint,.sub,.hud').forEach(e=>ro2.observe(e));
-const BUILD='v20';
+const BUILD='v21';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   const had=!!navigator.serviceWorker.controller;let reloaded=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
