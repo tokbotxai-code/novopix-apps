@@ -957,7 +957,10 @@ function load(i,keep){run.last=i;saveRun();
 }
 const live=document.getElementById('live');const say=t=>{live.textContent='';setTimeout(()=>live.textContent=t,30)};
 function focusGo(){const g=document.getElementById('go');g&&g.focus({preventScroll:true})}
-function showTip(){say(_('Poziom ','Level ')+(lvl+1)+', '+L.name+'. '+L.tip+' Bipek: '+BIP[lvl]);over.innerHTML=`<h2>${_('Poziom ','Level ')}${lvl+1}<br>${L.name}</h2><p>${L.tip}</p><p class="bip" aria-hidden="true"><b>BIPEK:</b> <span id="bt"></span></p>${lvl===0?`<p class="hint" style="display:block!important">${_('Dotknij i przeciągnij palcem po ekranie, żeby jechać. Przycisk FIRE strzela.','Touch and drag anywhere on the screen to move. The FIRE button shoots.')}</p>`:''}<button class="btn" id="go">${_('Start','Start')}</button>`;over.classList.add('show');state='tip';focusGo();typeIn(document.getElementById('bt'),BIP[lvl]);document.getElementById('go').onclick=()=>{sfx('ui');over.classList.remove('show');state='play'}}
+const ctlHint=document.createElement('div');ctlHint.setAttribute('aria-hidden','true');ctlHint.style.cssText='position:fixed;left:50%;bottom:8px;transform:translateX(-50%);z-index:5;pointer-events:none;font:600 13px Inter,sans-serif;color:#e8edf4;background:#10161fcc;border:1px solid #56d6e866;border-radius:10px;padding:6px 12px;text-align:center;max-width:90vw;display:none';document.body.appendChild(ctlHint);
+function updHint(){const on=lvl===0&&moves===0&&state==='play'&&hist.length===0;if(on)ctlHint.textContent=_('Przeciągnij po lewej: ruch. Po prawej: FIRE strzela.','Drag on the left to move. Tap FIRE on the right to shoot.');ctlHint.style.display=on?'block':'none'}
+setInterval(updHint,200);
+function showTip(){say(_('Poziom ','Level ')+(lvl+1)+', '+L.name+'. '+L.tip+' Bipek: '+BIP[lvl]);over.innerHTML=`<h2>${_('Poziom ','Level ')}${lvl+1}<br>${L.name}</h2><p>${L.tip}</p><p class="bip" aria-hidden="true"><b>BIPEK:</b> <span id="bt"></span></p><button class="btn" id="go">${_('Start','Start')}</button>`;over.classList.add('show');state='tip';focusGo();typeIn(document.getElementById('bt'),BIP[lvl]);document.getElementById('go').onclick=()=>{sfx('ui');over.classList.remove('show');state='play'}}
 function hud(){hAmmo.textContent=pad(ammo);hLvl.textContent=pad(lvl+1);hScr.textContent=pad(total-screws);hKey.textContent=pad(keys);hLife.textContent=set.calm?'--':pad(run.lives);hScore.textContent=pad(run.score,6);hSh.textContent=shield?_(' ◈ TARCZA',' ◈ SHIELD'):'';}
 const solid=c=>'#DBO%><^vMG'.includes(c);let tn=0;
 function enemyAt(x,y){return enemies.some(e=>e.x===x&&e.y===y)}
@@ -1353,7 +1356,7 @@ const ro=new ResizeObserver(resize);ro.observe(cv);addEventListener('resize',res
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
 const ro2=new ResizeObserver(()=>{clearTimeout(ro2.t);ro2.t=setTimeout(resize,30)});document.querySelectorAll('.top,.hint,.sub,.hud').forEach(e=>ro2.observe(e));
-const BUILD='v31';
+const BUILD='v32';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   const had=!!navigator.serviceWorker.controller;let reloaded=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
