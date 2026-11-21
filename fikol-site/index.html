@@ -929,10 +929,10 @@ addEventListener('keydown',e=>{
   if(k==='Escape'){menu()}
 });
 let sx=0,sy=0,moved=false;const scr=document.getElementById('screen');
-scr.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;moved=false},{passive:true});
-scr.addEventListener('touchmove',e=>{const t=e.touches[0],dx=t.clientX-sx,dy=t.clientY-sy,cell=scr.clientHeight/VYv,th=Math.max(26,cell*.8);if(Math.max(Math.abs(dx),Math.abs(dy))<th)return;
+scr.addEventListener('touchstart',e=>{if(LANDV)return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;moved=false},{passive:true});
+scr.addEventListener('touchmove',e=>{if(LANDV)return;const t=e.touches[0],dx=t.clientX-sx,dy=t.clientY-sy,cell=scr.clientHeight/VYv,th=Math.max(26,cell*.8);if(Math.max(Math.abs(dx),Math.abs(dy))<th)return;
   Math.abs(dx)>Math.abs(dy)?move(Math.sign(dx),0):move(0,Math.sign(dy));sx=t.clientX;sy=t.clientY;moved=true},{passive:true});
-scr.addEventListener('touchend',e=>{if(moved)return;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.max(Math.abs(dx),Math.abs(dy))<24)return;Math.abs(dx)>Math.abs(dy)?move(Math.sign(dx),0):move(0,Math.sign(dy))});
+scr.addEventListener('touchend',e=>{if(LANDV||moved)return;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.max(Math.abs(dx),Math.abs(dy))<24)return;Math.abs(dx)>Math.abs(dy)?move(Math.sign(dx),0):move(0,Math.sign(dy))});
 document.getElementById('undo').addEventListener('click',undo);
 const fb=document.getElementById('fire');fb.addEventListener('pointerdown',e=>{e.preventDefault();fire()});fb.addEventListener('click',e=>{if(e.detail===0)fire()});
 document.getElementById('resetBtn').onclick=()=>load(lvl,true);
@@ -947,7 +947,7 @@ const ro=new ResizeObserver(resize);ro.observe(cv);addEventListener('resize',res
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
 const ro2=new ResizeObserver(()=>{clearTimeout(ro2.t);ro2.t=setTimeout(resize,30)});document.querySelectorAll('.top,.hint,.sub,.hud').forEach(e=>ro2.observe(e));
-const BUILD='v16';
+const BUILD='v17';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   const had=!!navigator.serviceWorker.controller;let reloaded=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
