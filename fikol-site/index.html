@@ -641,7 +641,7 @@ function move0(dx,dy){
   if(shots.some(q=>q.o==='e'&&q.x===px&&q.y===py)){die(_('Fikol oberwał pociskiem.','Fikol was hit by a projectile.'));return true}
   hud();return true;
 }
-function fire(){if(state!=='play'||!ammo)return;const pre=snapState();hist.push(pre);sfx('fire');ammo--;moves++;shots.push({x:px,y:py,dx:fdx,dy:fdy,o:'p'});hud();moveShots()}
+function fire(){if(state!=='play'||!ammo)return;const nx=px+fdx,ny=py+fdy,c=grid[ny]&&grid[ny][nx];if(c===undefined||(!'.SKATgQH%O'.includes(c)&&!enemyAt(nx,ny))){sfx('ui');return}const pre=snapState();hist.push(pre);sfx('fire');ammo--;moves++;shots.push({x:px,y:py,dx:fdx,dy:fdy,o:'p'});hud();moveShots()}
 function boom(x,y){grid[y][x]='.';for(let yy=y-1;yy<=y+1;yy++)for(let xx=x-1;xx<=x+1;xx++){const c=grid[yy]&&grid[yy][xx];if(c==='O'){boom(xx,yy);continue}if(c==='%'||c==='B')grid[yy][xx]='.';enemies=enemies.filter(e=>!(e.x===xx&&e.y===yy));if(px===xx&&py===yy&&state==='play')die(_('Bum! Fikol był za blisko bomby.','Boom! Fikol was too close to the bomb.'))}flash={x,y,t:12};sfx('boom');spark(x,y,'#ffb43c',24)}
 let flash=null;
 function moveShots(){shots=shots.filter(s=>{SA.set(s,{x:s.x,y:s.y,t:performance.now()});s.x+=s.dx;s.y+=s.dy;const c=grid[s.y]&&grid[s.y][s.x];if(c===undefined)return false;if(s.x===px&&s.y===py&&s.o==='e'){die(_('Fikol oberwał pociskiem.','Fikol was hit by a projectile.'));return false}const i=enemies.findIndex(e=>e.x===s.x&&e.y===s.y);if(i>=0){if(s.o==='p'){addScore(100);floats.push({x:s.x,y:s.y,t:performance.now(),s:'+100'});sfx('hit');spark(s.x,s.y,'#d2364f',10);enemies.splice(i,1)}return s.o!=='p'}if(c==='%'){grid[s.y][s.x]='.';sfx('push');spark(s.x,s.y,'#7a6652',6);return false}if(c==='O'){boom(s.x,s.y);return false}return '.SKATgQH'.includes(c)})}
@@ -931,17 +931,17 @@ joy.addEventListener('pointerdown',e=>{e.preventDefault();try{joy.setPointerCapt
 joy.addEventListener('pointermove',e=>{if(e.pointerId===jid)jSet(e)});
 const jend=e=>{if(e.pointerId!==jid)return;jid=null;jdir=null;joy.classList.remove('on');jk.style.transform=''};
 ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>joy.addEventListener(ev,jend));
-// PIF: dotknięcie = strzał przed siebie; przeciągnięcie w bok/górę/dół = celuj i strzel w tę stronę (bez ruchu Fikola)
-const f2=document.getElementById('fire2');let ft=null,fid=null,fsx=0,fsy=0,faim=null;
-function aimFire(dx,dy){if(state!=='play')return;fdx=dx;fdy=dy;if(dx)face=dx;fdir=dx>0?'r':dx<0?'l':dy<0?'u':'d';aimT=performance.now()+800;fire()}
+// PIF: przeciągnij = celuj (strzałka przy Fikolu), puść = jeden strzał; samo dotknięcie i puszczenie = strzał przed siebie
+const f2=document.getElementById('fire2');let fid=null,fsx=0,fsy=0,fo=null,faimed=false;
+function setAim(dx,dy){fdx=dx;fdy=dy;if(dx)face=dx;fdir=dx>0?'r':dx<0?'l':dy<0?'u':'d';aimT=Infinity}
 function fPos(e){const dx=e.clientX-fsx,dy=e.clientY-fsy,m=Math.hypot(dx,dy),lim=34,k=m>lim?lim/m:1;f2.style.transform='translate('+dx*k+'px,'+dy*k+'px)';
-  if(m<20){if(faim){faim=null;clearInterval(ft);ft=setInterval(fire,260)}return}
-  const d=Math.abs(dx)>Math.abs(dy)?[Math.sign(dx),0]:[0,Math.sign(dy)];
-  if(!faim||faim[0]!==d[0]||faim[1]!==d[1]){faim=d;aimFire(d[0],d[1]);clearInterval(ft);ft=setInterval(()=>aimFire(d[0],d[1]),260)}}
-f2.addEventListener('pointerdown',e=>{e.preventDefault();try{f2.setPointerCapture(e.pointerId)}catch(x){}fid=e.pointerId;const r=f2.getBoundingClientRect();fsx=r.left+r.width/2;fsy=r.top+r.height/2;faim=null;f2.classList.add('on');fire();clearInterval(ft);ft=setInterval(fire,260)});
+  if(m<22){if(faimed){faimed=false;if(fo){fdx=fo.dx;fdy=fo.dy;face=fo.face;fdir=fo.dir}aimT=performance.now()+400}return}
+  const d=Math.abs(dx)>Math.abs(dy)?[Math.sign(dx),0]:[0,Math.sign(dy)];faimed=true;setAim(d[0],d[1])}
+f2.addEventListener('pointerdown',e=>{e.preventDefault();try{f2.setPointerCapture(e.pointerId)}catch(x){}fid=e.pointerId;const r=f2.getBoundingClientRect();fsx=r.left+r.width/2;fsy=r.top+r.height/2;fo={dx:fdx,dy:fdy,face,dir:fdir};faimed=false;f2.classList.add('on');aimT=performance.now()+900});
 f2.addEventListener('pointermove',e=>{if(e.pointerId===fid)fPos(e)});
-const fend=e=>{if(e.pointerId!==fid)return;fid=null;faim=null;clearInterval(ft);f2.classList.remove('on');f2.style.transform=''};
-['pointerup','pointercancel','lostpointercapture'].forEach(ev=>f2.addEventListener(ev,fend));
+f2.addEventListener('pointerup',e=>{if(e.pointerId!==fid)return;fid=null;f2.classList.remove('on');f2.style.transform='';aimT=performance.now()+500;fire()});
+const fcancel=e=>{if(e.pointerId!==fid)return;fid=null;f2.classList.remove('on');f2.style.transform='';if(fo){fdx=fo.dx;fdy=fo.dy;face=fo.face;fdir=fo.dir}aimT=0};
+['pointercancel','lostpointercapture'].forEach(ev=>f2.addEventListener(ev,fcancel));
 f2.addEventListener('click',e=>{if(e.detail===0)fire()});
 new MutationObserver(()=>document.body.classList.toggle('modal',over.classList.contains('show'))).observe(over,{attributes:true,attributeFilter:['class']});
 addEventListener('orientationchange',()=>setTimeout(()=>{camInit=false;resize()},300));
@@ -995,7 +995,7 @@ const ro=new ResizeObserver(resize);ro.observe(cv);addEventListener('resize',res
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
 const ro2=new ResizeObserver(()=>{clearTimeout(ro2.t);ro2.t=setTimeout(resize,30)});document.querySelectorAll('.top,.hint,.sub,.hud').forEach(e=>ro2.observe(e));
-const BUILD='v21';
+const BUILD='v22';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   const had=!!navigator.serviceWorker.controller;let reloaded=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
