@@ -466,6 +466,7 @@ let ammo=0,fdx=1,fdy=0,shots=[],L,grid,W,H,px,py,keys,screws,total,enemies,state
 let done=[];try{done=JSON.parse(localStorage.getItem('fikol')||'[]')}catch(e){}
 function save(){try{localStorage.setItem('fikol',JSON.stringify(done))}catch(e){}}
 let run={lives:5,score:0,hi:0};try{Object.assign(run,JSON.parse(localStorage.getItem('fikolRun')||'{}'))}catch(e){}
+const lastSaved=run.last|0;
 function saveRun(){try{localStorage.setItem('fikolRun',JSON.stringify(run))}catch(e){}}
 let scoreBase=0;
 function addScore(n){const before=Math.floor(run.score/1500);run.score+=n;if(Math.floor(run.score/1500)>before&&!set.calm){run.lives++;say('Dodatkowe życie!');sfx('shield')}if(run.score>run.hi)run.hi=run.score;saveRun();hud()}
@@ -511,7 +512,7 @@ const PAR=[44,56,59,50,39,63,52,49,63,50,56,48,35,62,63,56,49,75,38,75,74,97,142
 const starsFor=(i,m)=>m<=PAR[i]*1.3+6?3:m<=PAR[i]*2+10?2:1;
 const starStr=n=>'★'.repeat(n)+'☆'.repeat(3-n);
 let best={};try{best=JSON.parse(localStorage.getItem('fikolBest')||'{}')}catch(e){}
-let set={music:true,sfx:true,calm:false,zoom:true};try{Object.assign(set,JSON.parse(localStorage.getItem('fikolSet')||'{}'));if(localStorage.getItem('fikolMute')==='1'&&!localStorage.getItem('fikolSet')){set.music=false;set.sfx=false}delete set['voice'];}catch(e){}
+let set={music:true,sfx:true,calm:false,zoom:true,unlock:false};try{Object.assign(set,JSON.parse(localStorage.getItem('fikolSet')||'{}'));if(localStorage.getItem('fikolMute')==='1'&&!localStorage.getItem('fikolSet')){set.music=false;set.sfx=false}delete set['voice'];}catch(e){}
 function saveSet(){try{localStorage.setItem('fikolSet',JSON.stringify(set))}catch(e){}}
 
 // ===== AUDIO (wszystko generowane na żywo, bez plików) =====
@@ -577,7 +578,7 @@ let typeTimer=null;
 function typeIn(el,text){clearInterval(typeTimer);el.textContent=text;if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
   let i=0;el.textContent='';typeTimer=setInterval(()=>{if(!el.isConnected||!over.classList.contains('show')){clearInterval(typeTimer);return}i+=2;el.textContent=text.slice(0,i);if(i>=text.length){el.textContent=text;clearInterval(typeTimer)}},26)}
 
-function load(i,keep){
+function load(i,keep){run.last=i;saveRun();
   lvl=i;L=LEVELS[i];H=L.map.length;W=L.map[0].length;grid=[];enemies=[];keys=0;screws=0;total=0;ammo=0;shots=[];shield=false;inv=0;pa=null;
   L.map.forEach((row,y)=>{grid.push([...row].map((c,x)=>{
     if(c==='P'){px=x;py=y;return '.'}
@@ -676,18 +677,19 @@ function win(){
 }
 let before='play';
 function closeMenu(){over.classList.remove('show');if(before==='play')state='play';else if(before==='tip')showTip();else if(before==='dead')load(lvl,true);else load(lvl<LEVELS.length-1?lvl+1:lvl)}
-const OPT=[['music','Muzyka'],['sfx','Efekty'],['calm','Spokojny'],['zoom','Duży widok']];
+const OPT=[['music','Muzyka'],['sfx','Efekty'],['calm','Spokojny'],['zoom','Duży widok'],['unlock','Wszystkie poziomy']];
+const lvlOk=i=>set.unlock||i===0||done.includes(i-1)||done.includes(i);
 function optsHTML(){return OPT.map(([k,n])=>`<button class="btn" data-o="${k}" aria-pressed="${set[k]}">${n}</button>`).join('')}
 function menu(){
   if(state==='menu'){closeMenu();return}
   before=state==='tip'||state==='dead'||state==='win'?state:'play';
   state='menu';
   const tot=Object.values(best).reduce((a,b)=>a+b.stars,0);
-  over.innerHTML=`<h2>Poziomy</h2><div class="levels">${LEVELS.map((l,i)=>{const b=best[i],ok=i===0||done.includes(i-1)||done.includes(i);return `<button data-i="${i}" class="${done.includes(i)?'done':''} ${i===lvl?'cur':''}" aria-label="Poziom ${i+1}, ${l.name}${done.includes(i)?', zaliczony'+(b?', '+b.stars+' z 3 gwiazdek':''):''}" ${ok?'':'disabled'}>${i+1}${b?`<small aria-hidden="true">${starStr(b.stars)}</small>`:''}</button>`}).join('')}</div><div class="hint" style="font-size:12px">★ ${tot} / ${LEVELS.length*3} · Rekord punktów: ${run.hi}</div><div class="opts">${optsHTML()}</div>${/iPhone|iPad/.test(navigator.userAgent)?'<div class="hint" style="font-size:11px">Brak dźwięku? Sprawdź, czy telefon nie jest w trybie cichym.</div>':''}<button class="btn x" id="go" aria-label="Zamknij">✕</button>`;
+  over.innerHTML=`<h2>Poziomy</h2><div class="levels">${LEVELS.map((l,i)=>{const b=best[i],ok=lvlOk(i);return `<button data-i="${i}" class="${done.includes(i)?'done':''} ${i===lvl?'cur':''}" aria-label="Poziom ${i+1}, ${l.name}${done.includes(i)?', zaliczony'+(b?', '+b.stars+' z 3 gwiazdek':''):''}" ${ok?'':'disabled'}>${i+1}${b?`<small aria-hidden="true">${starStr(b.stars)}</small>`:''}</button>`}).join('')}</div><div class="hint" style="font-size:12px">★ ${tot} / ${LEVELS.length*3} · Rekord punktów: ${run.hi}</div><div class="opts">${optsHTML()}</div>${/iPhone|iPad/.test(navigator.userAgent)?'<div class="hint" style="font-size:11px">Brak dźwięku? Sprawdź, czy telefon nie jest w trybie cichym.</div>':''}<button class="btn x" id="go" aria-label="Zamknij">✕</button>`;
   over.classList.add('show');
   const cur=over.querySelector('.cur');(cur&&!cur.disabled?cur:document.getElementById('go')).focus({preventScroll:true});
   over.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{sfx('ui');load(+b.dataset.i)});
-  over.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{set[b.dataset.o]=!set[b.dataset.o];b.setAttribute('aria-pressed',set[b.dataset.o]);saveSet();A.ensure();A.music(Math.floor(lvl/4));if(b.dataset.o==='calm'){clearInterval(tick);tick=setInterval(step,stepMs())}if(b.dataset.o==='zoom'){camInit=false;resize()}sfx('ui');syncMute()});
+  over.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{set[b.dataset.o]=!set[b.dataset.o];b.setAttribute('aria-pressed',set[b.dataset.o]);saveSet();A.ensure();A.music(Math.floor(lvl/4));if(b.dataset.o==='calm'){clearInterval(tick);tick=setInterval(step,stepMs())}if(b.dataset.o==='zoom'){camInit=false;resize()}if(b.dataset.o==='unlock')over.querySelectorAll('[data-i]').forEach(x=>{x.disabled=!lvlOk(+x.dataset.i)});sfx('ui');syncMute()});
   document.getElementById('go').onclick=closeMenu;
 }
 // drawing
@@ -947,7 +949,7 @@ const ro=new ResizeObserver(resize);ro.observe(cv);addEventListener('resize',res
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
 const ro2=new ResizeObserver(()=>{clearTimeout(ro2.t);ro2.t=setTimeout(resize,30)});document.querySelectorAll('.top,.hint,.sub,.hud').forEach(e=>ro2.observe(e));
-const BUILD='v17';
+const BUILD='v18';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   const had=!!navigator.serviceWorker.controller;let reloaded=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
@@ -961,6 +963,7 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
     location.reload()}).catch(()=>{});
 }
 load(0);requestAnimationFrame(draw);
+(function(){const q=new URLSearchParams(location.search);let st=lastSaved;const pz=parseInt(q.get('poziom'),10);if(pz>=1&&pz<=LEVELS.length){st=pz-1;set.unlock=true;saveSet()}if(q.has('wszystko')){set.unlock=true;saveSet()}st=Math.max(0,Math.min(st,LEVELS.length-1));if(st>0){story0=true;load(st)}})();
 }
 </script>
 <noscript><p style="padding:20px">Fikol wymaga włączonego JavaScriptu.</p></noscript>
