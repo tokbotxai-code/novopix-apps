@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="description" content="Fikol: gra logiczna o małym robocie, który rozbił się na obcej planecie. 16 poziomów, śrubki, skrzynie, strażnicy, portale i bomby.">
+<meta property="og:title" content="Fikol"><meta property="og:type" content="website"><meta property="og:image" content="https://fikol.novopix.uk/icon-512.png"><meta name="description" content="Fikol: gra logiczna o małym robocie, który rozbił się na obcej planecie. 36 poziomów, śrubki, skrzynie, strażnicy, portale i bomby.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-title" content="Fikol">
 <meta name="theme-color" content="#10161f">
 <title>Fikol</title>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>@font-face{font-family:'Inter';font-weight:400;font-display:swap;src:url(fonts/inter-400.ttf) format('truetype')}@font-face{font-family:'Inter';font-weight:600;font-display:swap;src:url(fonts/inter-600.ttf) format('truetype')}@font-face{font-family:'Press Start 2P';font-display:swap;src:url(fonts/pressstart2p.ttf) format('truetype')}</style>
 <style>
 /* VOICE: playful retro arcade, a little robot on a mission
    IDEA: a handheld console — the board is the screen inside a moulded housing
@@ -1353,7 +1353,7 @@ const ro=new ResizeObserver(resize);ro.observe(cv);addEventListener('resize',res
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
 const ro2=new ResizeObserver(()=>{clearTimeout(ro2.t);ro2.t=setTimeout(resize,30)});document.querySelectorAll('.top,.hint,.sub,.hud').forEach(e=>ro2.observe(e));
-const BUILD='v30';
+const BUILD='v31';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   const had=!!navigator.serviceWorker.controller;let reloaded=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
