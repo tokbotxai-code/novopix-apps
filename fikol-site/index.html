@@ -818,11 +818,11 @@ const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),over=document.get
 let ammo=0,fdx=1,fdy=0,shots=[],L,grid,W,H,px,py,keys,screws,total,enemies,state,lvl=0,tick=null,anim=0,face=1;
 let done=[];try{done=JSON.parse(localStorage.getItem('fikol')||'[]')}catch(e){}
 function save(){try{localStorage.setItem('fikol',JSON.stringify(done))}catch(e){}}
-let run={lives:5,score:0,hi:0};try{Object.assign(run,JSON.parse(localStorage.getItem('fikolRun')||'{}'))}catch(e){}
+let run={lives:9,score:0,hi:0};try{Object.assign(run,JSON.parse(localStorage.getItem('fikolRun')||'{}'))}catch(e){}if(run.lives>0&&run.lives<9&&!run.v9){run.lives=9}run.v9=1;
 const lastSaved=run.last|0;
 function saveRun(){try{localStorage.setItem('fikolRun',JSON.stringify(run))}catch(e){}}
 let scoreBase=0;
-function addScore(n){const before=Math.floor(run.score/1500);run.score+=n;if(Math.floor(run.score/1500)>before&&!set.calm){run.lives++;say(_('Dodatkowe życie!','Extra life!'));sfx('shield')}if(run.score>run.hi)run.hi=run.score;saveRun();hud()}
+function addScore(n){const before=Math.floor(run.score/1000);run.score+=n;if(Math.floor(run.score/1000)>before&&!set.calm){run.lives++;say(_('Dodatkowe życie!','Extra life!'));sfx('shield')}if(run.score>run.hi)run.hi=run.score;saveRun();hud()}
 const pad=(n,l)=>String(Math.max(0,Math.min(n,l===6?999999:99))).padStart(l||2,'0');
 let fdir='d',cheerT=0,floats=[],aimT=0;
 let T=null,moves=0,hist=[],parts=[],shield=false,inv=0,now=0,pa=null;const EA=new WeakMap(),SA=new WeakMap();const stepMs=()=>set.calm?620:420;
@@ -1028,10 +1028,10 @@ function step(){
   if(enemyAt(px,py))die();
 }
 function die(m){if(state!=='play'||inv>0)return;if(shield){shield=false;inv=3;sfx('shbreak');shake=8;spark(px,py,'#56d6e8',18);say(_('Tarcza pochłonęła uderzenie.','The shield absorbed the hit.'));hud();return}state='dead';sfx('die');shake=14;if(!set.calm){run.lives--;saveRun()}hud();const msg=m||_('Strażnik złapał Fikola.','A guard caught Fikol.'),over0=!set.calm&&run.lives<=0;say(_('Auć! ','Ouch! ')+msg+(over0?_(' Koniec gry.',' Game over.'):set.calm?'':_(' Zostało żyć: ',' Lives left: ')+run.lives));
-  if(over0){over.innerHTML=`<h2>${_('Koniec gry','Game over')}</h2><p>${msg}</p><p>${_('Wynik: ','Score: ')}<b>${run.score}</b><br>${_('Rekord: ','Best: ')}<b>${run.hi}</b></p><button class="btn" id="go">${_('Zagraj od nowa','Play again')}</button><button class="btn" id="m2">${_('Mapa poziomów','Level map')}</button>`;over.classList.add('show');focusGo();document.getElementById('go').onclick=()=>{run.lives=5;run.score=0;scoreBase=0;saveRun();load(lvl,true)};document.getElementById('m2').onclick=()=>{run.lives=5;run.score=0;scoreBase=0;saveRun();state='dead';menu()};return}
+  if(over0){over.innerHTML=`<h2>${_('Koniec gry','Game over')}</h2><p>${msg}</p><p>${_('Wynik: ','Score: ')}<b>${run.score}</b><br>${_('Rekord: ','Best: ')}<b>${run.hi}</b></p><button class="btn" id="go">${_('Zagraj od nowa','Play again')}</button><button class="btn" id="m2">${_('Mapa poziomów','Level map')}</button>`;over.classList.add('show');focusGo();document.getElementById('go').onclick=()=>{run.lives=9;run.score=0;scoreBase=0;saveRun();load(lvl,true)};document.getElementById('m2').onclick=()=>{run.lives=9;run.score=0;scoreBase=0;saveRun();state='dead';menu()};return}
   over.innerHTML=`<h2>${_('Auć!','Ouch!')}</h2><p>${msg}</p>${set.calm?'':`<p>${_('Zostało żyć: ','Lives left: ')}<b>${run.lives}</b></p>`}<button class="btn" id="go">${_('Spróbuj jeszcze raz','Try again')}</button>`;over.classList.add('show');focusGo();document.getElementById('go').onclick=()=>load(lvl,true)}
 function win(){
-  state='win';sfx('win');const pts=500+run.lives*50;addScore(pts);const last=lvl===LEVELS.length-1,w=Math.floor(lvl/4),endW=lvl%4===3&&!last;
+  state='win';sfx('win');const pts=500+run.lives*50;addScore(pts);if(!set.calm&&run.lives<15){run.lives++;saveRun()}const last=lvl===LEVELS.length-1,w=Math.floor(lvl/4),endW=lvl%4===3&&!last;
   if(!done.includes(lvl)){done.push(lvl);save()}
   const extra=last?_('Fikol pokonał statek-matkę, zatankował i wrócił do domu. Bipek twierdzi, że to on wszystko zaplanował.','Fikol beat the mothership, refuelled and flew home. Bipek claims he planned it all.'):endW?WORLDS[w].end:'';
   const head=last?_('Brawo!','Well done!'):endW?_('Świat ukończony!','World complete!'):_('Kapsuła startuje!','Capsule launching!');
@@ -1353,7 +1353,7 @@ const ro=new ResizeObserver(resize);ro.observe(cv);addEventListener('resize',res
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
 const ro2=new ResizeObserver(()=>{clearTimeout(ro2.t);ro2.t=setTimeout(resize,30)});document.querySelectorAll('.top,.hint,.sub,.hud').forEach(e=>ro2.observe(e));
-const BUILD='v25';
+const BUILD='v26';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   const had=!!navigator.serviceWorker.controller;let reloaded=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
