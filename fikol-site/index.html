@@ -8,6 +8,8 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Fikol">
 <meta name="theme-color" content="#10161f">
 <title>Fikol</title>
@@ -78,6 +80,19 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 @media(max-height:760px){:root{--cell:54px}.hint{display:none}}
 @media(max-height:620px){:root{--cell:46px}.app{gap:6px;padding-top:6px}.hud{padding-top:6px}}
 @media(orientation:landscape) and (max-height:520px){:root{--cell:50px}.app{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr);column-gap:16px;row-gap:6px;max-width:none;padding:6px 14px}.top{grid-column:1;grid-row:1}.case{grid-column:1;grid-row:2;align-self:start}.pad{grid-column:2;grid-row:1/3;align-self:center;padding-top:0}.hint{display:none}.sub{padding-top:2px}.hud{padding-top:6px}}
+.joy,.act{display:none}
+@media(orientation:landscape) and (max-height:520px){
+ .app{grid-template-columns:auto minmax(0,1fr) auto!important;column-gap:12px!important;max-width:none}
+ .top{grid-column:2!important;grid-row:1!important}.case{grid-column:2!important;grid-row:2!important;justify-self:center}
+ .pad{display:none!important}
+ .joy{display:grid;grid-column:1;grid-row:1/3;align-self:center;justify-self:start;touch-action:none}
+ .act{display:grid;grid-column:3;grid-row:1/3;align-self:center;justify-self:end}
+}
+.jbase{width:128px;height:128px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#2a3748,#18202b);border:2px solid var(--edge);box-shadow:inset 0 4px 14px #0008,0 6px 16px #0006;display:grid;place-items:center;touch-action:none}
+.jknob{width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff9a80,#e04e30);box-shadow:0 4px 0 #8a2a18,0 6px 12px #0008;will-change:transform}
+.fire2{width:92px;height:92px;border-radius:50%;border:0;background:radial-gradient(circle at 35% 30%,#ff9a80,var(--coral));color:#10161f;font:700 16px Inter,sans-serif;box-shadow:0 5px 0 #8a2a18,0 8px 14px #0008;touch-action:none}
+.fire2:active{transform:translateY(3px);box-shadow:0 2px 0 #8a2a18}
+#fsBtn[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -86,6 +101,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
   <div class="top">
     <h1>FIKOL</h1>
     <div style="display:flex;gap:8px">
+      <button class="btn" id="fsBtn" aria-label="Pełny ekran" aria-pressed="false">⛶</button>
       <button class="btn" id="muteBtn" aria-label="Wycisz wszystko" aria-pressed="false">♪</button>
       <button class="btn" id="menuBtn">Poziomy</button>
       <button class="btn" id="resetBtn">↺ Od nowa</button>
@@ -115,6 +131,8 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
       <button class="d" data-d="0,1" aria-label="Dół">▼</button>
     </div>
   </div>
+  <div class="joy" id="joy" role="group" aria-label="Joystick: przeciągnij, aby się poruszać"><div class="jbase"><div class="jknob" id="jknob"></div></div></div>
+  <div class="act"><button class="fire2" id="fire2" aria-label="PIF, strzał">PIF</button></div>
   <div class="sr" id="live" aria-live="polite"></div>
   <p class="hint">Przesuń palcem albo użyj pada (można przytrzymać). PIF strzela w kierunku ostatniego ruchu.<span class="kb"> Klawiatura: strzałki lub WASD, spacja strzela, Z cofa ruch, R zaczyna od nowa, Esc to mapa poziomów.</span></p>
 </main>
@@ -850,6 +868,26 @@ function draw(){
   ctx.drawImage(low,shx,shy,cv.width,cv.height);
   requestAnimationFrame(draw);
 }
+function showInfo(html){before=state==='tip'||state==='dead'||state==='win'?state:'play';if(state==='menu')return;state='menu';over.innerHTML=html+'<button class="btn" id="go">OK</button>';over.classList.add('show');focusGo();document.getElementById('go').onclick=closeMenu}
+const fsBtn=document.getElementById('fsBtn'),FSok=!!(document.fullscreenEnabled||document.webkitFullscreenEnabled),fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement;
+fsBtn.onclick=async()=>{
+  if(!FSok){showInfo('<h2>Pełny ekran</h2><p>Na iPhonie: Udostępnij → Do ekranu początkowego. Wtedy gra działa na pełnym ekranie, także w poziomie.</p>');return}
+  try{if(fsEl()){(document.exitFullscreen||document.webkitExitFullscreen).call(document);try{screen.orientation.unlock()}catch(e){}}
+    else{const el=document.documentElement;await (el.requestFullscreen||el.webkitRequestFullscreen).call(el,{navigationUI:'hide'});try{await screen.orientation.lock('landscape')}catch(e){}}}catch(e){}
+};
+['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,()=>{fsBtn.setAttribute('aria-pressed',String(!!fsEl()));setTimeout(resize,200)}));
+// joystick (poziomo)
+const joy=document.getElementById('joy'),jk=document.getElementById('jknob'),jb=joy.querySelector('.jbase');let jid=null,jd=null,jt=null;
+function jSet(e){const r=jb.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,m=Math.hypot(dx,dy),lim=r.width/2-jk.offsetWidth/2,k=m>lim?lim/m:1;
+  jk.style.transform='translate('+dx*k+'px,'+dy*k+'px)';
+  let d=null;if(m>r.width*.16)d=Math.abs(dx)>Math.abs(dy)?[Math.sign(dx),0]:[0,Math.sign(dy)];
+  if(!d){jd=null;clearInterval(jt);return}
+  if(!jd||jd[0]!==d[0]||jd[1]!==d[1]){jd=d;move(d[0],d[1]);clearInterval(jt);jt=setInterval(()=>{if(jd)move(jd[0],jd[1])},150)}}
+joy.addEventListener('pointerdown',e=>{e.preventDefault();try{joy.setPointerCapture(e.pointerId)}catch(x){}jid=e.pointerId;jSet(e)});
+joy.addEventListener('pointermove',e=>{if(e.pointerId===jid)jSet(e)});
+const jend=e=>{if(e.pointerId!==jid)return;jid=null;jd=null;clearInterval(jt);jk.style.transform=''};
+['pointerup','pointercancel','lostpointercapture'].forEach(ev=>joy.addEventListener(ev,jend));
+const f2=document.getElementById('fire2');f2.addEventListener('pointerdown',e=>{e.preventDefault();fire()});f2.addEventListener('click',e=>{if(e.detail===0)fire()});
 // input
 let rep=null;const stopRep=()=>{clearInterval(rep);rep=null};
 document.querySelectorAll('.dpad button[data-d]').forEach(b=>{const d=b.dataset.d.split(',').map(Number);
@@ -886,7 +924,7 @@ const ro=new ResizeObserver(resize);ro.observe(cv);addEventListener('resize',res
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
 const ro2=new ResizeObserver(()=>{clearTimeout(ro2.t);ro2.t=setTimeout(resize,30)});document.querySelectorAll('.top,.hint,.sub,.hud').forEach(e=>ro2.observe(e));
-const BUILD='v12';
+const BUILD='v13';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   const had=!!navigator.serviceWorker.controller;let reloaded=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
