@@ -825,7 +825,7 @@ let scoreBase=0;
 function addScore(n){const before=Math.floor(run.score/1000);run.score+=n;if(Math.floor(run.score/1000)>before&&!set.calm){run.lives++;say(_('Dodatkowe życie!','Extra life!'));sfx('shield')}if(run.score>run.hi)run.hi=run.score;saveRun();hud()}
 const pad=(n,l)=>String(Math.max(0,Math.min(n,l===6?999999:99))).padStart(l||2,'0');
 let fdir='d',cheerT=0,floats=[],aimT=0;
-let T=null,moves=0,hist=[],parts=[],shield=false,inv=0,now=0,pa=null;const EA=new WeakMap(),SA=new WeakMap();const stepMs=()=>set.calm?620:420;
+let T=null,moves=0,hist=[],parts=[],shield=false,inv=0,now=0,pa=null;const EA=new WeakMap(),SA=new WeakMap();const stepMs=()=>set.calm?480:300;
 
 const WORLDS=[
  {n:"Złomowisko",f:['#121a25','#0f1620'],w:['#34465e','#4a6382','#22303f'],end:"Złomowisko za nami. Kapsuła zaskoczyła, ale to dopiero rozgrzewka.",m:{tempo:112,root:48,sc:[0,3,5,7,10],prog:[0,8,3,10]}},
@@ -1353,7 +1353,7 @@ const ro=new ResizeObserver(resize);ro.observe(cv);addEventListener('resize',res
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
 const ro2=new ResizeObserver(()=>{clearTimeout(ro2.t);ro2.t=setTimeout(resize,30)});document.querySelectorAll('.top,.hint,.sub,.hud').forEach(e=>ro2.observe(e));
-const BUILD='v26';
+const BUILD='v27';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   const had=!!navigator.serviceWorker.controller;let reloaded=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
