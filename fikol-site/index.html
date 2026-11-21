@@ -104,12 +104,12 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
  #undo{position:fixed;z-index:5;right:max(10px,calc(env(safe-area-inset-right) + 4px));top:calc(max(6px,env(safe-area-inset-top)) + 46px)}
  .joy{display:grid;position:fixed;z-index:5;left:max(10px,calc(env(safe-area-inset-left) + 2px));bottom:max(34px,calc(env(safe-area-inset-bottom) + 18px));padding:22px;touch-action:none;opacity:.5;transition:opacity .15s}
  .act{display:grid;position:fixed;z-index:5;right:max(10px,calc(env(safe-area-inset-right) + 2px));bottom:max(34px,calc(env(safe-area-inset-bottom) + 18px));padding:16px;touch-action:none}
- .joy.on{opacity:.9}
+ .joy{opacity:.16!important}.joy.on{opacity:.9!important}.joy .da{opacity:0;transition:opacity .12s}.joy.on .da{opacity:1}.joy.dp .jbase{width:128px;height:128px}
  .da{position:absolute;display:none;place-items:center;width:46px;height:46px;border-radius:12px;color:#ffb199;background:#ffffff14;font-size:20px;line-height:1;pointer-events:none}
  .joy.dp .da{display:grid}.da.u{top:6px;left:50%;margin-left:-23px}.da.d{bottom:6px;left:50%;margin-left:-23px}.da.l{left:6px;top:50%;margin-top:-23px}.da.r{right:6px;top:50%;margin-top:-23px}
  .joy.dp .jknob{display:none}.joy.dp .jbase{width:150px;height:150px}
  .joy[data-dir=u] .da.u,.joy[data-dir=d] .da.d,.joy[data-dir=l] .da.l,.joy[data-dir=r] .da.r{background:#ff6b4a;color:#10161f}
- .fire2{opacity:.55;transition:opacity .15s}.fire2.on{opacity:.95}
+ .fire2{opacity:.3;transition:opacity .15s}.fire2.on{opacity:.95}.fring{opacity:.5}
  .pad,.hint{display:none!important}
  body.modal .hud,body.modal .top,body.modal #undo,body.modal .joy,body.modal .act{visibility:hidden}
 }
@@ -1353,7 +1353,7 @@ const ro=new ResizeObserver(resize);ro.observe(cv);addEventListener('resize',res
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
 const ro2=new ResizeObserver(()=>{clearTimeout(ro2.t);ro2.t=setTimeout(resize,30)});document.querySelectorAll('.top,.hint,.sub,.hud').forEach(e=>ro2.observe(e));
-const BUILD='v27';
+const BUILD='v28';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   const had=!!navigator.serviceWorker.controller;let reloaded=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
