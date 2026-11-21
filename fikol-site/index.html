@@ -101,11 +101,11 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
  body.modal .hud,body.modal .top,body.modal .sub,body.modal .joy,body.modal .act{visibility:hidden}
 }
 @media(orientation:landscape) and (max-height:400px){
- .jbase,.fbase{width:104px;height:104px}.jknob{width:46px;height:46px}.fknob{width:50px;height:50px;font-size:13px}
+ .jbase{width:104px;height:104px}.jknob{width:46px;height:46px}.fire2{width:80px;height:80px;font-size:15px}
  .hud{gap:6px;font-size:9px}.sub #hBest{display:none}
 }
-.fbase{width:116px;height:116px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#3a2a28,#1c1514);border:2px solid #5a3a34;box-shadow:inset 0 4px 14px #0008,0 6px 16px #0006;display:grid;place-items:center;touch-action:none}
-.fknob{width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff9a80,var(--coral));color:#10161f;font:700 14px Inter,sans-serif;display:grid;place-items:center;box-shadow:0 4px 0 #8a2a18,0 6px 12px #0008;will-change:transform}
+.fire2{width:96px;height:96px;border-radius:50%;border:0;background:radial-gradient(circle at 35% 30%,#ff9a80,var(--coral));color:#10161f;font:700 17px Inter,sans-serif;box-shadow:0 5px 0 #8a2a18,0 8px 14px #0008;touch-action:none;cursor:pointer}
+.fire2:active{transform:translateY(3px);box-shadow:0 2px 0 #8a2a18}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -145,7 +145,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
     </div>
   </div>
   <div class="joy" id="joy" role="group" aria-label="Joystick: przeciągnij, aby się poruszać"><div class="jbase"><div class="jknob" id="jknob"></div></div></div>
-  <div class="act" id="act" role="group" aria-label="Gałka strzału: dotknij, aby strzelić, przeciągnij, aby wycelować"><div class="fbase"><div class="fknob" id="fknob">PIF</div></div></div>
+  <div class="act" id="act"><button class="fire2" id="fire2" aria-label="PIF, strzał">PIF</button></div>
   <div class="sr" id="live" aria-live="polite"></div>
   <p class="hint">Przesuń palcem albo użyj pada (można przytrzymać). PIF strzela w kierunku ostatniego ruchu.<span class="kb"> Klawiatura: strzałki lub WASD, spacja strzela, Z cofa ruch, R zaczyna od nowa, Esc to mapa poziomów.</span></p>
 </main>
@@ -906,18 +906,9 @@ joy.addEventListener('pointerdown',e=>{e.preventDefault();try{joy.setPointerCapt
 joy.addEventListener('pointermove',e=>{if(e.pointerId===jid)jSet(e)});
 const jend=e=>{if(e.pointerId!==jid)return;jid=null;jd=null;clearInterval(jt);jk.style.transform=''};
 ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>joy.addEventListener(ev,jend));
-const act=document.getElementById('act'),fb2=act.querySelector('.fbase'),fk=document.getElementById('fknob');let fid=null,fdn=null,ft=null,fmoved=false;
-function aimFire(dx,dy){if(state!=='play')return;fdx=dx;fdy=dy;if(dx)face=dx;fdir=dx>0?'r':dx<0?'l':dy<0?'u':'d';fire()}
-function fSet(e){const r=fb2.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,m=Math.hypot(dx,dy),lim=r.width/2-fk.offsetWidth/2,k=m>lim?lim/m:1;
-  fk.style.transform='translate('+dx*k+'px,'+dy*k+'px)';
-  let d=null;if(m>r.width*.16)d=Math.abs(dx)>Math.abs(dy)?[Math.sign(dx),0]:[0,Math.sign(dy)];
-  if(!d){fdn=null;clearInterval(ft);return}
-  fmoved=true;
-  if(!fdn||fdn[0]!==d[0]||fdn[1]!==d[1]){fdn=d;aimFire(d[0],d[1]);clearInterval(ft);ft=setInterval(()=>{if(fdn)aimFire(fdn[0],fdn[1])},380)}}
-act.addEventListener('pointerdown',e=>{e.preventDefault();try{act.setPointerCapture(e.pointerId)}catch(x){}fid=e.pointerId;fmoved=false;fSet(e)});
-act.addEventListener('pointermove',e=>{if(e.pointerId===fid)fSet(e)});
-const fend=e=>{if(e.pointerId!==fid)return;fid=null;fdn=null;clearInterval(ft);fk.style.transform='';if(!fmoved&&e.type==='pointerup')fire()};
-['pointerup','pointercancel','lostpointercapture'].forEach(ev=>act.addEventListener(ev,fend));
+const f2=document.getElementById('fire2');
+f2.addEventListener('pointerdown',e=>{e.preventDefault();fire()});
+f2.addEventListener('click',e=>{if(e.detail===0)fire()});
 new MutationObserver(()=>document.body.classList.toggle('modal',over.classList.contains('show'))).observe(over,{attributes:true,attributeFilter:['class']});
 addEventListener('orientationchange',()=>setTimeout(()=>{camInit=false;resize()},300));
 // input
@@ -956,7 +947,7 @@ const ro=new ResizeObserver(resize);ro.observe(cv);addEventListener('resize',res
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
 const ro2=new ResizeObserver(()=>{clearTimeout(ro2.t);ro2.t=setTimeout(resize,30)});document.querySelectorAll('.top,.hint,.sub,.hud').forEach(e=>ro2.observe(e));
-const BUILD='v15';
+const BUILD='v16';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   const had=!!navigator.serviceWorker.controller;let reloaded=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
