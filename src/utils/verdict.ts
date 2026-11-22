@@ -26,9 +26,26 @@ type ReportLike = {
   seoBreakdown?: { mobileFriendly: number | null };
 };
 
+// Black Friday 2026: −50% (UK time = UTC w listopadzie). Zmień daty tutaj i w sale.js na stronie novopix.uk.
+const SALE_START = Date.parse("2026-11-24T00:00:00Z");
+const SALE_END = Date.parse("2026-12-01T00:00:00Z");
+export const saleActive = (now = Date.now()) => now >= SALE_START && now < SALE_END;
+
+const fmtNum = (n: number, isPolish: boolean) => {
+  const r = Math.round(n * 100) / 100;
+  const i = Math.floor(r);
+  const c = Math.round((r - i) * 100);
+  const ip = String(i).replace(/\B(?=(\d{3})+(?!\d))/g, isPolish ? "\u00a0" : ",");
+  return ip + (c ? (isPolish ? "," : ".") + (c < 10 ? "0" : "") + c : "");
+};
+
 const money = (n: number, isPolish: boolean, from: boolean) => {
-  const v = String(n).replace(/\B(?=(\d{3})+(?!\d))/g, isPolish ? "\u00a0" : ",");
-  return isPolish ? `${from ? "od " : ""}${v} zł netto` : `${from ? "from " : ""}£${v} ex VAT`;
+  const regular = isPolish ? `${from ? "od " : ""}${fmtNum(n, isPolish)} zł netto` : `${from ? "from " : ""}£${fmtNum(n, isPolish)} ex VAT`;
+  if (!saleActive()) return regular;
+  const half = n / 2;
+  return isPolish
+    ? `${from ? "od " : ""}${fmtNum(half, isPolish)} zł netto (Black Friday −50%, było ${fmtNum(n, isPolish)} zł)`
+    : `${from ? "from " : ""}£${fmtNum(half, isPolish)} ex VAT (Black Friday −50%, was £${fmtNum(n, isPolish)})`;
 };
 
 const joinList = (a: string[], and: string) => (a.length < 2 ? a.join("") : `${a.slice(0, -1).join(", ")} ${and} ${a[a.length - 1]}`);
