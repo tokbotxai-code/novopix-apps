@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta property="og:title" content="Fikol"><meta property="og:type" content="website"><meta property="og:image" content="https://fikol.novopix.uk/icon-512.png"><meta name="description" content="Fikol: gra logiczna o małym robocie, który rozbił się na obcej planecie. 36 poziomów, śrubki, skrzynie, strażnicy, portale i bomby.">
+<meta property="og:title" content="NovoBot"><meta property="og:type" content="website"><meta property="og:image" content="https://fikol.novopix.uk/icon-512.png"><meta name="description" content="NovoBot: a puzzle game about a little robot that crashed on an alien planet. 36 levels, screws, crates, guards, portals and bombs.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Fikol">
+<meta name="apple-mobile-web-app-title" content="NovoBot">
 <meta name="theme-color" content="#10161f">
-<title>Fikol</title>
+<title>NovoBot</title>
 <style>@font-face{font-family:'Inter';font-weight:400;font-display:swap;src:url(fonts/inter-400.ttf) format('truetype')}@font-face{font-family:'Inter';font-weight:600;font-display:swap;src:url(fonts/inter-600.ttf) format('truetype')}@font-face{font-family:'Press Start 2P';font-display:swap;src:url(fonts/pressstart2p.ttf) format('truetype')}</style>
 <style>
 /* VOICE: playful retro arcade, a little robot on a mission
@@ -137,54 +137,52 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 </style>
 </head>
 <body>
-<div id="rot" role="alert"><div class="rphone" aria-hidden="true"></div><p id="rotT">Obróć telefon w poziomie</p><small id="rotS">Fikol działa tylko w poziomie</small></div>
-<div id="splash" aria-hidden="true"><div class="sbox"><img src="logo.svg" alt="" width="96" height="96"><div class="sname">NovoPix <span>Studio</span></div><div class="stag" id="stag">przedstawia</div><div class="sgame">FIKOL</div></div></div>
+<div id="rot" role="alert"><div class="rphone" aria-hidden="true"></div><p id="rotT">Rotate your phone to landscape</p><small id="rotS">NovoBot only runs in landscape</small></div>
+<div id="splash" aria-hidden="true"><div class="sbox"><img src="logo.svg" alt="" width="96" height="96"><div class="sname">NovoPix <span>Studio</span></div><div class="stag" id="stag">presents</div><div class="sgame">NOVOBOT</div></div></div>
 <main class="app">
   <div class="top">
-    <h1>FIKOL</h1>
+    <h1>NOVOBOT</h1>
     <div style="display:flex;gap:8px">
-      <button class="btn" id="fsBtn" aria-label="Pełny ekran" aria-pressed="false">⛶</button>
-      <button class="btn" id="muteBtn" aria-label="Wycisz wszystko" aria-pressed="false">♪</button>
-      <button class="btn" id="menuBtn" aria-label="Poziomy"><span class="ic">☰</span><span class="t">Poziomy</span></button>
-      <button class="btn" id="resetBtn" aria-label="Od nowa"><span class="ic">↺</span><span class="t"> Od nowa</span></button>
+      <button class="btn" id="fsBtn" aria-label="Fullscreen" aria-pressed="false">⛶</button>
+      <button class="btn" id="muteBtn" aria-label="Mute all" aria-pressed="false">♪</button>
+      <button class="btn" id="menuBtn" aria-label="Levels"><span class="ic">☰</span><span class="t">Levels</span></button>
+      <button class="btn" id="resetBtn" aria-label="Restart"><span class="ic">↺</span><span class="t"> Restart</span></button>
     </div>
   </div>
   <div class="case">
     <div class="screen" id="screen">
-      <canvas id="cv" role="img" aria-label="Plansza gry Fikol. Steruj strzałkami, WASD, padem lub przesunięciem palca."></canvas>
-      <div class="over" id="over" role="dialog" aria-label="Okno gry"></div>
+      <canvas id="cv" role="img" aria-label="NovoBot game board. Steer with the arrow keys, WASD, the pad or the joystick."></canvas>
+      <div class="over" id="over" role="dialog" aria-label="Game window"></div>
     </div>
-    <div class="hud" role="group" aria-label="Stan gry">
-      <span class="it"><b id="hScore">000000</b><span class="sr">Wynik</span></span>
-      <span class="it"><canvas class="ico" data-s="screw" width="16" height="16" aria-hidden="true"></canvas><b id="hScr">00</b><span class="sr">śrubek zostało</span></span>
-      <span class="it"><canvas class="ico" data-s="life" width="16" height="16" aria-hidden="true"></canvas><b id="hLife">05</b><span class="sr">żyć</span></span>
-      <span class="it"><canvas class="ico" data-s="key" width="16" height="16" aria-hidden="true"></canvas><b id="hKey">00</b><span class="sr">kluczy</span></span>
-      <span class="it"><canvas class="ico" data-s="ammo" width="16" height="16" aria-hidden="true"></canvas><b id="hAmmo">00</b><span class="sr">amunicji</span></span>
-      <span class="it"><canvas class="ico" data-s="level" width="16" height="16" aria-hidden="true"></canvas><b id="hLvl">01</b><span class="sr">poziom</span></span>
+    <div class="hud" role="group" aria-label="Game status">
+      <span class="it"><b id="hScore">000000</b><span class="sr">Score</span></span>
+      <span class="it"><canvas class="ico" data-s="screw" width="16" height="16" aria-hidden="true"></canvas><b id="hScr">00</b><span class="sr">screws left</span></span>
+      <span class="it"><canvas class="ico" data-s="life" width="16" height="16" aria-hidden="true"></canvas><b id="hLife">05</b><span class="sr">lives</span></span>
+      <span class="it"><canvas class="ico" data-s="key" width="16" height="16" aria-hidden="true"></canvas><b id="hKey">00</b><span class="sr">keys</span></span>
+      <span class="it"><canvas class="ico" data-s="ammo" width="16" height="16" aria-hidden="true"></canvas><b id="hAmmo">00</b><span class="sr">ammo</span></span>
+      <span class="it"><canvas class="ico" data-s="level" width="16" height="16" aria-hidden="true"></canvas><b id="hLvl">01</b><span class="sr">level</span></span>
     </div>
-    <div class="sub"><button class="btn" id="undo" aria-label="Cofnij ruch (Z)"><span class="ic">↶</span><span class="t"> Cofnij</span></button><span><span id="hSh" class="sh"></span></span></div>
+    <div class="sub"><button class="btn" id="undo" aria-label="Undo move (Z)"><span class="ic">↶</span><span class="t"> Undo</span></button><span><span id="hSh" class="sh"></span></span></div>
   </div>
   <div class="pad">
     <div class="dpad">
-      <button class="u" data-d="0,-1" aria-label="Góra">▲</button>
-      <button id="fire" aria-label="FIRE, strzał">FIRE</button>
-      <button class="l" data-d="-1,0" aria-label="Lewo">◀</button>
-      <button class="r" data-d="1,0" aria-label="Prawo">▶</button>
-      <button class="d" data-d="0,1" aria-label="Dół">▼</button>
+      <button class="u" data-d="0,-1" aria-label="Up">▲</button>
+      <button id="fire" aria-label="FIRE, fire">FIRE</button>
+      <button class="l" data-d="-1,0" aria-label="Left">◀</button>
+      <button class="r" data-d="1,0" aria-label="Right">▶</button>
+      <button class="d" data-d="0,1" aria-label="Down">▼</button>
     </div>
   </div>
-  <div class="joy" id="joy" role="group" aria-label="Sterowanie: przeciągnij, aby się poruszać"><div class="jbase"><span class="da u" aria-hidden="true">▲</span><span class="da d" aria-hidden="true">▼</span><span class="da l" aria-hidden="true">◀</span><span class="da r" aria-hidden="true">▶</span><div class="jknob" id="jknob"></div></div></div>
-  <div class="act" id="act" role="group" aria-label="Strzał: dotknij FIRE, aby strzelić przed siebie, przeciągnij w bok, górę lub dół, aby wycelować i strzelić"><div class="fring"><span class="ar u" aria-hidden="true">▲</span><span class="ar d" aria-hidden="true">▼</span><span class="ar l" aria-hidden="true">◀</span><span class="ar r" aria-hidden="true">▶</span><button class="fire2" id="fire2" aria-label="FIRE, strzał">FIRE</button></div></div>
+  <div class="joy" id="joy" role="group" aria-label="Joystick: drag to move"><div class="jbase"><span class="da u" aria-hidden="true">▲</span><span class="da d" aria-hidden="true">▼</span><span class="da l" aria-hidden="true">◀</span><span class="da r" aria-hidden="true">▶</span><div class="jknob" id="jknob"></div></div></div>
+  <div class="act" id="act" role="group" aria-label="Fire: tap FIRE to shoot ahead, drag sideways, up or down to aim and shoot"><div class="fring"><span class="ar u" aria-hidden="true">▲</span><span class="ar d" aria-hidden="true">▼</span><span class="ar l" aria-hidden="true">◀</span><span class="ar r" aria-hidden="true">▶</span><button class="fire2" id="fire2" aria-label="FIRE, fire">FIRE</button></div></div>
   <div class="sr" id="live" aria-live="polite"></div>
-  <p class="hint">Przesuń palcem albo użyj pada (można przytrzymać). FIRE strzela w kierunku ostatniego ruchu.<span class="kb"> Klawiatura: strzałki lub WASD, spacja strzela, Z cofa ruch, R zaczyna od nowa, Esc to mapa poziomów.</span></p>
+  <p class="hint">Swipe or use the pad (hold to repeat). FIRE fires in the direction of the last move.<span class="kb"> Keyboard: arrows or WASD, space fires, Z undoes, R restarts, Esc opens the level map.</span></p>
 </main>
 <script>
 {
-const PORTRAIT_OK=false; // ← zmień na true, aby przywrócić tryb pionowy (albo dopisz ?pion=1 do adresu)
+const PORTRAIT_OK=false; // set to true to allow portrait mode (or add ?pion=1 to the address)
 const portraitAllowed=PORTRAIT_OK||/[?&]pion(=|&|$)/.test(location.search);
-let LANG='en';try{const sv=JSON.parse(localStorage.getItem('fikolSet')||'{}'),nav=String((navigator.languages&&navigator.languages[0])||navigator.language||'en').toLowerCase();LANG=sv.lang==='pl'||sv.lang==='en'?sv.lang:(nav.startsWith('pl')?'pl':'en')}catch(e){}
-const _=(pl,en)=>LANG==='pl'?pl:en;
-const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła się otworzy.",map:[
+const LEVELS=[{name:"First screws",tip:"Collect all the screws and the capsule will open.",map:[
 "###########",
 "#P..S....S#",
 "#.###.###.#",
@@ -196,7 +194,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.###.###.#",
 "#S.......S#",
 "###########"]},
-{name:"Skrzynie",tip:"Skrzynie można pchać, ale tylko na wolne pole.",map:[
+{name:"Crates",tip:"You can push crates, but only onto an empty square.",map:[
 "###################",
 "#P....#....S#S...S#",
 "#.....#.X...#...B.#",
@@ -210,7 +208,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.#...#.....#.B.#.#",
 "#S....#S....#.....#",
 "###################"]},
-{name:"Klucze",tip:"Klucz otwiera jedne drzwi.",map:[
+{name:"Keys",tip:"One key opens one door.",map:[
 "###################",
 "#P....#S....#....S#",
 "#.....#.#...#.X...#",
@@ -224,7 +222,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.....#.....#.#...#",
 "#....K#....S#....E#",
 "###################"]},
-{name:"Patrol",tip:"Nie daj się złapać strażnikom!",map:[
+{name:"Patrol",tip:"Don't get caught by the guards!",map:[
 "###################",
 "#P....#.....#....S#",
 "#.....#.X...#.X...#",
@@ -238,7 +236,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#...#.#.#.#.#.....#",
 "#....S#....S#S...E#",
 "###################"]},
-{name:"Teleport",tip:"Wejdź na portal, żeby przenieść się do drugiego.",map:[
+{name:"Teleport",tip:"Step on a portal to jump to the other one.",map:[
 "###################",
 "#P....#S...S#T....#",
 "#.....#.#...#.Y...#",
@@ -252,7 +250,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.....#.X.T.#.....#",
 "#S....#S....#....E#",
 "###################"]},
-{name:"Gruz i bomby",tip:"Zestrzel gruz. Bomba wybucha od strzału, więc trzymaj się z daleka!",map:[
+{name:"Rubble and bombs",tip:"Shoot the rubble. A bomb explodes when shot, so keep your distance!",map:[
 "###################",
 "#P....#S...O#....S#",
 "#.....#.#...#...#.#",
@@ -266,7 +264,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.....#.#...#...#.#",
 "#....A#.....#S....#",
 "###################"]},
-{name:"Działka",tip:"Działka strzelają co chwilę. Przebiegnij między pociskami.",map:[
+{name:"Cannons",tip:"The cannons fire all the time. Run between the shots.",map:[
 "###################",
 "#P....#.....#S....#",
 "#.....#.....>.#.#.#",
@@ -280,7 +278,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.#...#...#.#.....#",
 "#S...E#S....#....S#",
 "###################"]},
-{name:"Magnes i ptaki",tip:"Magnes przyciąga Fikola, gdy jest z nim w jednej linii. Ptaki zrzucają pociski.",map:[
+{name:"Magnet and birds",tip:"The magnet pulls NovoBot when they are in a line. Birds drop projectiles.",map:[
 "###################",
 "#P....#....S#....S#",
 "#.....#...#.#..F..#",
@@ -294,7 +292,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.....#.#...#.#...#",
 "#S....#S....#....S#",
 "###################"]},
-{name:"Labirynt",tip:"Strażnicy pilnują korytarzy. Obserwuj ich i przemykaj.",map:[
+{name:"Maze",tip:"Guards watch the corridors. Watch them and slip past.",map:[
 "###################",
 "#P....#S....#.....#",
 "#.....#...#.#.Y.#.#",
@@ -314,7 +312,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.X...#.#...#.....#",
 "#....S#....S#S...E#",
 "###################"]},
-{name:"Skrzynki i klucz",tip:"Pomyśl, zanim pchniesz skrzynię.",map:[
+{name:"Crates and key",tip:"Think before you push the crate.",map:[
 "###################",
 "#P....#.....#.....#",
 "#.....#...B.#.....#",
@@ -334,7 +332,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.....#...B.#.B...#",
 "#S....#.....#S....#",
 "###################"]},
-{name:"Ogień krzyżowy",tip:"Trzy działka, jeden Fikol.",map:[
+{name:"Crossfire",tip:"Three cannons, one NovoBot.",map:[
 "###################",
 "#P....#.....#.....#",
 "#.....#.....#...#.#",
@@ -354,7 +352,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.X...#.#...#.....#",
 "#S....#S...E#S....#",
 "###################"]},
-{name:"Wybuchowa",tip:"Gruz zamyka skarbiec. Amunicji jest mało.",map:[
+{name:"Explosive",tip:"Rubble seals the vault. Ammo is scarce.",map:[
 "###################",
 "#P....#....S#S....#",
 "#.....#...#.#.Y.#.#",
@@ -374,7 +372,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#...#.#...#.#.#.#.#",
 "#A...S#....S#....S#",
 "###################"]},
-{name:"Ptasie gniazdo",tip:"Trzy ptaki i otwarte niebo.",map:[
+{name:"Bird's nest",tip:"Three birds and an open sky.",map:[
 "###################",
 "#P....#....S#.....#",
 "#.....#..F..#...#.#",
@@ -394,7 +392,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.#...#.#...#...#.#",
 "#.....#....S#.....#",
 "###################"]},
-{name:"Przyciąganie",tip:"Skrzynia osłania przed magnesem. Uważaj na strażników.",map:[
+{name:"Attraction",tip:"A crate shields you from the magnet. Watch out for the guards.",map:[
 "###################",
 "#P....#.....#.....#",
 "#.....#...#.#.....#",
@@ -414,7 +412,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.#...#.#.B.#.#...#",
 "#S...E#.....#.....#",
 "###################"]},
-{name:"Portale",tip:"Każdy portal prowadzi do następnego.",map:[
+{name:"Portals",tip:"Every portal leads to the next one.",map:[
 "###################",
 "#P....#T....#.....#",
 "#.....#.....#...#.#",
@@ -434,7 +432,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.#...#.#.#.#.X...#",
 "#S....#.....#....E#",
 "###################"]},
-{name:"Finał",tip:"Wszystko naraz. Powodzenia, Fikolu!",map:[
+{name:"Finale",tip:"Everything at once. Good luck, NovoBot!",map:[
 "###################",
 "#P...A#A....#S....#",
 "#.....#...#.#.#...#",
@@ -454,7 +452,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.O...#...#.#.....#",
 "#....H#.....#S...E#",
 "###################"]},
-{name:"Przycisk",tip:"Różowy przycisk przełącza wszystkie różowe bramy.",map:[
+{name:"Button",tip:"The pink button switches all the pink gates.",map:[
 "###################",
 "#P....#....Q#....S#",
 "#.....#.#...#.....#",
@@ -474,7 +472,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.....#.....#.#...#",
 "#S...S#....S#.....#",
 "###################"]},
-{name:"Dwie strony",tip:"Zbierz to, co otwarte, przełącz bramy i zbierz resztę.",map:[
+{name:"Two sides",tip:"Collect what is open, switch the gates, then collect the rest.",map:[
 "#########################",
 "#P....#....S#S....#.....#",
 "#..A..#.....#...#.#.....#",
@@ -488,7 +486,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.....#.#.#.#...#.#.#...#",
 "#.....#.....#S....#....E#",
 "#########################"]},
-{name:"Ścigacz",tip:"Fioletowy goni cię z bliska. Zestrzel go albo uciekaj.",map:[
+{name:"Chaser",tip:"The purple one chases you when close. Shoot it or run.",map:[
 "###################",
 "#P....#S....#....S#",
 "#.....#...#.#.....#",
@@ -508,7 +506,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.#...#.....#.....#",
 "#.....#.....#S....#",
 "###################"]},
-{name:"Paliwo",tip:"Tarcza pochłonie jedno uderzenie. Wykorzystaj ją mądrze.",map:[
+{name:"Fuel",tip:"The shield absorbs one hit. Use it wisely.",map:[
 "#########################",
 "#P....#.....#Q...S#....S#",
 "#.....#.#.#.#.#...#.#.Y.#",
@@ -528,7 +526,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.....#.#...#...#.#.....#",
 "#.....#.....#S....#....E#",
 "#########################"]},
-{name:"Port: wejście",tip:"Plansza większa niż ekran: kamera podąża za Fikolem. Zestrzel gruz.",map:[
+{name:"Port: entrance",tip:"The map is bigger than the screen: the camera follows NovoBot. Shoot the rubble.",map:[
 "###################",
 "#P....#S....#...YS#",
 "#.....#.#...#.#...#",
@@ -542,7 +540,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.#...#..S..#...#.#",
 "#S...S#....E#.....#",
 "###################"]},
-{name:"Port: magazyn",tip:"Klucze otwierają drzwi. Zbierz je, zanim ruszysz dalej.",map:[
+{name:"Port: warehouse",tip:"Keys open doors. Collect them before you go on.",map:[
 "#########################",
 "#P...K#S....#....S#.....#",
 "#.....#...#.#.....<.#Y..#",
@@ -556,7 +554,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.X...#.....#.....#.#...#",
 "#K....#.....#S....#....E#",
 "#########################"]},
-{name:"Port: wieża",tip:"Przycisk otwiera bramę, a strażnicy nie śpią.",map:[
+{name:"Port: tower",tip:"The button opens the gate, and the guards never sleep.",map:[
 "###################",
 "#P....#.....#S....#",
 "#.....#...F.#.....#",
@@ -576,7 +574,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.#...#..C..#.....#",
 "#....S#S....#....E#",
 "###################"]},
-{name:"Port: hangar",tip:"Wszystko, czego się nauczyłeś, na jednej wielkiej planszy.",map:[
+{name:"Port: hangar",tip:"Everything you have learned, on one huge map.",map:[
 "#########################",
 "#P...K#S....#S....#H...A#",
 "#.....#.X...#.....#.....#",
@@ -596,7 +594,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.#.#.#...#.#.....#..X..#",
 "#....S#....S#....S#....S#",
 "#########################"]},
-{name:"Cytadela: brama",tip:"Więcej strażników niż zwykle. Nie stój w miejscu.",map:[
+{name:"Citadel: gate",tip:"More guards than usual. Don't stand still.",map:[
 "###################",
 "#P....#....S#.....#",
 "#..S..#.....#.X...#",
@@ -610,7 +608,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#...#.#.S.#.#.....#",
 "#....S#S....#....E#",
 "###################"]},
-{name:"Cytadela: zbrojownia",tip:"Drzwi, klucz i działa. Licz takty.",map:[
+{name:"Citadel: armory",tip:"Doors, a key and cannons. Count the beats.",map:[
 "###################",
 "#P....#.....#....S#",
 "#.....#.X...>..Y..#",
@@ -624,7 +622,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#...#.#.....#.#.#.#",
 "#.....#S....#S...E#",
 "###################"]},
-{name:"Cytadela: wieża lodu",tip:"Ścigacz i ptaki naraz.",map:[
+{name:"Citadel: ice tower",tip:"A chaser and birds at once.",map:[
 "###################",
 "#P....#.....#....S#",
 "#.....#.....#...Y.#",
@@ -644,7 +642,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.#..S#.#...#.....#",
 "#.....#.....#S...E#",
 "###################"]},
-{name:"Cytadela: serce",tip:"Gruz, drzwi i sporo wrogów.",map:[
+{name:"Citadel: heart",tip:"Rubble, doors and plenty of enemies.",map:[
 "#########################",
 "#P...K#.....#.....#....S#",
 "#.....#.X...#.....#.Y.#.#",
@@ -658,7 +656,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#...#.#.....#.....#...#.#",
 "#.....#S....#....A#S....#",
 "#########^###############"]},
-{name:"Wulkan: krater",tip:"Robi się gorąco: ścigacz poluje na ciebie.",map:[
+{name:"Volcano: crater",tip:"It's getting hot: a chaser is hunting you.",map:[
 "###################",
 "#P....#H...S#.....#",
 "#.....#..F..#.#...#",
@@ -678,7 +676,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#...#.#.....#.....#",
 "#....E#.....#.....#",
 "###################"]},
-{name:"Wulkan: tunel",tip:"Gruz zamyka drogę, a ptaki patrolują sufit.",map:[
+{name:"Volcano: tunnel",tip:"Rubble blocks the way and birds patrol the ceiling.",map:[
 "#########################",
 "#P...A#S....#....S#.....#",
 "#.....#..F..#.X...#.Y.#.#",
@@ -692,7 +690,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.....#.#...#...#.#.#.#.#",
 "#.....#S...S#....S#....E#",
 "#########################"]},
-{name:"Wulkan: kuźnia",tip:"Brama, gruz i wiele zagrożeń.",map:[
+{name:"Volcano: forge",tip:"A gate, rubble and many threats.",map:[
 "###################",
 "#P....#.....#.....#",
 "#.....#.....<...#.#",
@@ -712,7 +710,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.....#..X..#.#...#",
 "#.....#.....#.....#",
 "###################"]},
-{name:"Wulkan: lawa",tip:"Wszystko naraz. Kamera cię nie uratuje.",map:[
+{name:"Volcano: lava",tip:"Everything at once. The camera won't save you.",map:[
 "#########################",
 "#P....#.....#S...A#....S#",
 "#.....#...Y.#.....#...#.#",
@@ -732,7 +730,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.#...#...#.#.#.#.#...#.#",
 "#.....#.....#.....#S...Q#",
 "#####################^###"]},
-{name:"Statek: dok",tip:"Drzwi i armia strażników.",map:[
+{name:"Mothership: dock",tip:"Doors and an army of guards.",map:[
 "###################",
 "#P...K#.....#S....#",
 "#.....#.#...<...#.#",
@@ -752,7 +750,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.....#.X...#...#.#",
 "#....S#.....#....S#",
 "###################"]},
-{name:"Statek: rdzeń",tip:"Mnóstwo wrogów i tarcza.",map:[
+{name:"Mothership: core",tip:"Plenty of enemies and a shield.",map:[
 "#########################",
 "#P....#S....#S...Q#.....#",
 "#.....#.....#...#.#.Y.#.#",
@@ -772,7 +770,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.....#.X...#.#.#.#.....#",
 "#.....#....S#....S#.....#",
 "#########################"]},
-{name:"Statek: mostek",tip:"Prawie koniec. Nikogo nie lekceważ.",map:[
+{name:"Mothership: bridge",tip:"Almost there. Don't underestimate anyone.",map:[
 "#########################",
 "#P...A#.....#.....#....S#",
 "#.....#.....#..F..#.#.#.#",
@@ -792,7 +790,7 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.....#.#.#.#.X...#...S.#",
 "#.....#.....#....S#....S#",
 "#########################"]},
-{name:"Statek: finał",tip:"Ostatnia plansza. Wielu wrogów, jedno wyjście.",map:[
+{name:"Mothership: finale",tip:"The final map. Many enemies, one exit.",map:[
 "#########################",
 "#P...Q#....S#S....#....S#",
 "#.....#.....<...#.#..F..#",
@@ -813,7 +811,6 @@ const LEVELS=[{name:"Pierwsze śrubki",tip:"Zbierz wszystkie śrubki, a kapsuła
 "#.....#....S#....S#....E#",
 "#########################"]}
 ];
-if(LANG==='en'){const _N=["First screws", "Crates", "Keys", "Patrol", "Teleport", "Rubble and bombs", "Cannons", "Magnet and birds", "Maze", "Crates and key", "Crossfire", "Explosive", "Bird's nest", "Attraction", "Portals", "Finale", "Button", "Two sides", "Chaser", "Fuel", "Port: entrance", "Port: warehouse", "Port: tower", "Port: hangar", "Citadel: gate", "Citadel: armory", "Citadel: ice tower", "Citadel: heart", "Volcano: crater", "Volcano: tunnel", "Volcano: forge", "Volcano: lava", "Mothership: dock", "Mothership: core", "Mothership: bridge", "Mothership: finale"],_T=["Collect all the screws and the capsule will open.", "You can push crates, but only onto an empty square.", "One key opens one door.", "Don't get caught by the guards!", "Step on a portal to jump to the other one.", "Shoot the rubble. A bomb explodes when shot, so keep your distance!", "The cannons fire all the time. Run between the shots.", "The magnet pulls Fikol when they are in a line. Birds drop projectiles.", "Guards watch the corridors. Watch them and slip past.", "Think before you push the crate.", "Three cannons, one Fikol.", "Rubble seals the vault. Ammo is scarce.", "Three birds and an open sky.", "A crate shields you from the magnet. Watch out for the guards.", "Every portal leads to the next one.", "Everything at once. Good luck, Fikol!", "The pink button switches all the pink gates.", "Collect what is open, switch the gates, then collect the rest.", "The purple one chases you when close. Shoot it or run.", "The shield absorbs one hit. Use it wisely.", "The map is bigger than the screen: the camera follows Fikol. Shoot the rubble.", "Keys open doors. Collect them before you go on.", "The button opens the gate, and the guards never sleep.", "Everything you have learned, on one huge map.", "More guards than usual. Don't stand still.", "Doors, a key and cannons. Count the beats.", "A chaser and birds at once.", "Rubble, doors and plenty of enemies.", "It's getting hot: a chaser is hunting you.", "Rubble blocks the way and birds patrol the ceiling.", "A gate, rubble and many threats.", "Everything at once. The camera won't save you.", "Doors and an army of guards.", "Plenty of enemies and a shield.", "Almost there. Don't underestimate anyone.", "The final map. Many enemies, one exit."];LEVELS.forEach((l,i)=>{l.name=_N[i];l.tip=_T[i]})}
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),over=document.getElementById('over');
 let ammo=0,fdx=1,fdy=0,shots=[],L,grid,W,H,px,py,keys,screws,total,enemies,state,lvl=0,tick=null,anim=0,face=1;
 let done=[];try{done=JSON.parse(localStorage.getItem('fikol')||'[]')}catch(e){}
@@ -822,65 +819,64 @@ let run={lives:9,score:0,hi:0};try{Object.assign(run,JSON.parse(localStorage.get
 const lastSaved=run.last|0;
 function saveRun(){try{localStorage.setItem('fikolRun',JSON.stringify(run))}catch(e){}}
 let scoreBase=0;
-function addScore(n){const before=Math.floor(run.score/1000);run.score+=n;if(Math.floor(run.score/1000)>before&&!set.calm){run.lives=Math.min(run.lives+1,15);say(_('Dodatkowe życie!','Extra life!'));sfx('shield')}if(run.score>run.hi)run.hi=run.score;saveRun();hud()}
+function addScore(n){const before=Math.floor(run.score/1000);run.score+=n;if(Math.floor(run.score/1000)>before&&!set.calm){run.lives=Math.min(run.lives+1,15);say('Extra life!');sfx('shield')}if(run.score>run.hi)run.hi=run.score;saveRun();hud()}
 const pad=(n,l)=>String(Math.max(0,Math.min(n,l===6?999999:99))).padStart(l||2,'0');
 let fdir='d',cheerT=0,floats=[],aimT=0;
 let T=null,moves=0,hist=[],parts=[],shield=false,inv=0,now=0,pa=null;const EA=new WeakMap(),SA=new WeakMap();const stepMs=()=>set.calm?480:300;
 
 const WORLDS=[
- {n:"Złomowisko",f:['#121a25','#0f1620'],w:['#34465e','#4a6382','#22303f'],end:"Złomowisko za nami. Kapsuła zaskoczyła, ale to dopiero rozgrzewka.",m:{tempo:112,root:48,sc:[0,3,5,7,10],prog:[0,8,3,10]}},
- {n:"Obca pustynia",f:['#241a12','#1d150e'],w:['#7a5a3a','#9a7650','#4e3a24'],end:"Pustynia za nami. Piasek w trybach, ale kapsuła leci dalej.",m:{tempo:100,root:50,sc:[0,2,5,7,9],prog:[0,5,3,7]}},
- {n:"Kopalnia",f:['#1b1522','#150f1a'],w:['#5e4e74','#7e6c96','#3a2f4a'],end:"Kopalnia za nami. Jeszcze jedna planeta i do domu!",m:{tempo:124,root:45,sc:[0,3,5,7,10],prog:[0,0,8,7]}},
- {n:"Stacja magnesów",f:['#0e1c1c','#0a1717'],w:['#2f6b6b','#44909a','#1d4545'],end:"Stacja za nami. Bipek złapał sygnał z laboratorium: tam jest paliwo na drogę do domu.",m:{tempo:118,root:52,sc:[0,2,4,7,9],prog:[0,2,7,5]}},
- {n:"Laboratorium",f:['#102019','#0b1812'],w:['#3f7a5a','#5ea67f','#264735'],end:"Laboratorium za nami. Fikol ma paliwo, ale w porcie kosmicznym czekają hale większe niż ekran.",m:{tempo:108,root:55,sc:[0,2,4,7,9],prog:[0,5,7,3]}},
- {n:"Port kosmiczny",f:['#1a1a30','#141428'],w:['#a0602d','#d08a4f','#6b3a1a'],end:"Port za nami. Bipek wykrył nowy sygnał: lodowa cytadela strzeże zapasów, bez których nie dolecimy.",m:{tempo:126,root:43,sc:[0,3,5,7,10],prog:[0,3,8,5]}},
- {n:"Lodowa cytadela",f:['#0f1c2b','#0b1622'],w:['#6fa8d6','#9fd0f0','#3d6a8a'],end:"Cytadela za nami. Zimno, ale Fikol się nie zatrzymuje. Dalej jest wulkan.",m:{tempo:114,root:50,sc:[0,2,5,7,9],prog:[0,7,5,3]}},
- {n:"Wulkan",f:['#241210','#1c0e0c'],w:['#a8421e','#d9693a','#6b2a12'],end:"Wulkan za nami. Został już tylko statek-matka.",m:{tempo:130,root:41,sc:[0,3,5,6,7],prog:[0,0,5,7]}},
- {n:"Statek-matka",f:['#101a1a','#0b1414'],w:['#c0c6d0','#e4e9f0','#7c8594'],end:"",m:{tempo:120,root:46,sc:[0,2,3,7,8],prog:[0,3,5,8]}}
+ {n:"Scrapyard",f:['#121a25','#0f1620'],w:['#34465e','#4a6382','#22303f'],end:"Scrapyard behind us. The capsule started, but that was only a warm-up.",m:{tempo:112,root:48,sc:[0,3,5,7,10],prog:[0,8,3,10]}},
+ {n:"Alien desert",f:['#241a12','#1d150e'],w:['#7a5a3a','#9a7650','#4e3a24'],end:"Desert behind us. Sand in the gears, but the capsule flies on.",m:{tempo:100,root:50,sc:[0,2,5,7,9],prog:[0,5,3,7]}},
+ {n:"Mine",f:['#1b1522','#150f1a'],w:['#5e4e74','#7e6c96','#3a2f4a'],end:"Mine behind us. One more planet and we're home!",m:{tempo:124,root:45,sc:[0,3,5,7,10],prog:[0,0,8,7]}},
+ {n:"Magnet station",f:['#0e1c1c','#0a1717'],w:['#2f6b6b','#44909a','#1d4545'],end:"Station behind us. Bipek picked up a signal from the laboratory: there is fuel for the way home.",m:{tempo:118,root:52,sc:[0,2,4,7,9],prog:[0,2,7,5]}},
+ {n:"Laboratory",f:['#102019','#0b1812'],w:['#3f7a5a','#5ea67f','#264735'],end:"Laboratory behind us. NovoBot has fuel, but the space port has halls bigger than the screen.",m:{tempo:108,root:55,sc:[0,2,4,7,9],prog:[0,5,7,3]}},
+ {n:"Space port",f:['#1a1a30','#141428'],w:['#a0602d','#d08a4f','#6b3a1a'],end:"Port behind us. Bipek detected a new signal: an ice citadel guards supplies we cannot fly without.",m:{tempo:126,root:43,sc:[0,3,5,7,10],prog:[0,3,8,5]}},
+ {n:"Ice citadel",f:['#0f1c2b','#0b1622'],w:['#6fa8d6','#9fd0f0','#3d6a8a'],end:"Citadel behind us. Cold, but NovoBot doesn't stop. A volcano is next.",m:{tempo:114,root:50,sc:[0,2,5,7,9],prog:[0,7,5,3]}},
+ {n:"Volcano",f:['#241210','#1c0e0c'],w:['#a8421e','#d9693a','#6b2a12'],end:"Volcano behind us. Only the mothership is left.",m:{tempo:130,root:41,sc:[0,3,5,6,7],prog:[0,0,5,7]}},
+ {n:"Mothership",f:['#101a1a','#0b1414'],w:['#c0c6d0','#e4e9f0','#7c8594'],end:"",m:{tempo:120,root:46,sc:[0,2,3,7,8],prog:[0,3,5,8]}}
 ];
 const BIP=[
- "Bip! Tu Bipek, komputer pokładowy. Skanuję okolicę: sześć śrubek leży na ziemi. Zbierz je, a kapsuła ożyje.",
- "Skrzynie można pchać, ale nie ciągnąć. Jak ugrzęźniesz, wciśnij R albo cofnij ruch klawiszem Z.",
- "Klucze otwierają drzwi. Jeden klucz, jedne drzwi. Nie marnuj ich!",
- "Uwaga, patrol! Strażnicy chodzą w kółko i mają kiepski wzrok. Za to dużo cierpliwości.",
- "Obca pustynia. Te portale wciągają wszystko. Wchodzisz do jednego, wychodzisz w drugim.",
- "Kto zostawia bomby na środku drogi? Strzel w gruz, ale nie w bombę, gdy stoisz obok.",
- "Działka strzelają w równym rytmie. Poczekaj na dobry moment i przebiegnij.",
- "Magnes! Skrzynia osłoni cię przed przyciąganiem. A ptaki zrzucają pociski, więc nie stój pod nimi.",
- "Kopalnia. Strażnicy pilnują korytarzy. Obserwuj ich i przemykaj. Zawsze jest jakiś strażnik.",
- "Skrzynie i klucz. Pomyśl, zanim pchniesz. Pchnięcie ma swoje konsekwencje.",
- "Trzy działka i jeden Fikol. Statystyka jest po stronie działek, ale umiejętności po twojej.",
- "Gruz zamyka skarbiec. Amunicji mało, więc każdy strzał musi trafić.",
- "Stacja magnesów. Trzy ptaki i otwarte niebo. Nie podnoś głowy.",
- "Znowu magnes. Skrzynia jest twoim przyjacielem. Strażnicy w korytarzach nie są.",
- "Portale prowadzą do następnego, w kółko. Zgubić się łatwo, wrócić trudniej.",
- "Wszystko naraz! A potem laboratorium, gdzie czeka paliwo na drogę do domu. Wierzę w ciebie, Fikolu. Bip.",
- "Laboratorium. Różowy przycisk przełącza wszystkie różowe bramy: jedne się otwierają, inne zamykają. Nadepnij, a zobaczysz.",
- "Przycisk przełącza wszystkie bramy naraz. Zbierz, co otwarte, przełącz i zbierz resztę. Brama zamknięta na strażniku to koniec strażnika.",
- "Ścigacz! Ten fioletowy goni cię, gdy jesteś blisko. Ucieczka jest możliwa, ale amunicja jest lepsza.",
- "Ostatnie laboratorium. Tarcza pochłonie jedno uderzenie, więc zachowaj ją na gorszą chwilę. Paliwo czeka za bramą.",
- "Port kosmiczny! Hale są większe niż ekran, więc kamera podąża za tobą. Gruz zamyka drogę, ale amunicja leży niedaleko.",
- "Magazyn z drzwiami. Klucze leżą w ślepych zaułkach przed drzwiami. Strażnik chodzi po hali, więc pilnuj rytmu.",
- "Wieża. Przycisk gdzieś w dole otwiera bramę, a strażnicy patrolują. Tarcza leży w jakimś zaułku.",
- "Ostatni hangar! Drzwi, gruz, brama i trzy rodzaje wrogów. Nie spiesz się: tu nie ma limitu czasu.",
- "Cytadela lodu. Strażników jest więcej niż zwykle, a stanie w miejscu to zły pomysł.",
- "Zbrojownia. Klucz leży za rogiem, a działa nie zapomną o tobie. Licz takty.",
- "Wieża lodu. Ścigacz i ptaki pracują razem, więc trzymaj się osłon.",
- "Serce cytadeli. Gruz zamyka drogę do skarbca, a wrogów jest sporo.",
- "Wulkan! Gorąco nie tylko od lawy: ścigacz poluje na ciebie.",
- "Tunel pod kraterem. Ptaki patrolują sufit, a gruz zamyka wyjście.",
- "Kuźnia. Brama, gruz i mnóstwo zagrożeń. Nie biegnij na oślep.",
- "Lawa. Wszystko naraz. Kamera cię nie uratuje, ale tarcza może.",
- "Statek-matka. Dok pełen strażników, drzwi i zero litości.",
- "Rdzeń statku. Mnóstwo wrogów, jedna tarcza. Wybierz mądrze, kiedy jej użyć.",
- "Mostek. Prawie koniec drogi. Tylko nikogo nie zlekceważ.",
- "Ostatnia plansza! Wielu wrogów i jedno wyjście. Wierzę w ciebie, Fikolu. Bip."
+ "Beep! Bipek here, the on-board computer. Scanning the area: six screws are lying on the ground. Collect them and the capsule will come to life.",
+ "You can push crates but not pull them. If you get stuck, press R or undo a move with Z.",
+ "Keys open doors. One key, one door. Don't waste them!",
+ "Watch out, patrol! The guards walk in circles and have poor eyesight. But plenty of patience.",
+ "Alien desert. These portals suck in everything. You step into one and come out of the other.",
+ "Who leaves bombs in the middle of the road? Shoot the rubble, but not the bomb when you stand next to it.",
+ "The cannons fire at a steady rhythm. Wait for the right moment and run.",
+ "Magnet! A crate will shield you from the pull. And the birds drop projectiles, so don't stand under them.",
+ "The mine. Guards watch the corridors. Watch them and slip past. There is always a guard.",
+ "Crates and a key. Think before you push. A push has consequences.",
+ "Three cannons and one NovoBot. The odds favour the cannons, but the skill is yours.",
+ "Rubble seals the vault. Ammo is scarce, so every shot has to count.",
+ "Magnet station. Three birds and an open sky. Don't look up.",
+ "Another magnet. The crate is your friend. The guards in the corridors are not.",
+ "Portals lead to the next one, round and round. Getting lost is easy, getting back is harder.",
+ "Everything at once! And then the laboratory, where fuel for the way home is waiting. I believe in you, NovoBot. Beep.",
+ "The laboratory. The pink button switches all the pink gates: some open, others close. Step on it and you'll see.",
+ "The button switches all gates at once. Collect what's open, switch, and collect the rest. A gate closed on a guard is the end of the guard.",
+ "Chaser! The purple one hunts you when you're close. Escaping is possible, but ammo is better.",
+ "The last laboratory. The shield absorbs one hit, so save it for a worse moment. The fuel is waiting behind the gate.",
+ "Space port! The halls are bigger than the screen, so the camera follows you. Rubble blocks the way, but ammo is lying nearby.",
+ "A warehouse with doors. The keys lie in dead ends before the doors. A guard patrols the hall, so mind the rhythm.",
+ "The tower. A button somewhere below opens the gate, and the guards are on patrol. A shield lies in some dead end.",
+ "The last hangar! Doors, rubble, a gate and three kinds of enemies. Take your time: there is no time limit here.",
+ "Ice citadel. More guards than usual, and standing still is a bad idea.",
+ "The armory. The key is around the corner, and the cannons won't forget you. Count the beats.",
+ "Ice tower. The chaser and the birds work together, so stick to cover.",
+ "Heart of the citadel. Rubble seals the way to the vault, and there are plenty of enemies.",
+ "Volcano! It's hot, and not only from the lava: a chaser is hunting you.",
+ "Tunnel under the crater. Birds patrol the ceiling and rubble seals the exit.",
+ "The forge. A gate, rubble and plenty of threats. Don't run blindly.",
+ "Lava. Everything at once. The camera won't save you, but the shield might.",
+ "The mothership. A dock full of guards, doors and no mercy.",
+ "The ship's core. Plenty of enemies, one shield. Choose wisely when to use it.",
+ "The bridge. Nearly the end of the road. Just don't underestimate anyone.",
+ "The final map! Many enemies and one exit. I believe in you, NovoBot. Beep."
 ];
-if(LANG==='en'){const _B=["Beep! Bipek here, the on-board computer. Scanning the area: six screws are lying on the ground. Collect them and the capsule will come to life.", "You can push crates but not pull them. If you get stuck, press R or undo a move with Z.", "Keys open doors. One key, one door. Don't waste them!", "Watch out, patrol! The guards walk in circles and have poor eyesight. But plenty of patience.", "Alien desert. These portals suck in everything. You step into one and come out of the other.", "Who leaves bombs in the middle of the road? Shoot the rubble, but not the bomb when you stand next to it.", "The cannons fire at a steady rhythm. Wait for the right moment and run.", "Magnet! A crate will shield you from the pull. And the birds drop projectiles, so don't stand under them.", "The mine. Guards watch the corridors. Watch them and slip past. There is always a guard.", "Crates and a key. Think before you push. A push has consequences.", "Three cannons and one Fikol. The odds favour the cannons, but the skill is yours.", "Rubble seals the vault. Ammo is scarce, so every shot has to count.", "Magnet station. Three birds and an open sky. Don't look up.", "Another magnet. The crate is your friend. The guards in the corridors are not.", "Portals lead to the next one, round and round. Getting lost is easy, getting back is harder.", "Everything at once! And then the laboratory, where fuel for the way home is waiting. I believe in you, Fikol. Beep.", "The laboratory. The pink button switches all the pink gates: some open, others close. Step on it and you'll see.", "The button switches all gates at once. Collect what's open, switch, and collect the rest. A gate closed on a guard is the end of the guard.", "Chaser! The purple one hunts you when you're close. Escaping is possible, but ammo is better.", "The last laboratory. The shield absorbs one hit, so save it for a worse moment. The fuel is waiting behind the gate.", "Space port! The halls are bigger than the screen, so the camera follows you. Rubble blocks the way, but ammo is lying nearby.", "A warehouse with doors. The keys lie in dead ends before the doors. A guard patrols the hall, so mind the rhythm.", "The tower. A button somewhere below opens the gate, and the guards are on patrol. A shield lies in some dead end.", "The last hangar! Doors, rubble, a gate and three kinds of enemies. Take your time: there is no time limit here.", "Ice citadel. More guards than usual, and standing still is a bad idea.", "The armory. The key is around the corner, and the cannons won't forget you. Count the beats.", "Ice tower. The chaser and the birds work together, so stick to cover.", "Heart of the citadel. Rubble seals the way to the vault, and there are plenty of enemies.", "Volcano! It's hot, and not only from the lava: a chaser is hunting you.", "Tunnel under the crater. Birds patrol the ceiling and rubble seals the exit.", "The forge. A gate, rubble and plenty of threats. Don't run blindly.", "Lava. Everything at once. The camera won't save you, but the shield might.", "The mothership. A dock full of guards, doors and no mercy.", "The ship's core. Plenty of enemies, one shield. Choose wisely when to use it.", "The bridge. Nearly the end of the road. Just don't underestimate anyone.", "The final map! Many enemies and one exit. I believe in you, Fikol. Beep."],_W=[["Scrapyard", "Scrapyard behind us. The capsule started, but that was only a warm-up."], ["Alien desert", "Desert behind us. Sand in the gears, but the capsule flies on."], ["Mine", "Mine behind us. One more planet and we're home!"], ["Magnet station", "Station behind us. Bipek picked up a signal from the laboratory: there is fuel for the way home."], ["Laboratory", "Laboratory behind us. Fikol has fuel, but the space port has halls bigger than the screen."], ["Space port", "Port behind us. Bipek detected a new signal: an ice citadel guards supplies we cannot fly without."], ["Ice citadel", "Citadel behind us. Cold, but Fikol doesn't stop. A volcano is next."], ["Volcano", "Volcano behind us. Only the mothership is left."], ["Mothership", ""]];_B.forEach((t,i)=>BIP[i]=t);_W.forEach((w,i)=>{WORLDS[i].n=w[0];WORLDS[i].end=w[1]})}
 let set={music:true,sfx:true,calm:false,zoom:true,unlock:false,dpad:true};try{Object.assign(set,JSON.parse(localStorage.getItem('fikolSet')||'{}'));if(localStorage.getItem('fikolMute')==='1'&&!localStorage.getItem('fikolSet')){set.music=false;set.sfx=false}delete set['voice'];}catch(e){}
 function saveSet(){try{localStorage.setItem('fikolSet',JSON.stringify(set))}catch(e){}}
 
-// ===== AUDIO (wszystko generowane na żywo, bez plików) =====
+// ===== AUDIO (all generated live, no files) =====
 const mhz=m=>440*Math.pow(2,(m-69)/12);
 const NB=new WeakMap();
 function noiseBuf(c){let b=NB.get(c);if(!b){b=c.createBuffer(1,c.sampleRate,c.sampleRate);const d=b.getChannelData(0);let q=1;for(let i=0;i<d.length;i++){q=(q*1664525+1013904223)>>>0;d[i]=q/2147483648-1}NB.set(c,b)}return b}
@@ -938,7 +934,7 @@ const A={ctx:null,mG:null,mT:0,mBar:0,mTimer:null,mw:-1,
  pause(){this.stopMusic();this.mw=-1;if(this.ctx&&this.ctx.state==='running')this.ctx.suspend().catch(()=>{})}
 };
 const sfx=n=>A.play(n);
-let silentEl=null; // tryb cichy iPhone'a jest respektowany (bez obejść)
+let silentEl=null; // the iPhone silent mode is respected (no workarounds)
 let typeTimer=null;
 function typeIn(el,text){clearInterval(typeTimer);el.textContent=text;if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
   let i=0;el.textContent='';typeTimer=setInterval(()=>{if(!el.isConnected||!over.classList.contains('show')){clearInterval(typeTimer);return}i+=2;el.textContent=text.slice(0,i);if(i>=text.length){el.textContent=text;clearInterval(typeTimer)}},26)}
@@ -958,10 +954,10 @@ function load(i,keep){run.last=i;saveRun();
 const live=document.getElementById('live');const say=t=>{live.textContent='';setTimeout(()=>live.textContent=t,30)};
 function focusGo(){const g=document.getElementById('go');g&&g.focus({preventScroll:true})}
 const ctlHint=document.createElement('div');ctlHint.setAttribute('aria-hidden','true');ctlHint.style.cssText='position:fixed;left:50%;bottom:8px;transform:translateX(-50%);z-index:5;pointer-events:none;font:600 13px Inter,sans-serif;color:#e8edf4;background:#10161fcc;border:1px solid #56d6e866;border-radius:10px;padding:6px 12px;text-align:center;max-width:90vw;display:none';document.body.appendChild(ctlHint);
-function updHint(){const on=lvl===0&&moves===0&&state==='play'&&hist.length===0;if(on)ctlHint.textContent=_('Przeciągnij po lewej: ruch. Po prawej: FIRE strzela.','Drag on the left to move. Tap FIRE on the right to shoot.');ctlHint.style.display=on?'block':'none'}
+function updHint(){const on=lvl===0&&moves===0&&state==='play'&&hist.length===0;if(on)ctlHint.textContent='Drag on the left to move. Tap FIRE on the right to shoot.';ctlHint.style.display=on?'block':'none'}
 setInterval(updHint,200);
-function showTip(){say(_('Poziom ','Level ')+(lvl+1)+', '+L.name+'. '+L.tip+' Bipek: '+BIP[lvl]);over.innerHTML=`<h2>${_('Poziom ','Level ')}${lvl+1}<br>${L.name}</h2><p>${L.tip}</p><p class="bip" aria-hidden="true"><b>BIPEK:</b> <span id="bt"></span></p><button class="btn" id="go">${_('Start','Start')}</button>`;over.classList.add('show');state='tip';focusGo();typeIn(document.getElementById('bt'),BIP[lvl]);document.getElementById('go').onclick=()=>{sfx('ui');over.classList.remove('show');state='play'}}
-function hud(){hAmmo.textContent=pad(ammo);hLvl.textContent=pad(lvl+1);hScr.textContent=pad(total-screws);hKey.textContent=pad(keys);hLife.textContent=set.calm?'--':pad(run.lives);hScore.textContent=pad(run.score,6);hSh.textContent=shield?_(' ◈ TARCZA',' ◈ SHIELD'):'';}
+function showTip(){say('Level '+(lvl+1)+', '+L.name+'. '+L.tip+' Bipek: '+BIP[lvl]);over.innerHTML=`<h2>${'Level '}${lvl+1}<br>${L.name}</h2><p>${L.tip}</p><p class="bip" aria-hidden="true"><b>BIPEK:</b> <span id="bt"></span></p><button class="btn" id="go">${'Start'}</button>`;over.classList.add('show');state='tip';focusGo();typeIn(document.getElementById('bt'),BIP[lvl]);document.getElementById('go').onclick=()=>{sfx('ui');over.classList.remove('show');state='play'}}
+function hud(){hAmmo.textContent=pad(ammo);hLvl.textContent=pad(lvl+1);hScr.textContent=pad(total-screws);hKey.textContent=pad(keys);hLife.textContent=set.calm?'--':pad(run.lives);hScore.textContent=pad(run.score,6);hSh.textContent=shield?' ◈ SHIELD':'';}
 const solid=c=>'#DBO%><^vMG'.includes(c);let tn=0;
 function enemyAt(x,y){return enemies.some(e=>e.x===x&&e.y===y)}
 const snapState=()=>JSON.stringify({grid,px,py,keys,screws,ammo,shots,enemies,fdx,fdy,face,tn,moves,shield,inv,score:run.score});
@@ -974,7 +970,7 @@ function move(dx,dy){
 }
 function undo(){
   if(!hist.length||state!=='play')return;
-  restoreState(hist.pop());over.classList.remove('show');state='play';parts=[];hud();sfx('undo');say(_('Cofnięto ruch','Move undone'));
+  restoreState(hist.pop());over.classList.remove('show');state='play';parts=[];hud();sfx('undo');say('Move undone');
 }
 function toggleGates(){for(let y=0;y<H;y++)for(let x=0;x<W;x++){const c=grid[y][x];if(c==='G')grid[y][x]='g';else if(c==='g'){if(enemyAt(x,y)){enemies=enemies.filter(e=>!(e.x===x&&e.y===y));sfx('hit');spark(x,y,'#d2364f',12)}grid[y][x]='G'}}}
 function move0(dx,dy){
@@ -987,28 +983,27 @@ function move0(dx,dy){
   pa={x:px,y:py,t:performance.now()};px=nx;py=ny;moves++;
   const t=grid[py][px];
   if(t==='.')sfx('step');
-  if(t==='S'){addScore(50);cheerT=performance.now()+520;floats.push({x:px,y:py,t:performance.now(),s:'+50',pop:true});const hs=document.getElementById('hScr');hs.classList.remove('pulse');void hs.offsetWidth;hs.classList.add('pulse');sfx('screw');spark(px,py,'#ffcc3d',10);screws++;grid[py][px]='.';say(_('Śrubki ','Screws ')+screws+_(' z ',' of ')+total+(screws===total?_('. Kapsuła otwarta.','. Capsule open.'):''));if(screws===total){cheerT=performance.now()+900;for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(grid[y][x]==='E'){flash={x,y,t:16};spark(x,y,'#ffe2a8',14)}}}
+  if(t==='S'){addScore(50);cheerT=performance.now()+520;floats.push({x:px,y:py,t:performance.now(),s:'+50',pop:true});const hs=document.getElementById('hScr');hs.classList.remove('pulse');void hs.offsetWidth;hs.classList.add('pulse');sfx('screw');spark(px,py,'#ffcc3d',10);screws++;grid[py][px]='.';say('Screws '+screws+' of '+total+(screws===total?'. Capsule open.':''));if(screws===total){cheerT=performance.now()+900;for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(grid[y][x]==='E'){flash={x,y,t:16};spark(x,y,'#ffe2a8',14)}}}
   if(t==='K'){addScore(25);floats.push({x:px,y:py,t:performance.now(),s:'+25'});sfx('key');spark(px,py,'#56d6e8',8);keys++;grid[py][px]='.'}
   if(t==='A'){addScore(25);floats.push({x:px,y:py,t:performance.now(),s:'+25'});sfx('ammo');spark(px,py,'#ff6b4a',8);ammo+=3;grid[py][px]='.'}
-  if(t==='Q'){sfx('plate');toggleGates();spark(px,py,'#ff5fa2',10);say(_('Bramy się przełączyły.','Gates switched.'))}
-  if(t==='H'){addScore(50);sfx('shield');spark(px,py,'#56d6e8',12);shield=true;grid[py][px]='.';say(_('Tarcza włączona. Pochłonie jedno uderzenie.','Shield on. It absorbs one hit.'))}
+  if(t==='Q'){sfx('plate');toggleGates();spark(px,py,'#ff5fa2',10);say('Gates switched.')}
+  if(t==='H'){addScore(50);sfx('shield');spark(px,py,'#56d6e8',12);shield=true;grid[py][px]='.';say('Shield on. It absorbs one hit.')}
   if(t==='T'){pa=null;const ts=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(grid[y][x]==='T')ts.push([x,y]);const k=ts.findIndex(q=>q[0]===px&&q[1]===py);spark(px,py,'#c77dff',12);[px,py]=ts[(k+1)%ts.length];sfx('tele');spark(px,py,'#c77dff',12)}
   if(t==='E'){win();return true}
   if(enemyAt(px,py)){die();return true}
-  if(shots.some(q=>q.o==='e'&&q.x===px&&q.y===py)){die(_('Fikol oberwał pociskiem.','Fikol was hit by a projectile.'));return true}
+  if(shots.some(q=>q.o==='e'&&q.x===px&&q.y===py)){die('NovoBot was hit by a projectile.');return true}
   hud();return true;
 }
 function fire(){if(state!=='play'||!ammo)return;const nx=px+fdx,ny=py+fdy,c=grid[ny]&&grid[ny][nx];if(c===undefined||(!'.SKATgQH%O'.includes(c)&&!enemyAt(nx,ny))){sfx('ui');return}const pre=snapState();hist.push(pre);sfx('fire');ammo--;moves++;shots.push({x:px,y:py,dx:fdx,dy:fdy,o:'p'});hud();moveShots()}
-function boom(x,y){grid[y][x]='.';for(let yy=y-1;yy<=y+1;yy++)for(let xx=x-1;xx<=x+1;xx++){const c=grid[yy]&&grid[yy][xx];if(c==='O'){boom(xx,yy);continue}if(c==='%'||c==='B')grid[yy][xx]='.';enemies=enemies.filter(e=>!(e.x===xx&&e.y===yy));if(px===xx&&py===yy&&state==='play')die(_('Bum! Fikol był za blisko bomby.','Boom! Fikol was too close to the bomb.'))}flash={x,y,t:12};sfx('boom');spark(x,y,'#ffb43c',24)}
+function boom(x,y){grid[y][x]='.';for(let yy=y-1;yy<=y+1;yy++)for(let xx=x-1;xx<=x+1;xx++){const c=grid[yy]&&grid[yy][xx];if(c==='O'){boom(xx,yy);continue}if(c==='%'||c==='B')grid[yy][xx]='.';enemies=enemies.filter(e=>!(e.x===xx&&e.y===yy));if(px===xx&&py===yy&&state==='play')die('Boom! NovoBot was too close to the bomb.')}flash={x,y,t:12};sfx('boom');spark(x,y,'#ffb43c',24)}
 let flash=null;
-function moveShots(){shots=shots.filter(s=>{SA.set(s,{x:s.x,y:s.y,t:performance.now()});s.x+=s.dx;s.y+=s.dy;const c=grid[s.y]&&grid[s.y][s.x];if(c===undefined)return false;if(s.x===px&&s.y===py&&s.o==='e'){die(_('Fikol oberwał pociskiem.','Fikol was hit by a projectile.'));return false}const i=enemies.findIndex(e=>e.x===s.x&&e.y===s.y);if(i>=0){if(s.o==='p'){addScore(100);floats.push({x:s.x,y:s.y,t:performance.now(),s:'+100'});sfx('hit');spark(s.x,s.y,'#d2364f',10);enemies.splice(i,1)}return s.o!=='p'}if(c==='%'){grid[s.y][s.x]='.';sfx('push');spark(s.x,s.y,'#7a6652',6);return false}if(c==='O'){boom(s.x,s.y);return false}return '.SKATgQH'.includes(c)})}
+function moveShots(){shots=shots.filter(s=>{SA.set(s,{x:s.x,y:s.y,t:performance.now()});s.x+=s.dx;s.y+=s.dy;const c=grid[s.y]&&grid[s.y][s.x];if(c===undefined)return false;if(s.x===px&&s.y===py&&s.o==='e'){die('NovoBot was hit by a projectile.');return false}const i=enemies.findIndex(e=>e.x===s.x&&e.y===s.y);if(i>=0){if(s.o==='p'){addScore(100);floats.push({x:s.x,y:s.y,t:performance.now(),s:'+100'});sfx('hit');spark(s.x,s.y,'#d2364f',10);enemies.splice(i,1)}return s.o!=='p'}if(c==='%'){grid[s.y][s.x]='.';sfx('push');spark(s.x,s.y,'#7a6652',6);return false}if(c==='O'){boom(s.x,s.y);return false}return '.SKATgQH'.includes(c)})}
 setInterval(()=>{if(state==='play'&&!document.hidden)moveShots()},90);
 let story0=false;
 const STORY=[
- {h:'FIKOL',t:'Mały robot Fikol leciał na zwykłą misję serwisową. Zwykłą, dopóki nie zabrakło mu paliwa. Rozbił się na obcej planecie, a z kapsuły ratunkowej wypadły wszystkie śrubki.',b:'Dalej'},
- {h:'BIPEK',t:'Na szczęście komputer pokładowy przeżył. Nazywa się Bipek i uwielbia gadać. Dziewięć światów, trzydzieści sześć kapsuł. Zbierz śrubki, naprawiaj, odlatuj. I uważaj na strażników!',b:'Lecimy'}
+ {h:'NOVOBOT',t:"Little robot NovoBot was on an ordinary service mission. Ordinary, until he ran out of fuel. He crashed on an alien planet, and all the screws fell out of the escape capsule.",b:"Next"},
+ {h:'BIPEK',t:"Luckily the on-board computer survived. His name is Bipek and he loves to talk. Nine worlds, thirty-six capsules. Collect screws, repair, take off. And watch out for the guards!",b:"Let's go"}
 ];
-if(LANG==='en'){const _S=[["Little robot Fikol was on an ordinary service mission. Ordinary, until he ran out of fuel. He crashed on an alien planet, and all the screws fell out of the escape capsule.", "Next"], ["Luckily the on-board computer survived. His name is Bipek and he loves to talk. Nine worlds, thirty-six capsules. Collect screws, repair, take off. And watch out for the guards!", "Let's go"]];_S.forEach((x,i)=>{STORY[i].t=x[0];STORY[i].b=x[1]})}
 function story(p){p=p||0;story0=true;state='tip';const g=STORY[p];over.innerHTML=`<h2 style="${p?'color:#56d6e8;':'font-size:28px;color:#ff6b4a'}">${g.h}</h2><p id="stt"></p><button class="btn" id="go">${g.b}</button>`;over.classList.add('show');focusGo();say(g.h+'. '+g.t);typeIn(document.getElementById('stt'),g.t);document.getElementById('go').onclick=()=>{sfx('ui');p+1<STORY.length?story(p+1):showTip()}}
 const pausedNow=()=>!portraitAllowed&&matchMedia('(orientation:portrait)').matches;
 function step(){
@@ -1016,7 +1011,7 @@ function step(){
   const dirs={'>':[1,0],'<':[-1,0],'^':[0,-1],'v':[0,1]};let cn=false;
   if(tn%4===0)for(let y=0;y<H;y++)for(let x=0;x<W;x++){const d=dirs[grid[y][x]];if(d){shots.push({x,y,dx:d[0],dy:d[1],o:'e'});if(!cn&&Math.abs(x-px)+Math.abs(y-py)<9){cn=true;sfx('cannon')}}}
   for(const e of enemies)if(e.bird&&tn%5===0){shots.push({x:e.x,y:e.y,dx:0,dy:1,o:'e'});if(Math.abs(e.x-px)+Math.abs(e.y-py)<9)sfx('bird')}
-  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(grid[y][x]==='M'&&y===py){const d=Math.sign(x-px);let clear=true;for(let k=px+d;k!==x;k+=d)if(grid[y][k]!=='.')clear=false;if(clear){sfx('magnet');pa={x:px,y:py,t:performance.now()};px+=d;if(Math.abs(x-px)<=1){die(_('Magnes przyciągnął Fikola.','The magnet pulled Fikol in.'));return}}}
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(grid[y][x]==='M'&&y===py){const d=Math.sign(x-px);let clear=true;for(let k=px+d;k!==x;k+=d)if(grid[y][k]!=='.')clear=false;if(clear){sfx('magnet');pa={x:px,y:py,t:performance.now()};px+=d;if(Math.abs(x-px)<=1){die('The magnet pulled NovoBot in.');return}}}
   for(const e of enemies){
     if(e.chase){
       if((lvl<26&&tn%2)||Math.abs(px-e.x)+Math.abs(py-e.y)>9)continue;
@@ -1032,34 +1027,33 @@ function step(){
   }
   if(enemyAt(px,py))die();
 }
-function die(m){if(state!=='play'||inv>0)return;if(shield){shield=false;inv=3;sfx('shbreak');shake=8;spark(px,py,'#56d6e8',18);say(_('Tarcza pochłonęła uderzenie.','The shield absorbed the hit.'));hud();return}state='dead';sfx('die');shake=14;if(!set.calm){run.lives--;saveRun()}hud();const msg=m||_('Strażnik złapał Fikola.','A guard caught Fikol.'),over0=!set.calm&&run.lives<=0;say(_('Auć! ','Ouch! ')+msg+(over0?_(' Koniec gry.',' Game over.'):set.calm?'':_(' Zostało żyć: ',' Lives left: ')+run.lives));
-  if(over0){over.innerHTML=`<h2>${_('Koniec gry','Game over')}</h2><p>${msg}</p><p>${_('Wynik: ','Score: ')}<b>${run.score}</b><br>${_('Rekord: ','Best: ')}<b>${run.hi}</b></p><button class="btn" id="go">${_('Zagraj od nowa','Play again')}</button><button class="btn" id="m2">${_('Mapa poziomów','Level map')}</button>`;over.classList.add('show');focusGo();document.getElementById('go').onclick=()=>{run.lives=9;run.score=0;scoreBase=0;saveRun();load(lvl,true)};document.getElementById('m2').onclick=()=>{run.lives=9;run.score=0;scoreBase=0;saveRun();state='dead';menu()};return}
-  over.innerHTML=`<h2>${_('Auć!','Ouch!')}</h2><p>${msg}</p>${set.calm?'':`<p>${_('Zostało żyć: ','Lives left: ')}<b>${run.lives}</b></p>`}<button class="btn" id="go">${_('Spróbuj jeszcze raz','Try again')}</button>`;over.classList.add('show');focusGo();document.getElementById('go').onclick=()=>load(lvl,true)}
+function die(m){if(state!=='play'||inv>0)return;if(shield){shield=false;inv=3;sfx('shbreak');shake=8;spark(px,py,'#56d6e8',18);say('The shield absorbed the hit.');hud();return}state='dead';sfx('die');shake=14;if(!set.calm){run.lives--;saveRun()}hud();const msg=m||'A guard caught NovoBot.',over0=!set.calm&&run.lives<=0;say('Ouch! '+msg+(over0?' Game over.':set.calm?'':' Lives left: '+run.lives));
+  if(over0){over.innerHTML=`<h2>${'Game over'}</h2><p>${msg}</p><p>${'Score: '}<b>${run.score}</b><br>${'Best: '}<b>${run.hi}</b></p><button class="btn" id="go">${'Play again'}</button><button class="btn" id="m2">${'Level map'}</button>`;over.classList.add('show');focusGo();document.getElementById('go').onclick=()=>{run.lives=9;run.score=0;scoreBase=0;saveRun();load(lvl,true)};document.getElementById('m2').onclick=()=>{run.lives=9;run.score=0;scoreBase=0;saveRun();state='dead';menu()};return}
+  over.innerHTML=`<h2>${'Ouch!'}</h2><p>${msg}</p>${set.calm?'':`<p>${'Lives left: '}<b>${run.lives}</b></p>`}<button class="btn" id="go">${'Try again'}</button>`;over.classList.add('show');focusGo();document.getElementById('go').onclick=()=>load(lvl,true)}
 function win(){
   state='win';sfx('win');const pts=500+run.lives*50;addScore(pts);if(!set.calm&&run.lives<15){run.lives++;saveRun()}const last=lvl===LEVELS.length-1,w=Math.floor(lvl/4),endW=lvl%4===3&&!last;
   if(!done.includes(lvl)){done.push(lvl);save()}
-  const extra=last?_('Fikol pokonał statek-matkę, zatankował i wrócił do domu. Bipek twierdzi, że to on wszystko zaplanował.','Fikol beat the mothership, refuelled and flew home. Bipek claims he planned it all.'):endW?WORLDS[w].end:'';
-  const head=last?_('Brawo!','Well done!'):endW?_('Świat ukończony!','World complete!'):_('Kapsuła startuje!','Capsule launching!');
-  say(head+_(' Poziom ',' Level ')+(lvl+1)+_(' ukończony. ',' complete. ')+extra);
-  over.innerHTML=`<h2>${head}</h2><p>${_('Poziom ','Level ')}${lvl+1}${_(' ukończony',' complete')}</p><p>${_('Punkty: ','Points: ')}<b>+${pts}</b> (${_('razem ','total ')}${run.score})</p>${extra?`<p class="bip"><b>BIPEK:</b> ${extra}</p>`:''}<button class="btn" id="go">${last?_('Wybierz poziom','Choose level'):_('Dalej','Next')}</button><button class="btn" id="again">${_('Jeszcze raz','Play again')}</button>`;
+  const extra=last?'NovoBot beat the mothership, refuelled and flew home. Bipek claims he planned it all.':endW?WORLDS[w].end:'';
+  const head=last?'Well done!':endW?'World complete!':'Capsule launching!';
+  say(head+' Level '+(lvl+1)+' complete. '+extra);
+  over.innerHTML=`<h2>${head}</h2><p>${'Level '}${lvl+1}${' complete'}</p><p>${'Points: '}<b>+${pts}</b> (${'total '}${run.score})</p>${extra?`<p class="bip"><b>BIPEK:</b> ${extra}</p>`:''}<button class="btn" id="go">${last?'Choose level':'Next'}</button><button class="btn" id="again">${'Play again'}</button>`;
   over.classList.add('show');focusGo();
   document.getElementById('go').onclick=()=>{last?menu():load(lvl+1)};document.getElementById('again').onclick=()=>load(lvl,true);
 }
 let before='play';
 function closeMenu(){over.classList.remove('show');if(before==='play')state='play';else if(before==='tip')showTip();else if(before==='dead')load(lvl,true);else load(lvl<LEVELS.length-1?lvl+1:lvl)}
-const OPT=[['music',_('Muzyka','Music')],['sfx',_('Efekty','Effects')],['calm',_('Spokojny','Calm')],['zoom',_('Duży widok','Large view')],['unlock',_('Wszystkie poziomy','All levels')],['dpad',_('Krzyżak','D-pad')]];
+const OPT=[['music','Music'],['sfx','Effects'],['calm','Calm'],['zoom','Large view'],['unlock','All levels'],['dpad','D-pad']];
 const lvlOk=i=>set.unlock||i===0||done.includes(i-1)||done.includes(i);
-function optsHTML(){return OPT.map(([k,n])=>`<button class="btn" data-o="${k}" aria-pressed="${set[k]}">${n}</button>`).join('')+`<button class="btn" id="langBtn" lang="${LANG==='pl'?'en':'pl'}" aria-label="${LANG==='pl'?'English (przełącz na angielski)':'Polski (switch to Polish)'}">${LANG==='pl'?'English':'Polski'}</button>`}
+function optsHTML(){return OPT.map(([k,n])=>`<button class="btn" data-o="${k}" aria-pressed="${set[k]}">${n}</button>`).join('')}
 function menu(){
   if(state==='menu'){closeMenu();return}
   before=state==='tip'||state==='dead'||state==='win'?state:'play';
   state='menu';
-  over.innerHTML=`<h2>${_('Poziomy','Levels')}</h2><div class="levels">${LEVELS.map((l,i)=>{const ok=lvlOk(i);return `<button data-i="${i}" class="${done.includes(i)?'done':''} ${i===lvl?'cur':''}" aria-label="${_('Poziom ','Level ')}${i+1}, ${l.name}${done.includes(i)?_(', zaliczony',', completed'):''}" ${ok?'':'disabled'}>${i+1}</button>`}).join('')}</div><div class="hint" style="font-size:12px">${_('Rekord punktów: ','Best score: ')}${run.hi}</div><div class="opts">${optsHTML()}</div>${/iPhone|iPad/.test(navigator.userAgent)?'<div class="hint" style="font-size:11px">'+_('Brak dźwięku? Sprawdź, czy telefon nie jest w trybie cichym.','No sound? Check that your phone is not in silent mode.')+'</div>':''}<button class="btn x" id="go" aria-label="${_('Zamknij','Close')}">✕</button>`;
+  over.innerHTML=`<h2>${'Levels'}</h2><div class="levels">${LEVELS.map((l,i)=>{const ok=lvlOk(i);return `<button data-i="${i}" class="${done.includes(i)?'done':''} ${i===lvl?'cur':''}" aria-label="${'Level '}${i+1}, ${l.name}${done.includes(i)?', completed':''}" ${ok?'':'disabled'}>${i+1}</button>`}).join('')}</div><div class="hint" style="font-size:12px">${'Best score: '}${run.hi}</div><div class="opts">${optsHTML()}</div>${/iPhone|iPad/.test(navigator.userAgent)?'<div class="hint" style="font-size:11px">'+'No sound? Check that your phone is not in silent mode.'+'</div>':''}<button class="btn x" id="go" aria-label="${'Close'}">✕</button>`;
   over.classList.add('show');
   const cur=over.querySelector('.cur');(cur&&!cur.disabled?cur:document.getElementById('go')).focus({preventScroll:true});
   over.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{sfx('ui');load(+b.dataset.i)});
   over.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{set[b.dataset.o]=!set[b.dataset.o];b.setAttribute('aria-pressed',set[b.dataset.o]);saveSet();A.ensure();A.music(Math.floor(lvl/4));if(b.dataset.o==='calm'){clearInterval(tick);tick=setInterval(step,stepMs())}if(b.dataset.o==='zoom'){camInit=false;resize()}if(b.dataset.o==='dpad')joy.classList.toggle('dp',!!set.dpad);if(b.dataset.o==='unlock')over.querySelectorAll('[data-i]').forEach(x=>{x.disabled=!lvlOk(+x.dataset.i)});sfx('ui');syncMute()});
-  const lb=document.getElementById('langBtn');if(lb)lb.onclick=()=>{set.lang=LANG==='pl'?'en':'pl';saveSet();location.reload()};
   document.getElementById('go').onclick=closeMenu;
 }
 // drawing
@@ -1074,7 +1068,7 @@ function fit(){const app=document.querySelector('.app'),sc=document.getElementBy
   document.body.classList.remove('tight');let w=calc();
   if(w<250){document.body.classList.add('tight');w=calc()}
   sc.style.width=Math.max(150,Math.floor(w))+'px';
-  // zabezpieczenie: jeśli cokolwiek się nakłada albo wychodzi poza ekran, zmniejsz planszę
+  // safeguard: if anything overlaps or leaves the screen, shrink the board
   for(let i=0;i<14;i++){const d=app.querySelector('.dpad').getBoundingClientRect(),h=app.querySelector('.hint'),hv=h&&getComputedStyle(h).display!=='none',lim=hv?h.getBoundingClientRect().top-2:innerHeight;
     if(d.bottom<=lim&&app.scrollHeight<=app.clientHeight+1)break;
     const cur=parseFloat(sc.style.width);if(cur<=150)break;sc.style.width=Math.max(150,cur-5)+'px'}}
@@ -1100,13 +1094,13 @@ function buildSprites(){
   SP.wall=mk(R=>{R(w0,0,0,16,16);R(w1,0,0,16,1);R(w1,0,0,1,16);R(w2,0,15,16,1);R(w2,15,0,1,16);R(w2,3,3,10,10);R(w0,4,4,8,8);R(w1,4,4,8,1);R(w1,4,4,1,8);R('#0000002a',5,12,7,1)});
   const hex=(f)=>mk(R=>{
     const O='#5a3f08',H='#fff6c0',G='#ffcc3d',M='#e0a82e',D='#9a6f12';
-    // łeb: sześciokątny, widok z boku (trzy ściany)
+    // head: hexagonal, side view (three faces)
     R(O,4,0,8,1);R(O,3,1,1,4);R(O,12,1,1,4);R(O,4,5,8,1);
     R(G,4,1,8,4);R(H,4,1,8,1);R(M,4,4,8,1);
     R(D,6,1,1,4);R(D,9,1,1,4);R(H,5,2,1,2);R(H,10,2,1,2);
-    // podkładka
+    // washer
     R(O,5,6,6,1);R(M,5,6,6,1);R(D,5,6,6,1);R(O,4,6,1,1);R(O,11,6,1,1);
-    // trzonek z gwintem (rotuje: gwint przesunięty o klatkę)
+    // shaft with thread (rotates: thread shifted by a frame)
     R(O,5,7,1,7);R(O,10,7,1,7);
     R(G,6,7,4,7);R(H,6,7,1,7);R(D,9,7,1,7);
     for(let i=0;i<4;i++){const y=7+i*2+(f?1:0);if(y<=13){R(D,6,y,4,1);R(H,6,y+1,1,1)}}
@@ -1123,7 +1117,7 @@ function buildSprites(){
   SP.cannon={'>':cn,'v':rot(cn,Math.PI/2),'<':rot(cn,Math.PI),'^':rot(cn,-Math.PI/2)};
   SP.magnet=mk(R=>{R('#d2364f',2,3,4,9);R('#d2364f',10,3,4,9);R('#d2364f',2,3,12,4);R('#ff7088',3,4,10,1);R('#e9eef5',2,11,4,3);R('#e9eef5',10,11,4,3);R('#8a99ad',2,13,4,1);R('#8a99ad',10,13,4,1)});
   SP.key=mk(R=>{R('#56d6e8',2,4,7,7);R('#1f6f7c',2,10,7,1);R('#56d6e8',4,6,3,3);R('#000',4,6,1,1);const g=0;R('#56d6e8',8,7,7,2);R('#56d6e8',12,9,2,3);R('#56d6e8',10,9,1,2);R('#fff',3,5,2,1)});
-  // klucz: wyczyść otwór
+  // key: clear the hole
   SP.key=mk((R,g)=>{R('#56d6e8',2,4,7,7);R('#1f6f7c',2,10,7,1);g.clearRect(4,6,3,3);R('#56d6e8',8,7,7,2);R('#56d6e8',12,9,2,3);R('#56d6e8',10,9,1,2);R('#e9ffff',3,5,2,1)});
   SP.door=mk(R=>{R('#1f6f7c',2,0,12,16);R('#56d6e8',3,1,10,14);R('#1f6f7c',4,2,8,12);R('#2d8d9c',5,3,6,10);R('#56d6e8',7,6,2,2);R('#56d6e8',7,8,2,3)});
   const tp=(f)=>mk(R=>{ring(R,'#c77dff',6-f,6-f,4+2*f,4+2*f);ring(R,'#a64dff',4-f,5-f,8+2*f,6+2*f);ring(R,'#6a3ea0',2-f,4-f,12+2*f,8+2*f);R('#e8d0ff',7,7,2,2)});
@@ -1169,14 +1163,14 @@ function fikolPx(R,x,y,dir,fr,cheer,blink,ant){
     else{L(k,2,10+step,2,2);L(kd,2,12+step,2,1);L(k,12,10+step2,2,2);L(kd,12,12+step2,2,1)}
     tr(L,2,12);
     return}
-  // przód
+  // front
   ball(L,6);
   L(rl,4,3,8,1);L(r,3,4,10,5);L(rd,4,9,8,1);L(rd,12,5,1,4);L(rl,3,5,1,3);
   L(k,1,5,2,3);L(kd,1,6,1,1);L(k,13,5,2,3);L(kd,14,6,1,1);   // uszy
   L(a,4,4,8,4);L(a,5,3,6,1);                                  // twarz
   if(cheer){[[5,6],[6,5],[7,6],[9,6],[10,5],[11,6]].forEach(([ex,ey])=>L(c,ex,ey,1,1))}
   else if(blink){L(c,5,6,2,1);L(c,9,6,2,1)}else{L(c,5,5,2,2);L(c,9,5,2,2);L('#fff',5,5,1,1);L('#fff',9,5,1,1)}
-  L('#2c8a9a',7,7,2,1);                                       // uśmiech
+  L('#2c8a9a',7,7,2,1);                                       // smile
   L(kd,7,10,2,1);
   L(r,4,10,8,3);L(rl,4,10,8,1);L(rd,4,12,8,1);L(yl,6,11,1,1);L(c,9,11,1,1);L(a,7,11,2,1);
   if(cheer){L(k,2,6,2,5);L(kd,1,5,3,1);L(k,12,6,2,5);L(kd,12,5,3,1)}
@@ -1267,14 +1261,14 @@ if(!portraitAllowed)document.body.classList.add('nopion');
 function showInfo(html){before=state==='tip'||state==='dead'||state==='win'?state:'play';if(state==='menu')return;state='menu';over.innerHTML=html+'<button class="btn" id="go">OK</button>';over.classList.add('show');focusGo();document.getElementById('go').onclick=closeMenu}
 const fsBtn=document.getElementById('fsBtn'),FSok=!!(document.fullscreenEnabled||document.webkitFullscreenEnabled),fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement;
 fsBtn.onclick=async()=>{
-  if(!FSok){showInfo('<h2>'+_('Pełny ekran','Fullscreen')+'</h2><p>'+_('Na iPhonie: Udostępnij → Do ekranu początkowego. Wtedy gra działa na pełnym ekranie, także w poziomie.','On iPhone: Share → Add to Home Screen. Then the game runs fullscreen, also in landscape.')+'</p>');return}
+  if(!FSok){showInfo('<h2>'+'Fullscreen'+'</h2><p>'+'On iPhone: Share → Add to Home Screen. Then the game runs fullscreen, also in landscape.'+'</p>');return}
   try{if(fsEl()){(document.exitFullscreen||document.webkitExitFullscreen).call(document);try{screen.orientation.unlock()}catch(e){}}
     else{const el=document.documentElement;await (el.requestFullscreen||el.webkitRequestFullscreen).call(el,{navigationUI:'hide'});try{await screen.orientation.lock('landscape')}catch(e){}}}catch(e){}
 };
 ['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,()=>{fsBtn.setAttribute('aria-pressed',String(!!fsEl()));setTimeout(resize,200)}));
-// joystick (poziomo)
+// joystick (landscape)
 const joy=document.getElementById('joy'),jk=document.getElementById('jknob'),jb=joy.querySelector('.jbase');
-let jid=null,jdir=null,jang=0,jlast=0,jraf=0;const JMS=100,DIRS=[[1,0],[0,1],[-1,0],[0,-1]]; // 0=prawo,1=dół,2=lewo,3=góra
+let jid=null,jdir=null,jang=0,jlast=0,jraf=0;const JMS=100,DIRS=[[1,0],[0,1],[-1,0],[0,-1]]; // 0=right,1=down,2=left,3=up
 function jLoop(){if(!jdir){jraf=0;return}const t=performance.now();if(t-jlast>=JMS){if(state==='play')move(jdir[0],jdir[1]);jlast=t}jraf=requestAnimationFrame(jLoop)}
 function jSet(e){
   const r=jb.getBoundingClientRect(),R=r.width/2,cx=r.left+R,cy=r.top+R,dx=e.clientX-cx,dy=e.clientY-cy,m=Math.hypot(dx,dy),lim=R-jk.offsetWidth/2,k=m>lim?lim/m:1;
@@ -1282,7 +1276,7 @@ function jSet(e){
   const on=m>R*(set.dpad?.1:(jdir?.14:.2));
   if(!on){if(jdir){jdir=null;joy.dataset.dir=''}return}
   const th=Math.atan2(dy,dx);let si=Math.round(th/(Math.PI/2));si=((si%4)+4)%4;const HY=set.dpad?50:55;
-  if(jdir){ // histereza: zmiana kierunku dopiero po wyraźnym przekroczeniu granicy (55° od osi zamiast 45°)
+  if(jdir){ // hysteresis: direction changes only after clearly crossing the boundary (55° from the axis instead of 45°)
     const cur=DIRS.findIndex(d=>d[0]===jdir[0]&&d[1]===jdir[1]),ca=cur*Math.PI/2;let df=Math.atan2(Math.sin(th-ca),Math.cos(th-ca));
     if(Math.abs(df)<Math.PI*HY/180)si=cur}
   const nd=DIRS[si];joy.dataset.dir='rdlu'[si];
@@ -1292,7 +1286,7 @@ joy.addEventListener('pointerdown',e=>{e.preventDefault();try{joy.setPointerCapt
 joy.addEventListener('pointermove',e=>{if(e.pointerId===jid)jSet(e)});
 const jend=e=>{if(e.pointerId!==jid)return;jid=null;jdir=null;joy.dataset.dir='';joy.classList.remove('on');jk.style.transform=''};
 ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>joy.addEventListener(ev,jend));
-// FIRE: przeciągnij = celuj (strzałka przy Fikolu), puść = jeden strzał; samo dotknięcie i puszczenie = strzał przed siebie
+// FIRE: drag = aim (arrow next to NovoBot), release = one shot; a plain tap = shot ahead
 const f2=document.getElementById('fire2');let fid=null,fsx=0,fsy=0,fo=null,faimed=false;
 function setAim(dx,dy){fdx=dx;fdy=dy;if(dx)face=dx;fdir=dx>0?'r':dx<0?'l':dy<0?'u':'d';aimT=Infinity}
 function fPos(e){const dx=e.clientX-fsx,dy=e.clientY-fsy,m=Math.hypot(dx,dy),lim=34,k=m>lim?lim/m:1;f2.style.transform='translate('+dx*k+'px,'+dy*k+'px)';
@@ -1307,20 +1301,6 @@ f2.addEventListener('click',e=>{if(e.detail===0)fire()});
 new MutationObserver(()=>document.body.classList.toggle('modal',over.classList.contains('show'))).observe(over,{attributes:true,attributeFilter:['class']});
 addEventListener('orientationchange',()=>setTimeout(()=>{camInit=false;resize()},300));
 joy.classList.toggle('dp',!!set.dpad);
-function applyLang(){
-  document.documentElement.lang=LANG;if(LANG==='pl')return;
-  const rt=document.getElementById('rotT'),rs=document.getElementById('rotS'),sg=document.getElementById('stag');if(rt)rt.textContent='Rotate your phone to landscape';if(rs)rs.textContent='Fikol only runs in landscape';if(sg)sg.textContent='presents';
-  const T=(sel,txt)=>{const e=document.querySelector(sel);if(e)e.textContent=txt},A=(sel,txt)=>{const e=document.querySelector(sel);if(e)e.setAttribute('aria-label',txt)};
-  document.title='Fikol';document.querySelector('meta[name=description]').content='Fikol: a puzzle game about a little robot that crashed on an alien planet. 36 levels, screws, crates, guards, portals and bombs.';
-  A('#fsBtn','Fullscreen');A('#menuBtn','Levels');T('#menuBtn .t','Levels');A('#resetBtn','Restart');T('#resetBtn .t',' Restart');A('#undo','Undo move (Z)');T('#undo .t',' Undo');
-  A('#cv','Fikol game board. Steer with the arrow keys, WASD, the pad or the joystick.');A('.over','Game window');A('.hud','Game status');
-  [['#hScore','Score'],['#hScr','screws left'],['#hLife','lives'],['#hKey','keys'],['#hAmmo','ammo'],['#hLvl','level']].forEach(([b,t])=>{const e=document.querySelector(b);if(e&&e.nextElementSibling)e.nextElementSibling.textContent=t});
-  A('.dpad .u','Up');A('.dpad .d','Down');A('.dpad .l','Left');A('.dpad .r','Right');A('#fire','FIRE, fire');A('#fire2','FIRE, fire');
-  A('#joy','Joystick: drag to move');A('#act','Fire: tap FIRE to shoot ahead, drag sideways, up or down to aim and shoot');
-  const h=document.querySelector('.hint');if(h){h.firstChild.textContent='Swipe or use the pad (hold to repeat). FIRE fires in the direction of the last move.';const k=h.querySelector('.kb');if(k)k.textContent=' Keyboard: arrows or WASD, space fires, Z undoes, R restarts, Esc opens the level map.'}
-  const ns=document.querySelector('noscript p');if(ns)ns.textContent='Fikol needs JavaScript.';
-}
-applyLang();
 // input
 let rep=null;const stopRep=()=>{clearInterval(rep);rep=null};
 document.querySelectorAll('.dpad button[data-d]').forEach(b=>{const d=b.dataset.d.split(',').map(Number);
@@ -1348,7 +1328,7 @@ const fb=document.getElementById('fire');fb.addEventListener('pointerdown',e=>{e
 document.getElementById('resetBtn').onclick=()=>load(lvl,true);
 document.getElementById('menuBtn').onclick=menu;
 const mb=document.getElementById('muteBtn');
-function syncMute(){const off=!set.music&&!set.sfx;mb.setAttribute('aria-pressed',off);mb.setAttribute('aria-label',off?_('Włącz dźwięk','Unmute'):_('Wycisz wszystko','Mute all'))}
+function syncMute(){const off=!set.music&&!set.sfx;mb.setAttribute('aria-pressed',off);mb.setAttribute('aria-label',off?'Unmute':'Mute all')}
 mb.onclick=()=>{const off=!set.music&&!set.sfx;if(off){set.music=true;set.sfx=true}else{set.music=set.sfx=false}saveSet();A.ensure();A.music(Math.floor(lvl/4));syncMute();sfx('ui')};syncMute();
 const firstGesture=()=>{if(!portraitAllowed)try{screen.orientation.lock('landscape').catch(()=>{})}catch(e){}if(A.ensure()){A.music(Math.floor(lvl/4));}};
 ['pointerdown','keydown','click','touchend'].forEach(ev=>addEventListener(ev,firstGesture,{passive:true}));
@@ -1358,12 +1338,12 @@ const ro=new ResizeObserver(resize);ro.observe(cv);addEventListener('resize',res
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
 const ro2=new ResizeObserver(()=>{clearTimeout(ro2.t);ro2.t=setTimeout(resize,30)});document.querySelectorAll('.top,.hint,.sub,.hud').forEach(e=>ro2.observe(e));
-const BUILD='v34';
+const BUILD='v35';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   const had=!!navigator.serviceWorker.controller;let reloaded=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
   navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update().catch(()=>{})).catch(()=>{});
-  // sprawdzenie wersji: jeśli serwer ma nowszą, wyczyść pamięć podręczną i przeładuj (raz)
+  // version check: if the server has a newer one, clear the cache and reload (once)
   fetch('version.json?'+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(async j=>{
     if(!j||j.v===BUILD)return;
     let g='';try{g=sessionStorage.getItem('fikolRel')||''}catch(e){}
@@ -1375,6 +1355,6 @@ load(0);requestAnimationFrame(draw);
 (function(){const q=new URLSearchParams(location.search);let st=lastSaved;const pz=parseInt(q.get('poziom'),10);if(pz>=1&&pz<=LEVELS.length){st=pz-1;set.unlock=true;saveSet()}if(q.has('wszystko')){set.unlock=true;saveSet()}st=Math.max(0,Math.min(st,LEVELS.length-1));if(st>0){story0=true;load(st)}})();
 }
 </script>
-<noscript><p style="padding:20px">Fikol wymaga włączonego JavaScriptu.</p></noscript>
+<noscript><p style="padding:20px">NovoBot needs JavaScript.</p></noscript>
 </body>
 </html>
