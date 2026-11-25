@@ -260,7 +260,7 @@ function step(){
  if(state==='play'){if(!paused)update();engine(!paused&&pause<=0)}
  else{engine(false);off+=1.2;while(off>=RH){off-=RH;rows.unshift(mkRow(false));rows.pop()}parts.forEach(q=>{q.x+=q.vx;q.y+=q.vy;q.l--});parts=parts.filter(q=>q.l>0);if(state==='over'&&pause>0)pause--}
 }
-function start(){if(state==='play')return;if(state==='over'&&pause>0)return;reset(true);state='play';paused=false;msg='SECTION 1';msgT=100;pzShow();if(!lsGet('novojet-hint4')){lsSet('aquaforce-hint','1');setTimeout(()=>{if(state==='play'){msg='TOUCH: SHIP FOLLOWS YOUR FINGER';msgT=170}},1700)}try{AC&&AC.resume()}catch(e){}tone(440,.1,'square',880,.04)}
+function start(){if(state==='play')return;if(state==='over'&&pause>0)return;reset(true);state='play';paused=false;msg='SECTION 1';msgT=100;pzShow();if(!lsGet('novojet-hint5')){lsSet('aquaforce-hint','1');setTimeout(()=>{if(state==='play'){msg='TOUCH: STEER  2ND FINGER: FIRE';msgT=170}},1700)}try{AC&&AC.resume()}catch(e){}tone(440,.1,'square',880,.04)}
 function setMute(v){muted=v;lsSet('aquaforce-mute',v?'1':'0');try{AC&&AC.resume()}catch(e){}}
 function setCRT(v){crt=v;lsSet('aquaforce-crt',v?'1':'0');$('scr').classList.toggle('crt',v)}
 function togglePause(){if(state!=='play')return;paused=!paused;engine(false);pzShow()}
@@ -282,11 +282,12 @@ function sv(e){if(!jr)jcache();let dx=e.clientX-jr.cx,dy=e.clientY-jr.cy;const L
  if(drag0)dragT=Math.max(0,Math.min(W-p.w,drag0.px+(e.clientX-drag0.x)/(BW/240)));const a=dx/R,dz=.07;steer=0*Math.abs(a)<dz?0:Math.sign(a)*(Math.abs(a)-dz)/(1-dz);const t=-dy/R;thr=Math.abs(t)<.14?0:Math.sign(t)*(Math.abs(t)-.14)/.86}
 function sEnd(){steer=0;thr=0;jr=null;drag0=null;dragT=null;st.classList.remove('on');if(jkEl){jkEl.style.transition='transform .08s';jkEl.style.transform='';setTimeout(()=>{if(jkEl)jkEl.style.transition='none'},100)}}
 const zn=$('zone');let touch0=null;
-function follow(e){const r=$('scr').getBoundingClientRect(),u=r.width/240;const m=28,nx=Math.max(0,Math.min(1,(e.clientX-r.left-m)/(r.width-2*m))),nt=nx*(W-p.w);if(dragT===null||Math.abs(nt-dragT)>1.2)dragT=nt;thr=0}
+function follow(e){const r=$('scr').getBoundingClientRect(),u=r.width/240;const m=28,nx=Math.max(0,Math.min(1,(e.clientX-r.left-m)/(r.width-56-m-12))),nt=nx*(W-p.w);if(dragT===null||Math.abs(nt-dragT)>1.2)dragT=nt;thr=0}
 const tp=document.createElement('div');tp.id='tp';document.body.appendChild(tp);let tid=null;
 function showTp(t){tp.style.display='block';tp.style.left=t.clientX+'px';tp.style.top=t.clientY+'px'}
-function tEnd(e){for(const t of e.changedTouches)if(t.identifier===tid){tid=null;touch0=null;dragT=null;thr=0;tp.style.display='none'}}
-zn.addEventListener('touchstart',e=>{e.preventDefault();if(tid!==null)return;const t=e.changedTouches[0];tid=t.identifier;if(state!=='play')start();if(paused)togglePause();touch0={y:t.clientY};follow(t);showTp(t)},{passive:false});
+function tEnd(e){for(const t of e.changedTouches){if(t.identifier===fid2){fid2=null;keys.fire=false}}for(const t of e.changedTouches)if(t.identifier===tid){tid=null;touch0=null;dragT=null;thr=0;tp.style.display='none'}}
+let fid2=null;
+zn.addEventListener('touchstart',e=>{e.preventDefault();if(tid!==null){if(fid2===null){fid2=e.changedTouches[0].identifier;keys.fire=true;fireTap=8}return}const t=e.changedTouches[0];tid=t.identifier;if(state!=='play')start();if(paused)togglePause();touch0={y:t.clientY};follow(t);showTp(t)},{passive:false});
 zn.addEventListener('touchmove',e=>{for(const t of e.changedTouches)if(t.identifier===tid){e.preventDefault();follow(t);showTp(t)}},{passive:false});
 zn.addEventListener('touchend',tEnd);zn.addEventListener('touchcancel',tEnd);
 zn.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;e.preventDefault();zn.setPointerCapture(e.pointerId);if(state!=='play')start();if(paused)togglePause();touch0={y:e.clientY};follow(e)});
