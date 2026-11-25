@@ -64,7 +64,7 @@ function layout(force){
  let ship=ch-HUDH-34;
  const changed=force||ch!==CH||ship!==SHIP;
  const sc=$('scr');sc.style.width=bw+'px';sc.style.height=bh+'px';sc.style.setProperty('--u',u+'px');BW=bw;BH=bh;
- if(changed){CH=ch;H=CH-HUDH;N=H/RH+2;SHIP=ship;cv.width=W;cv.height=CH;g.imageSmoothingEnabled=false;if(typeof state!=='undefined'&&state)reset(state==='title'?true:false)}
+ if(changed){CH=ch;H=CH-HUDH;N=H/RH+2;SHIP=ship;cv.width=W;cv.height=CH;g.imageSmoothingEnabled=false;if(typeof state!=='undefined'&&state==='play'&&rows&&p){while(rows.length<Math.ceil(N))rows.push(mkRow(false));rows.length=Math.min(rows.length,Math.ceil(N));p.y=SHIP}else if(typeof state!=='undefined'&&state)reset(state==='title'?true:false)}
 }
 function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
@@ -282,7 +282,7 @@ function sv(e){if(!jr)jcache();let dx=e.clientX-jr.cx,dy=e.clientY-jr.cy;const L
  if(drag0)dragT=Math.max(0,Math.min(W-p.w,drag0.px+(e.clientX-drag0.x)/(BW/240)));const a=dx/R,dz=.07;steer=0*Math.abs(a)<dz?0:Math.sign(a)*(Math.abs(a)-dz)/(1-dz);const t=-dy/R;thr=Math.abs(t)<.14?0:Math.sign(t)*(Math.abs(t)-.14)/.86}
 function sEnd(){steer=0;thr=0;jr=null;drag0=null;dragT=null;st.classList.remove('on');if(jkEl){jkEl.style.transition='transform .08s';jkEl.style.transform='';setTimeout(()=>{if(jkEl)jkEl.style.transition='none'},100)}}
 const zn=$('zone');let touch0=null;
-function follow(e){const r=$('scr').getBoundingClientRect(),u=r.width/240;dragT=Math.max(0,Math.min(W-p.w,(e.clientX-r.left)/u-p.w/2));thr=0}
+function follow(e){const r=$('scr').getBoundingClientRect(),u=r.width/240;const m=28,nx=Math.max(0,Math.min(1,(e.clientX-r.left-m)/(r.width-2*m)));dragT=nx*(W-p.w);thr=0}
 const tp=document.createElement('div');tp.id='tp';document.body.appendChild(tp);let tid=null;
 function showTp(t){tp.style.display='block';tp.style.left=t.clientX+'px';tp.style.top=t.clientY+'px'}
 function tEnd(e){for(const t of e.changedTouches)if(t.identifier===tid){tid=null;touch0=null;dragT=null;thr=0;tp.style.display='none'}}
