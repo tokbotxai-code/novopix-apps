@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="author" content="NovoPix Studio">
 <title>NovoJet</title>
 <meta name="description" content="NovoJet: retro arcade river jet game. Fly the river, collect fuel, shoot enemies and destroy bridges.">
@@ -33,7 +33,7 @@ canvas{width:100%;height:100%;display:block;image-rendering:pixelated;touch-acti
 .jb::after{content:"";position:absolute;top:12%;bottom:12%;left:50%;width:2px;background:rgba(165,160,224,.25)}
 #jk{position:absolute;left:50%;top:50%;width:46%;height:46%;margin:-23% 0 0 -23%;border-radius:50%;background:radial-gradient(circle at 40% 35%,#8f82d6,#5a4cae);border:3px solid var(--fg);box-shadow:0 4px 10px #0009;will-change:transform}
 #steer.on #jk{background:radial-gradient(circle at 40% 35%,#ffe27a,#ffd23f)}
-#fire{position:absolute;right:max(18px,env(safe-area-inset-right));bottom:max(30px,env(safe-area-inset-bottom));width:calc(var(--sd)*.76);height:calc(var(--sd)*.76);border-radius:50%;background:#e0402a;border:3px solid rgba(255,255,255,.6);color:#fff;font:700 9px "Press Start 2P",monospace;padding:0;box-shadow:0 4px 10px #0007}
+#fire{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;position:absolute;right:max(18px,env(safe-area-inset-right));bottom:max(30px,env(safe-area-inset-bottom));width:calc(var(--sd)*.76);height:calc(var(--sd)*.76);border-radius:50%;background:#e0402a;border:3px solid rgba(255,255,255,.6);color:#fff;font:700 9px "Press Start 2P",monospace;padding:0;box-shadow:0 4px 10px #0007}
 #fire.on{background:var(--acc);color:#000}
 #fbk{position:absolute;top:calc(40 * var(--u) + 6px);left:6px;z-index:6;font:700 8px "Press Start 2P",monospace;color:#fff;background:rgba(20,10,60,.6);border:1px solid rgba(255,255,255,.4);border-radius:6px;padding:5px 6px;text-decoration:none}.scr.pl #fbk{display:none}
 #pz{position:absolute;top:calc(60 * var(--u) + 6px);right:6px;width:34px;height:34px;border:2px solid rgba(255,255,255,.55);border-radius:9px;background:rgba(20,10,60,.55);color:#fff;font:700 12px "Press Start 2P",monospace;letter-spacing:-2px;padding:0;display:grid;place-items:center;z-index:2}
@@ -160,7 +160,7 @@ function update(){
  const kt=(keys.ArrowUp||keys.w?1:0)-(keys.ArrowDown||keys.s?1:0),th=thr||kt,base=1+Math.min(lvl-1,8)*.1;
  spd+=(Math.max(.5,Math.min(3,base+(th>0?th*1.3:th*.5)))-spd)*.28;const sp=spd;
  const dir=(keys.ArrowLeft||keys.a?-1:0)+(keys.ArrowRight||keys.d?1:0);
- if(dragT!==null&&!dir){p.x+=Math.max(-14,Math.min(14,(dragT-p.x)*.85));vx=0}else{const sv0=dir||steer,tv=Math.sign(sv0)*Math.pow(Math.abs(sv0),1.4)*3.6;vx+=(tv-vx)*(dir?.6:.4)}p.x=Math.max(0,Math.min(W-p.w,p.x+vx));
+ if(dragT!==null&&!dir){p.x+=Math.max(-8,Math.min(8,(dragT-p.x)*.55));vx=0}else{const sv0=dir||steer,tv=Math.sign(sv0)*Math.pow(Math.abs(sv0),1.4)*3.6;vx+=(tv-vx)*(dir?.6:.4)}p.x=Math.max(0,Math.min(W-p.w,p.x+vx));
  if(fireTap>0)fireTap--;if(fcd>0)fcd--;if((keys[' ']||keys.fire||fireTap>0)&&fcd<=0&&buls.length<5){buls.push({x:p.x+p.w/2,y:p.y});fcd=7;tone(1400,.09,'sawtooth',220,.035)}
  off+=sp;
  while(off>=RH){off-=RH;rows.unshift(mkRow(true));rows.pop()}
@@ -282,7 +282,7 @@ function sv(e){if(!jr)jcache();let dx=e.clientX-jr.cx,dy=e.clientY-jr.cy;const L
  if(drag0)dragT=Math.max(0,Math.min(W-p.w,drag0.px+(e.clientX-drag0.x)/(BW/240)));const a=dx/R,dz=.07;steer=0*Math.abs(a)<dz?0:Math.sign(a)*(Math.abs(a)-dz)/(1-dz);const t=-dy/R;thr=Math.abs(t)<.14?0:Math.sign(t)*(Math.abs(t)-.14)/.86}
 function sEnd(){steer=0;thr=0;jr=null;drag0=null;dragT=null;st.classList.remove('on');if(jkEl){jkEl.style.transition='transform .08s';jkEl.style.transform='';setTimeout(()=>{if(jkEl)jkEl.style.transition='none'},100)}}
 const zn=$('zone');let touch0=null;
-function follow(e){const r=$('scr').getBoundingClientRect(),u=r.width/240;const m=28,nx=Math.max(0,Math.min(1,(e.clientX-r.left-m)/(r.width-2*m)));dragT=nx*(W-p.w);thr=0}
+function follow(e){const r=$('scr').getBoundingClientRect(),u=r.width/240;const m=28,nx=Math.max(0,Math.min(1,(e.clientX-r.left-m)/(r.width-2*m))),nt=nx*(W-p.w);if(dragT===null||Math.abs(nt-dragT)>1.2)dragT=nt;thr=0}
 const tp=document.createElement('div');tp.id='tp';document.body.appendChild(tp);let tid=null;
 function showTp(t){tp.style.display='block';tp.style.left=t.clientX+'px';tp.style.top=t.clientY+'px'}
 function tEnd(e){for(const t of e.changedTouches)if(t.identifier===tid){tid=null;touch0=null;dragT=null;thr=0;tp.style.display='none'}}
@@ -301,8 +301,13 @@ cv.addEventListener('pointerdown',e=>{e.preventDefault();if(state!=='play'){star
 $('pz').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();togglePause()});
 $('splash').addEventListener('pointerdown',()=>{$('splash').style.display='none'});$('splash').addEventListener('animationend',()=>{$('splash').style.display='none'});
 const fb=$('fire');
-fb.addEventListener('pointerdown',e=>{e.preventDefault();fb.setPointerCapture(e.pointerId);keys.fire=true;fireTap=8;fb.classList.add('on');if(state!=='play')start()});
-['pointerup','pointercancel'].forEach(n=>fb.addEventListener(n,()=>{keys.fire=false;fb.classList.remove('on')}));
+let fid=null;fb.addEventListener('touchstart',e=>{e.preventDefault();if(fid!==null)return;fid=e.changedTouches[0].identifier;keys.fire=true;fireTap=8;fb.classList.add('on');if(state!=='play')start()},{passive:false});
+function fEnd(e){for(const t of e.changedTouches)if(t.identifier===fid){fid=null;keys.fire=false;fb.classList.remove('on')}}
+fb.addEventListener('touchend',fEnd);fb.addEventListener('touchcancel',fEnd);fb.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+fb.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;e.preventDefault();fb.setPointerCapture(e.pointerId);keys.fire=true;fireTap=8;fb.classList.add('on');if(state!=='play')start()});
+['pointerup','pointercancel'].forEach(n=>fb.addEventListener(n,e=>{if(e.pointerType==='touch')return;keys.fire=false;fb.classList.remove('on')}));
+['gesturestart','gesturechange','gestureend'].forEach(n=>document.addEventListener(n,e=>e.preventDefault()));
+document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='play'&&!paused){paused=true;pzShow()}});
 addEventListener('blur',()=>{keys={};steer=0});
 addEventListener('contextmenu',e=>e.preventDefault());
