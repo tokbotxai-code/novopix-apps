@@ -1049,7 +1049,7 @@ function menu(){
   if(state==='menu'){closeMenu();return}
   before=state==='tip'||state==='dead'||state==='win'?state:'play';
   state='menu';
-  over.innerHTML=`<h2>${'Levels'}</h2><div class="levels">${LEVELS.map((l,i)=>{const ok=lvlOk(i);return `<button data-i="${i}" class="${done.includes(i)?'done':''} ${i===lvl?'cur':''}" aria-label="${'Level '}${i+1}, ${l.name}${done.includes(i)?', completed':''}" ${ok?'':'disabled'}>${i+1}</button>`}).join('')}</div><div class="hint" style="font-size:12px">${'Best score: '}${run.hi}</div><div class="opts">${optsHTML()}</div>${/iPhone|iPad/.test(navigator.userAgent)?'<div class="hint" style="font-size:11px">'+'No sound? Check that your phone is not in silent mode.'+'</div>':''}<button class="btn x" id="go" aria-label="${'Close'}">✕</button>`;
+  over.innerHTML=`<h2>${'Levels'}</h2><div class="levels">${LEVELS.map((l,i)=>{const ok=lvlOk(i);return `<button data-i="${i}" class="${done.includes(i)?'done':''} ${i===lvl?'cur':''}" aria-label="${'Level '}${i+1}, ${l.name}${done.includes(i)?', completed':''}" ${ok?'':'disabled'}>${i+1}</button>`}).join('')}</div><div class="hint" style="font-size:12px">${'Best score: '}${run.hi}</div><div class="opts">${optsHTML()}</div>${/iPhone|iPad/.test(navigator.userAgent)?'<div class="hint" style="font-size:11px">'+'No sound? Check that your phone is not in silent mode.'+'</div>':''}<div class="hint" style="font-size:12px"><a href="mailto:contact@novopix.uk?subject=NovoBot%20feedback" style="color:inherit">Send feedback</a></div><button class="btn x" id="go" aria-label="${'Close'}">✕</button>`;
   over.classList.add('show');
   const cur=over.querySelector('.cur');(cur&&!cur.disabled?cur:document.getElementById('go')).focus({preventScroll:true});
   over.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{sfx('ui');load(+b.dataset.i)});
@@ -1338,7 +1338,7 @@ const ro=new ResizeObserver(resize);ro.observe(cv);addEventListener('resize',res
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
 const ro2=new ResizeObserver(()=>{clearTimeout(ro2.t);ro2.t=setTimeout(resize,30)});document.querySelectorAll('.top,.hint,.sub,.hud').forEach(e=>ro2.observe(e));
-const BUILD='v36';
+const BUILD='v37';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   const had=!!navigator.serviceWorker.controller;let reloaded=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!reloaded){reloaded=true;location.reload()}});
