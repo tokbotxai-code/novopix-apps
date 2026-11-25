@@ -68,6 +68,8 @@ services:
       - caddy-config:/config
       - ../../pantrypal-site:/srv/pantrypal:ro
       - ../../fikol-site:/srv/fikol:ro
+      - ../../novojet-site:/srv/novojet:ro
+      - ../../novobot-site:/srv/novobot:ro
     depends_on: [scanner, panel, fridgebite]
 
 networks:

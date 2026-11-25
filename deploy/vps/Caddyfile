@@ -88,3 +88,27 @@ rentproof.novopix.uk {
 		}
 	}
 }
+
+novojet.novopix.uk {
+	encode gzip
+	import security_headers
+	header {
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		Cache-Control "no-cache"
+		defer
+	}
+	root * /srv/novojet
+	file_server
+}
+
+novobot.novopix.uk {
+	encode gzip
+	import security_headers
+	header {
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		Cache-Control "no-cache"
+		defer
+	}
+	root * /srv/novobot
+	file_server
+}
