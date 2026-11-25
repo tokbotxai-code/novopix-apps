@@ -3,3 +3,16 @@ dist
 .env
 data
 .git
+# Static sites and media are served by Caddy or other images; keep them out of the scanner/panel build context
+# so that changes to them do not rebuild (and briefly restart) the scanner and panel.
+novojet-site
+novobot-site
+pantrypal-site
+fridgebite
+tiktok
+instagram
+linkedin
+docs
+deploy
+.github
+*.md
